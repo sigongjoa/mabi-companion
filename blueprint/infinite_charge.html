@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마비노기 - 무한 채집 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #111827;
+            color: #d1d5db;
+        }
+        .sidebar-link.active {
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .guide-card {
+            background-color: #1f2937;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .guide-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="relative min-h-screen flex">
+        <!-- 사이드바 네비게이션 -->
+        <aside id="sidebar" class="w-64 bg-gray-900 text-white shadow-lg h-screen fixed top-0 left-0 transform transition-transform duration-300 ease-in-out z-30">
+            <div class="p-5 border-b border-gray-700 flex items-center space-x-3">
+                 <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                 </div>
+                 <div>
+                    <h2 class="text-lg font-bold">마비노기</h2>
+                    <p class="text-xs text-gray-400">제작 계산기</p>
+                 </div>
+            </div>
+            <nav class="mt-4">
+                <ul>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                        아이템
+                    </a></li>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-6.38-3.386l-1.591-1.592a2.25 2.25 0 010-3.182l1.591-1.592L9 6.5l1.518-1.518a2.25 2.25 0 013.182 0l1.592 1.591L15 9.5l-1.518 1.518a2.25 2.25 0 01-3.182 0L9 12.5l-1.88-1.88z" /></svg>
+                        퀘스트
+                    </a></li>
+                    <li><a href="#" class="sidebar-link active flex items-center py-3 px-5">
+                         <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.343 3.071a.75.75 0 011.314 0l1.83 4.22c.1.23.32.393.571.424l4.632.673a.75.75 0 01.416 1.279l-3.352 3.267a.75.75 0 00-.215.66l.792 4.612a.75.75 0 01-1.088.79L12 18.293l-4.134 2.174a.75.75 0 01-1.088-.79l.792-4.612a.75.75 0 00-.215-.66L3.805 9.646a.75.75 0 01.416-1.28l4.632-.672a.75.75 0 00.57-.424l1.831-4.22z" /></svg>
+                        무한 채집
+                    </a></li>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 16.5V21m3.75-18v1.5m0 16.5V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" /></svg>
+                        AI 어시스턴트
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out">
+            <header class="bg-gray-900 shadow-sm p-4 flex items-center sticky top-0 z-20">
+                <button id="sidebar-toggle-btn" class="p-2 mr-4 text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                </button>
+                <div class="text-sm text-gray-400"><span>홈</span><span class="mx-1">/</span><span>무한 채집 가이드</span></div>
+            </header>
+            
+            <div id="content-wrapper" class="p-4 md:p-8">
+                <h1 class="text-3xl font-bold text-white mb-2">무한/반자동 채집 아이템 정리표</h1>
+                <p class="text-gray-400 mb-8">제작 아이템을 활용해 특정 재료를 무한 또는 반자동으로 채집하는 방법을 확인하세요.</p>
+
+                <div id="guide-container" class="space-y-6">
+                    <!-- 가이드 카드가 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-20 hidden"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const guideData = [
+                { item: '치명타 비약', target: '네잎클로버', quantity: '10회(100개)', method: '제작 10회 설정 → 네잎클로버 100개 필요 → ‘구하는 방법’ 약초 채집', tip: '티르코네일 남쪽, 약초 밀집 지역' },
+                { item: '마나 회복 비약', target: '마나 허브', quantity: '10회(100개)', method: '제작 10회 설정 → 마나 허브 100개 필요 → ‘구하는 방법’ 약초 채집', tip: '마나 허브 출현 지역' },
+                { item: '생명력 회복 비약', target: '블러디 허브', quantity: '10회(100개)', method: '제작 10회 설정 → 블러디 허브 100개 필요 → ‘구하는 방법’ 약초 채집', tip: '블러디 허브 출현 지역' },
+                { item: '궁극기 비약', target: '끈기 풀', quantity: '10회(100개)', method: '제작 10회 설정 → 끈기 풀 100개 필요 → ‘구하는 방법’ 채집', tip: '끈기 풀 출현 지역' },
+                { item: '이동 속도 비약', target: '화살꽃', quantity: '10회(100개)', method: '제작 10회 설정 → 화살꽃 100개 필요 → ‘구하는 방법’ 채집', tip: '화살꽃 출현 지역' },
+                { item: '최상급 회복 물약', target: '숨숨꽃', quantity: '10회(100개)', method: '제작 10회 설정 → 숨숨꽃 100개 필요 → ‘구하는 방법’ 채집', tip: '숨숨꽃 출현 지역' },
+                { item: '조개찜', target: '조개', quantity: '10회(40개)', method: '제작 10회 설정 → 조개 40개 필요 → ‘구하는 방법’ 채집', tip: '강가, 조개밀집 지역' },
+                { item: '사과 스플레', target: '사과', quantity: '10회(40개)', method: '제작 10회 설정 → 사과 40개 필요 → ‘구하는 방법’ 채집', tip: '사과나무 밀집 지역' },
+                { item: '감자 수프', target: '감자', quantity: '10회(40개)', method: '제작 10회 설정 → 감자 40개 필요 → ‘구하는 방법’ 채집', tip: '감자밭' },
+                { item: '숙련 캠프파이어 키트', target: '돌멩이(광석)', quantity: '10회(100개)', method: '제작 10회 설정 → 돌멩이 100개 필요 → ‘구하는 방법’ 광석 캐기', tip: '늑대의 숲, 여신의 뜰 등 광맥 위치' },
+                { item: '마력 기폭제(가공)', target: '반짝이는 이끼(버섯류)', quantity: '10회(100개)', method: '약품 가공 메뉴 → 마력 기폭제 10회 설정 → ‘구하는 방법’ 약초 채집', tip: '새록버섯, 튼튼버섯 등 버섯류 주변' },
+                { item: '우유(요리)', target: '우유', quantity: '10회(40개)', method: '제작 10회 설정 → 우유 40개 필요 → ‘구하는 방법’ 채집', tip: '젖소가 있는 목장' },
+                { item: '달걀(요리)', target: '달걀', quantity: '10회(40개)', method: '제작 10회 설정 → 달걀 40개 필요 → ‘구하는 방법’ 채집', tip: '둥지(던바튼 동쪽 등)' },
+                { item: '황금 달걀(특수)', target: '황금 달걀', quantity: '1회(1개)', method: '인벤토리 > 황금 달걀 > ‘구하는 방법’ > 둥지', tip: '둥지(특수 드랍)' },
+                { item: '각종 버섯(포자 활용)', target: '버섯 포자', quantity: '10회(100개)', method: '인벤토리 > 버섯 포자 > ‘구하는 방법’ > 해당 버섯', tip: '새록버섯, 튼튼버섯, 쑥쑥버섯, 깔끔버섯 등' },
+                { item: '거미줄(특수)', target: '황금 거미줄', quantity: '1회(1개)', method: '인벤토리 > 황금 거미줄 > ‘구하는 방법’ > 거미줄 채집', tip: '거미줄 밀집 지역' }
+            ];
+
+            const guideContainer = document.getElementById('guide-container');
+
+            function renderGuide() {
+                guideData.forEach(data => {
+                    const card = document.createElement('div');
+                    card.className = 'guide-card';
+                    card.innerHTML = `
+                        <h3 class="flex items-center space-x-3">
+                           <span class="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center text-white font-bold">${data.item.charAt(0)}</span>
+                           <span>${data.item}</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <p class="font-semibold text-gray-400 mb-1">채집 대상</p>
+                                <p>${data.target}</p>
+                            </div>
+                             <div>
+                                <p class="font-semibold text-gray-400 mb-1">설정 수량</p>
+                                <p>${data.quantity}</p>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <p class="font-semibold text-gray-400 mb-1">자동 채집 방식</p>
+                                <p>${data.method}</p>
+                            </div>
+                             <div class="md:col-span-2 lg:col-span-4">
+                                <p class="font-semibold text-gray-400 mb-1">팁 & 장소 예시</p>
+                                <p>${data.tip}</p>
+                            </div>
+                        </div>
+                    `;
+                    guideContainer.appendChild(card);
+                });
+            }
+
+            // --- 사이드바 및 초기화 ---
+            const sidebar = document.getElementById('sidebar'), mainContent = document.getElementById('main-content'),
+                  sidebarToggleBtn = document.getElementById('sidebar-toggle-btn'), sidebarOverlay = document.getElementById('sidebar-overlay');
+            function applySidebarState(isOpen) {
+                 const isDesktop = window.innerWidth >= 768;
+                 if (isOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
+                    if (isDesktop) { mainContent.classList.add('md:ml-64'); sidebarOverlay.classList.add('hidden'); }
+                 } else {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                    if (isDesktop) { mainContent.classList.remove('md:ml-64'); }
+                 }
+            }
+            function toggleSidebar() { applySidebarState(!sidebar.classList.contains('-translate-x-full')); }
+            function initializeSidebar() { applySidebarState(window.innerWidth >= 768); }
+            sidebarToggleBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+            window.addEventListener('resize', initializeSidebar);
+            
+            initializeSidebar();
+            renderGuide();
+        });
+    </script>
+</body>
+</html>

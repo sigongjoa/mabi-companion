@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마비노기 - 종합 AI 어시스턴트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #111827;
+            color: #d1d5db;
+        }
+        .sidebar-link.active {
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        .chat-bubble-user {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .chat-bubble-ai {
+            background-color: #374151;
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="relative min-h-screen flex">
+        <!-- 사이드바 네비게이션 -->
+        <aside id="sidebar" class="w-64 bg-gray-900 text-white shadow-lg h-screen fixed top-0 left-0 transform transition-transform duration-300 ease-in-out z-30">
+            <div class="p-5 border-b border-gray-700 flex items-center space-x-3">
+                 <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                 </div>
+                 <div>
+                    <h2 class="text-lg font-bold">마비노기</h2>
+                    <p class="text-xs text-gray-400">제작 계산기</p>
+                 </div>
+            </div>
+            <nav class="mt-4">
+                 <ul>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                        아이템
+                    </a></li>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-6.38-3.386l-1.591-1.592a2.25 2.25 0 010-3.182l1.591-1.592L9 6.5l1.518-1.518a2.25 2.25 0 013.182 0l1.592 1.591L15 9.5l-1.518 1.518a2.25 2.25 0 01-3.182 0L9 12.5l-1.88-1.88z" /></svg>
+                        퀘스트
+                    </a></li>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.418a.562.562 0 01.321.988l-4.204 3.055a.563.563 0 00-.182.557l1.528 4.97a.562.562 0 01-.82.622l-4.42-3.232a.563.563 0 00-.664 0l-4.42 3.232a.562.562 0 01-.82-.622l1.528-4.97a.563.563 0 00-.182-.557l-4.204-3.055a.562.562 0 01.321-.988h5.418a.563.563 0 00.475-.31L11.48 3.5z" /></svg>
+                        생활스킬
+                    </a></li>
+                    <li><a href="#" class="sidebar-link flex items-center py-3 px-5 text-gray-300 hover:bg-gray-800 transition-colors">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.016h-.008v-.016z" /></svg>
+                        캐릭터 장비
+                    </a></li>
+                     <li><a href="#" class="sidebar-link active flex items-center py-3 px-5">
+                        <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 16.5V21m3.75-18v1.5m0 16.5V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" /></svg>
+                        AI 어시스턴트
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out">
+            <header class="bg-gray-900 shadow-sm p-4 flex items-center sticky top-0 z-20">
+                <button id="sidebar-toggle-btn" class="p-2 mr-4 text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                </button>
+                <div class="text-sm text-gray-400"><span>홈</span><span class="mx-1">/</span><span>AI 어시스턴트</span></div>
+            </header>
+            
+            <div id="content-wrapper" class="p-4 md:p-8 flex flex-col h-[calc(100vh-64px)]">
+                <div class="flex-shrink-0 mb-4">
+                    <h1 class="text-3xl font-bold text-white">종합 AI 어시스턴트</h1>
+                    <p class="text-gray-400 mt-1">게임에 대한 모든 것을 물어보세요. 현재 캐릭터 정보와 아이템, 퀘스트 상황을 바탕으로 답변해 드립니다.</p>
+                </div>
+
+                <div id="chat-container" class="flex-1 bg-gray-800 rounded-lg p-4 overflow-y-auto space-y-4">
+                    <!-- Chat messages will be appended here -->
+                </div>
+                
+                <div class="mt-4 flex-shrink-0">
+                    <div class="flex items-start space-x-3">
+                        <textarea id="user-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500 resize-none" placeholder="예: 필드보스 잡아서 나오는 인장은 어디서 교환하나요?" rows="2"></textarea>
+                        <button id="send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg h-full flex items-center">
+                           <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-20 hidden"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 데이터 정의 (다른 페이지들의 데이터를 모두 통합) ---
+            const allItemsData = { 1: { name: '붕대', category: '소모품', icon: '...', description: '...', weight: 0.1, price: 5 }, 2: { name: '고기', category: '음식', icon: '...', description: '...', weight: 0.5, price: 10 }, 10: { name: '질긴 붕대', category: '소모품', icon: '...', description: '...', weight: 0.2, price: 15 }, /* ... 등 모든 아이템 */ };
+            const inventoryMap = new Map([ [1, 10], [2, 59] ]);
+            const craftingRecipes = [ { resultId: 10, materials: [{ itemId: 1, quantity: 5 }, { itemId: 4, quantity: 10 }] } ];
+            const dailyTasks = { '캐시샵 관련': [{ id: 'd1', text: '추천픽 무료 상품 1개 구입', completed: false }] };
+            const weeklyTasks = { '필드/레이드/어비스': [{ id: 'w1', text: '필드보스: 페리, 크라브바흐, 크라마 처치', completed: false }] };
+            const characterData = { name: 'SessionLocal', level: 28, combatPower: 2709, lifeSkills: [{ id: 1, name: '일상 채집', level: 1 }] };
+
+            // --- DOM 요소 ---
+            const chatContainer = document.getElementById('chat-container');
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+
+            // --- AI 및 채팅 로직 ---
+            function addMessage(sender, message) {
+                const messageEl = document.createElement('div');
+                const bubbleClass = sender === 'user' ? 'chat-bubble-user self-end' : 'chat-bubble-ai self-start';
+                messageEl.className = `w-full flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+                messageEl.innerHTML = `<div class="max-w-lg rounded-lg px-4 py-3 ${bubbleClass}">${message}</div>`;
+                chatContainer.appendChild(messageEl);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            async function handleSend() {
+                const userMessage = userInput.value.trim();
+                if (!userMessage) return;
+
+                addMessage('user', userMessage);
+                userInput.value = '';
+                sendBtn.disabled = true;
+
+                addMessage('ai', '<span class="spinner"></span>');
+                const loadingBubble = chatContainer.lastElementChild.querySelector('div');
+
+                // --- LLM에 전달할 전체 컨텍스트 생성 ---
+                const fullContext = `
+                    당신은 '마비노기 모바일' 게임의 숙련된 조언가입니다. 당신의 임무는 아래에 제공된 게임 시스템 정보와 유저의 현재 데이터를 바탕으로, 유저의 질문에 대해 가장 정확하고 유용한 답변을 제공하는 것입니다. 답변은 한국어로, 친절하고 명확한 어조로 작성해주세요. 계산이 필요하면 계산을 수행하고, 특정 아이템이나 퀘스트에 대한 정보가 필요하면 데이터를 참조하여 답변하세요.
+
+                    --- 유저의 질문 ---
+                    ${userMessage}
+                    
+                    --- 현재 캐릭터 정보 ---
+                    ${JSON.stringify(characterData, null, 2)}
+                    
+                    --- 현재 인벤토리 (아이템 ID: 보유량) ---
+                    ${JSON.stringify(Object.fromEntries(inventoryMap), null, 2)}
+                    
+                    --- 게임 내 모든 아이템 정보 ---
+                    ${JSON.stringify(allItemsData, null, 2)}
+                    
+                    --- 아이템 제작 레시피 ---
+                    ${JSON.stringify(craftingRecipes, null, 2)}
+                    
+                    --- 일일 숙제 목록 및 완료 상태 ---
+                    ${JSON.stringify(dailyTasks, null, 2)}
+                    
+                    --- 주간 숙제 목록 및 완료 상태 ---
+                    ${JSON.stringify(weeklyTasks, null, 2)}
+                    --------------------
+
+                    위 모든 정보를 종합하여 질문에 답변해주세요.
+                `;
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: fullContext }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // API Key
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+
+                    const result = await response.json();
+                    const aiResponse = result.candidates[0].content.parts[0].text;
+                    loadingBubble.innerHTML = aiResponse.replace(/\n/g, '<br>');
+
+                } catch (error) {
+                    loadingBubble.innerHTML = `오류가 발생했습니다: ${error.message}`;
+                    console.error('AI 응답 오류:', error);
+                } finally {
+                    sendBtn.disabled = false;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+            
+            sendBtn.addEventListener('click', handleSend);
+            userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            });
+
+
+            // --- 사이드바 로직 ---
+            const sidebar = document.getElementById('sidebar'), mainContent = document.getElementById('main-content'),
+                  sidebarToggleBtn = document.getElementById('sidebar-toggle-btn'), sidebarOverlay = document.getElementById('sidebar-overlay');
+            function applySidebarState(isOpen) { const isDesktop = window.innerWidth >= 768; if (isOpen) { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.remove('hidden'); if (isDesktop) { mainContent.classList.add('md:ml-64'); sidebarOverlay.classList.add('hidden'); } } else { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); if (isDesktop) { mainContent.classList.remove('md:ml-64'); } } }
+            function toggleSidebar() { applySidebarState(!sidebar.classList.contains('-translate-x-full')); }
+            function initializeSidebar() { applySidebarState(window.innerWidth >= 768); }
+            sidebarToggleBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+            window.addEventListener('resize', initializeSidebar);
+            
+            initializeSidebar();
+            addMessage('ai', '안녕하세요! 마비노기 모바일 어시스턴트입니다. 무엇이든 물어보세요.');
+        });
+    </script>
+</body>
+</html>
