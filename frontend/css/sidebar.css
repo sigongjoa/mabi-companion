@@ -1,0 +1,19 @@
+﻿/* sidebar.css */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Tailwind CSS is now used for sidebar layout and animation. */
+/* The following styles are kept for specific active link styling or general overrides. */
+
+.sidebar-link.active {
+    background-color: #f3f4f6;
+    color: #8b5cf6;
+    font-weight: 600;
+}
+
+.sidebar-link.active svg {
+    color: #8b5cf6;
+}
