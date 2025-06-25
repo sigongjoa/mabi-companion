@@ -35,7 +35,10 @@ const allItems: Record<string, Item> = allItemsData as Record<string, Item>
 
 const recipes: Recipe[] = recipesData as Recipe[]
 
-const categories = ["전체", "소모품", "음식", "재료"]
+// Update categories to include individual material categories
+const categories = ["전체", "소모품", "음식", "장비", "기타", "화폐",
+  "광물", "목재", "가죽", "옷감", "버섯", "결정", "마법", "파편", "꽃", "요리재료"
+];
 
 export default function InventoryPage() {
   console.debug(`Entering InventoryPage`);
@@ -157,6 +160,7 @@ export default function InventoryPage() {
     })
     .filter((item): item is (Item & { quantity: number }) => {
       console.debug(`Checking item for filter: ${item?.name}, category: ${item?.category}, selectedCategory: ${selectedCategory}`);
+      // Simplified filtering logic: directly match category
       return item !== null && (selectedCategory === "전체" || item.category === selectedCategory);
     });
   console.debug("Final filteredItems:", filteredItems);
