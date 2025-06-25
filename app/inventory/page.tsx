@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
 import { FavoriteToggle } from "@/components/favorite-toggle"
-import { Plus, Minus, Package, Sparkles } from "lucide-react"
+import { Plus, Minus, Package, Sparkles, LayoutGrid, Table2 } from "lucide-react"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 
 import allItemsData from "@/data/items.json"
 import recipesData from "@/data/recipes.json"
@@ -37,9 +38,12 @@ const recipes: Recipe[] = recipesData as Recipe[]
 const categories = ["전체", "소모품", "음식", "재료"]
 
 export default function InventoryPage() {
+  console.debug(`Entering InventoryPage`);
   const { activeCharacter, viewMode, characters, updateCharacter } = useCharacter()
   console.debug(`InventoryPage rendered - viewMode: ${viewMode}, activeCharacter: ${activeCharacter?.id}`);
   const [selectedCategory, setSelectedCategory] = useState("전체")
+  // Change state for main tabs
+  const [currentMainTab, setCurrentMainTab] = useState("inventory-card");
   console.debug(`Initial selectedCategory: ${selectedCategory}`);
 
   // Get inventory data based on view mode
@@ -170,28 +174,34 @@ export default function InventoryPage() {
           icon={Package}
         />
 
-        <Tabs defaultValue="inventory" className="section-spacing">
+        <Tabs defaultValue="inventory-card" value={currentMainTab} onValueChange={setCurrentMainTab} className="section-spacing">
           <div className="card">
             <div className="card-content">
               <TabsList className="bg-gray-100 border border-gray-200">
                 <TabsTrigger
-                  value="inventory"
+                  value="inventory-card"
                   className="data-[state=active]:bg-white data-[state=active]:text-blue-600"
                 >
-                  인벤토리
+                  <LayoutGrid className="w-4 h-4 mr-2" /> 아이템 (카드)
+                </TabsTrigger>
+                <TabsTrigger
+                  value="inventory-table"
+                  className="data-[state=active]:bg-white data-[state=active]:text-blue-600"
+                >
+                  <Table2 className="w-4 h-4 mr-2" /> 아이템 (테이블)
                 </TabsTrigger>
                 <TabsTrigger
                   value="crafting"
                   className="data-[state=active]:bg-white data-[state=active]:text-blue-600"
                   disabled={viewMode === "all"}
                 >
-                  제작 가능 ({craftableRecipes.length})
+                  <Sparkles className="w-4 h-4 mr-2" /> 제작 가능 ({craftableRecipes.length})
                 </TabsTrigger>
               </TabsList>
             </div>
           </div>
 
-          <TabsContent value="inventory" className="section-spacing">
+          <TabsContent value="inventory-card" className="section-spacing">
             <Card className="card">
               <CardHeader className="card-header">
                 <div className="flex items-center justify-between">
@@ -248,30 +258,26 @@ export default function InventoryPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => updateQuantity(item.id, -1)}
-                            className="h-8 w-8 p-0 form-button-secondary"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-4 h-4" />
                           </Button>
-                          <span className="w-12 text-center text-gray-900 font-medium">{item.quantity}</span>
+                          <span className="font-bold text-gray-900 text-lg">
+                            {inventory.get(item.id) || 0}개
+                          </span>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="h-8 w-8 p-0 form-button-secondary"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-4 h-4" />
                           </Button>
                         </div>
                       ) : (
-                        <div className="text-center">
-                          <span className="text-lg font-bold text-gray-900">{item.quantity}</span>
-                          <p className="text-xs text-gray-500">총 보유량</p>
-                        </div>
+                        <span className="font-bold text-gray-900 text-lg">
+                          {inventory.get(item.id) || 0}개
+                        </span>
                       )}
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">가격</p>
-                        <p className="text-sm text-yellow-600 font-medium">{item.price}G</p>
-                      </div>
+                      <span className="text-sm text-gray-500">가격: {item.price}G</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -279,80 +285,115 @@ export default function InventoryPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="inventory-table" className="section-spacing">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className={selectedCategory === category ? "form-button-primary" : "form-button-secondary"}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+            <Card className="card">
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">아이콘</TableHead>
+                      <TableHead>이름</TableHead>
+                      <TableHead>카테고리</TableHead>
+                      <TableHead className="w-[100px] text-right">수량</TableHead>
+                      <TableHead className="w-[120px] text-right">가격</TableHead>
+                      {viewMode === "single" && <TableHead className="w-[120px] text-center">관리</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="text-3xl">{item.icon}</TableCell>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell className="text-right font-bold">{inventory.get(item.id) || 0}개</TableCell>
+                        <TableCell className="text-right text-sm text-gray-500">{item.price}G</TableCell>
+                        {viewMode === "single" && (
+                          <TableCell className="flex items-center justify-center space-x-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, -1)}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="crafting" className="section-spacing">
             <Card className="card">
               <CardHeader className="card-header">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span>제작 가능 아이템</span>
-                  </CardTitle>
-                  <FavoriteToggle id="crafting-main" name="제작 시스템" type="crafting" />
-                </div>
+                <CardTitle className="flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5" />
+                  <span>제작 가능 아이템</span>
+                </CardTitle>
               </CardHeader>
             </Card>
 
-            {craftableRecipes.length === 0 ? (
-              <Card className="card">
-                <CardContent className="p-8 text-center">
-                  <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">제작 가능한 아이템이 없습니다.</p>
-                  <p className="text-gray-500 text-sm">필요한 재료를 수집해보세요.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {craftableRecipes.map((recipe) => {
-                  const resultItem = allItems[recipe.resultId.toString()]
-                  return (
-                    <Card key={recipe.resultId} className="card">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="text-3xl">{resultItem.icon}</div>
-                            <div>
-                              <CardTitle className="text-gray-900 text-sm">{resultItem.name}</CardTitle>
-                              <Badge className="status-complete text-xs">제작 가능</Badge>
-                            </div>
-                          </div>
-                          <FavoriteToggle
-                            id={`recipe-${recipe.resultId}`}
-                            name={`${resultItem.name} 제작`}
-                            type="recipe"
-                          />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {craftableRecipes.map((recipe) => (
+                <Card key={recipe.resultId} className="card">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-3xl">{allItems[recipe.resultId]?.icon}</div>
+                        <div className="flex-1">
+                          <CardTitle className="text-gray-900 text-sm">
+                            {allItems[recipe.resultId]?.name}
+                          </CardTitle>
+                          <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
+                            제작 가능
+                          </Badge>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs text-gray-500 mb-2">필요 재료:</p>
-                            <div className="space-y-1">
-                              {recipe.materials.map((material) => {
-                                const materialItem = allItems[material.itemId.toString()]
-                                const owned = inventory.get(material.itemId) || 0
-                                return (
-                                  <div key={material.itemId} className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-700">
-                                      {materialItem.icon} {materialItem.name}
-                                    </span>
-                                    <span className={owned >= material.quantity ? "text-green-600" : "text-red-500"}>
-                                      {owned}/{material.quantity}
-                                    </span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                          <Button onClick={() => craftItem(recipe)} className="w-full form-button-primary" size="sm">
-                            제작하기
-                          </Button>
+                      </div>
+                      <FavoriteToggle id={`recipe-${recipe.resultId}`} name={allItems[recipe.resultId]?.name || ''} type="recipe" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="mb-3">
+                      <p className="text-gray-600 text-xs">필요 재료:</p>
+                      {recipe.materials.map((material, index) => (
+                        <div key={index} className="flex items-center justify-between text-xs text-gray-700">
+                          <span>{allItems[material.itemId]?.name}:</span>
+                          <span className={inventory.get(material.itemId) || 0 < material.quantity ? "text-red-500" : "text-green-600"}>
+                            {inventory.get(material.itemId) || 0}/{material.quantity}
+                          </span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            )}
+                      ))}
+                    </div>
+                    <Button className="w-full" onClick={() => craftItem(recipe)}>
+                      제작하기
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
