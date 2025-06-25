@@ -44,6 +44,7 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   // Change state for main tabs
   const [currentMainTab, setCurrentMainTab] = useState("inventory-card");
+  const [currentCraftingViewMode, setCurrentCraftingViewMode] = useState("card");
   console.debug(`Initial selectedCategory: ${selectedCategory}`);
 
   // Get inventory data based on view mode
@@ -356,44 +357,104 @@ export default function InventoryPage() {
               </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {craftableRecipes.map((recipe) => (
-                <Card key={recipe.resultId} className="card">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-3xl">{allItems[recipe.resultId]?.icon}</div>
-                        <div className="flex-1">
-                          <CardTitle className="text-gray-900 text-sm">
-                            {allItems[recipe.resultId]?.name}
-                          </CardTitle>
-                          <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
-                            제작 가능
-                          </Badge>
+            <Tabs defaultValue="card" value={currentCraftingViewMode} onValueChange={setCurrentCraftingViewMode} className="mt-4">
+              <div className="card">
+                <div className="card-content">
+                  <TabsList className="bg-gray-100 border border-gray-200">
+                    <TabsTrigger value="card" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+                      <LayoutGrid className="w-4 h-4 mr-2" /> 카드 뷰
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+                      <Table2 className="w-4 h-4 mr-2" /> 테이블 뷰
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
+
+              <TabsContent value="card" className="section-spacing">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {craftableRecipes.map((recipe) => (
+                    <Card key={recipe.resultId} className="card">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="text-3xl">{allItems[recipe.resultId]?.icon}</div>
+                            <div className="flex-1">
+                              <CardTitle className="text-gray-900 text-sm">
+                                {allItems[recipe.resultId]?.name}
+                              </CardTitle>
+                              <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
+                                제작 가능
+                              </Badge>
+                            </div>
+                          </div>
+                          <FavoriteToggle id={`recipe-${recipe.resultId}`} name={allItems[recipe.resultId]?.name || ''} type="recipe" />
                         </div>
-                      </div>
-                      <FavoriteToggle id={`recipe-${recipe.resultId}`} name={allItems[recipe.resultId]?.name || ''} type="recipe" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="mb-3">
-                      <p className="text-gray-600 text-xs">필요 재료:</p>
-                      {recipe.materials.map((material, index) => (
-                        <div key={index} className="flex items-center justify-between text-xs text-gray-700">
-                          <span>{allItems[material.itemId]?.name}:</span>
-                          <span className={inventory.get(material.itemId) || 0 < material.quantity ? "text-red-500" : "text-green-600"}>
-                            {inventory.get(material.itemId) || 0}/{material.quantity}
-                          </span>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="mb-3">
+                          <p className="text-gray-600 text-xs">필요 재료:</p>
+                          {recipe.materials.map((material, index) => (
+                            <div key={index} className="flex items-center justify-between text-xs text-gray-700">
+                              <span>{allItems[material.itemId]?.name}:</span>
+                              <span className={inventory.get(material.itemId) || 0 < material.quantity ? "text-red-500" : "text-green-600"}>
+                                {inventory.get(material.itemId) || 0}/{material.quantity}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <Button className="w-full" onClick={() => craftItem(recipe)}>
-                      제작하기
-                    </Button>
+                        <Button className="w-full" onClick={() => craftItem(recipe)}>
+                          제작하기
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="table" className="section-spacing">
+                <Card className="card">
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[50px]">아이콘</TableHead>
+                          <TableHead>아이템</TableHead>
+                          <TableHead>필요 재료</TableHead>
+                          <TableHead className="w-[120px] text-center">제작</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {craftableRecipes.map((recipe) => (
+                          <TableRow key={recipe.resultId}>
+                            <TableCell className="text-3xl">{allItems[recipe.resultId]?.icon}</TableCell>
+                            <TableCell className="font-medium">{allItems[recipe.resultId]?.name}</TableCell>
+                            <TableCell>
+                              {recipe.materials.map((material, index) => (
+                                <div key={index} className="flex items-center justify-between text-xs text-gray-700">
+                                  <span>{allItems[material.itemId]?.name}:</span>
+                                  <span className={inventory.get(material.itemId) || 0 < material.quantity ? "text-red-500" : "text-green-600"}>
+                                    {inventory.get(material.itemId) || 0}/{material.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                size="sm"
+                                onClick={() => craftItem(recipe)}
+                              >
+                                제작하기
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
