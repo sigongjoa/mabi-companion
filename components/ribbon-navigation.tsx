@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, memo, useCallback } from "react"
+import React, { useState, memo, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -48,6 +48,7 @@ const ribbonTabs = [
           { icon: Package, label: "아이템", href: "/inventory", size: "large" },
           { icon: Users, label: "캐릭터", href: "/characters", size: "large" },
           { icon: CheckSquare, label: "퀘스트", href: "/quests", size: "large" },
+          { icon: Package, label: "재료", href: "/materials", size: "large" },
         ],
       },
       {
@@ -127,7 +128,7 @@ export const RibbonNavigation = memo(function RibbonNavigation() {
   }, [])
 
   const toggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen((prev) => !prev)
+    setIsMobileMenuOpen((prev: boolean) => !prev)
   }, [])
 
   return (
