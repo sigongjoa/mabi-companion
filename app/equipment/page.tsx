@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Sword, User } from "lucide-react"
+import { useCharacter, Character } from "@/contexts/character-context"
+import equipmentData from "@/data/equipment.json"
 
 interface Equipment {
   id: number
@@ -14,55 +16,68 @@ interface Equipment {
 }
 
 interface EquipmentSlots {
-  weapon?: Equipment
-  shield?: Equipment
-  armor?: Equipment
-  gloves?: Equipment
-  pants?: Equipment
-  boots?: Equipment
-  ring1?: Equipment
-  ring2?: Equipment
-  belt?: Equipment
+  weapon?: number | null
+  shield?: number | null
+  armor?: number | null
+  gloves?: number | null
+  pants?: number | null
+  boots?: number | null
+  ring1?: number | null
+  ring2?: number | null
+  belt?: number | null
 }
 
-const availableEquipment: Equipment[] = [
-  { id: 1, name: "견습 마법사의 스태프", type: "weapon", icon: "🪄", stats: "마법 공격력 +15" },
-  { id: 2, name: "가죽 갑옷", type: "armor", icon: "🦺", stats: "방어력 +20" },
-  { id: 3, name: "가죽 장갑", type: "gloves", icon: "🧤", stats: "방어력 +5" },
-  { id: 4, name: "나무 방패", type: "shield", icon: "🛡️", stats: "방어력 +10" },
-  { id: 5, name: "힘의 반지", type: "ring", icon: "💍", stats: "힘 +3" },
-  { id: 6, name: "민첩의 반지", type: "ring", icon: "💍", stats: "민첩 +3" },
-  { id: 7, name: "가죽 바지", type: "pants", icon: "👖", stats: "방어력 +8" },
-  { id: 8, name: "가죽 부츠", type: "boots", icon: "👢", stats: "방어력 +6" },
-]
+const allEquipment: Equipment[] = equipmentData as Equipment[];
 
 export default function EquipmentPage() {
-  const [equippedItems, setEquippedItems] = useState<EquipmentSlots>({})
-  const [inventory] = useState<Equipment[]>(availableEquipment)
+  console.debug("EquipmentPage rendered.");
+  const { activeCharacter, updateCharacter } = useCharacter();
 
-  const equipItem = (item: Equipment, slot: keyof EquipmentSlots) => {
-    setEquippedItems((prev) => ({
-      ...prev,
-      [slot]: item,
-    }))
+  // Retrieve equipped items from activeCharacter
+  const equippedItems = activeCharacter?.equippedItems || {};
+  console.debug("Current equippedItems from activeCharacter:", equippedItems);
+
+  // Helper to get full Equipment object from ID
+  const getEquipmentById = (id: number | null | undefined): Equipment | undefined => {
+    if (id === null || id === undefined) return undefined;
+    return allEquipment.find(eq => eq.id === id);
   }
+
+  const equipItem = (itemId: number, slot: keyof EquipmentSlots) => {
+    console.debug(`Entering equipItem - itemId: ${itemId}, slot: ${slot}`);
+    if (!activeCharacter) {
+      console.warn("No active character, cannot equip item.");
+      return;
+    }
+
+    const newEquippedItems = { ...activeCharacter.equippedItems, [slot]: itemId };
+    updateCharacter(activeCharacter.id, { equippedItems: newEquippedItems });
+    console.debug(`Item ${itemId} equipped to ${slot}. New equippedItems:`, newEquippedItems);
+  };
 
   const unequipItem = (slot: keyof EquipmentSlots) => {
-    setEquippedItems((prev) => {
-      const newEquipped = { ...prev }
-      delete newEquipped[slot]
-      return newEquipped
-    })
-  }
+    console.debug(`Entering unequipItem - slot: ${slot}`);
+    if (!activeCharacter) {
+      console.warn("No active character, cannot unequip item.");
+      return;
+    }
+
+    const newEquippedItems = { ...activeCharacter.equippedItems };
+    newEquippedItems[slot] = null; // Set to null to explicitly mark as empty
+    updateCharacter(activeCharacter.id, { equippedItems: newEquippedItems });
+    console.debug(`Item from ${slot} unequipped. New equippedItems:`, newEquippedItems);
+  };
 
   const isEquipped = (itemId: number) => {
-    return Object.values(equippedItems).some((item) => item?.id === itemId)
-  }
-
-  const canEquipToSlot = (itemType: string, slot: keyof EquipmentSlots) => {
-    if (itemType === "ring" && (slot === "ring1" || slot === "ring2")) return true
-    return itemType === slot
-  }
+    console.debug(`Entering isEquipped - itemId: ${itemId}`);
+    if (!activeCharacter) {
+        console.debug("No active character, isEquipped returning false.");
+        return false;
+    }
+    const result = Object.values(activeCharacter.equippedItems).some((eqItemId) => eqItemId === itemId);
+    console.debug(`Exiting isEquipped for item ${itemId}, result: ${result}`);
+    return result;
+  };
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -81,7 +96,7 @@ export default function EquipmentPage() {
             <CardHeader>
               <CardTitle className="text-gray-900 flex items-center space-x-2">
                 <User className="w-5 h-5" />
-                <span>SessionLocal - Lv.28 견습 힐러</span>
+                <span>{activeCharacter?.name || "선택된 캐릭터 없음"} - Lv.{activeCharacter?.level || 0} {activeCharacter?.profession || ""}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -90,23 +105,26 @@ export default function EquipmentPage() {
                 <div className="space-y-4">
                   <EquipmentSlot
                     slot="weapon"
-                    item={equippedItems.weapon}
-                    onEquip={(item) => equipItem(item, "weapon")}
-                    onUnequip={() => unequipItem("weapon")}
+                    equippedItemId={equippedItems.weapon}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="무기"
                   />
                   <EquipmentSlot
                     slot="belt"
-                    item={equippedItems.belt}
-                    onEquip={(item) => equipItem(item, "belt")}
-                    onUnequip={() => unequipItem("belt")}
+                    equippedItemId={equippedItems.belt}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="벨트"
                   />
                   <EquipmentSlot
                     slot="ring1"
-                    item={equippedItems.ring1}
-                    onEquip={(item) => equipItem(item, "ring1")}
-                    onUnequip={() => unequipItem("ring1")}
+                    equippedItemId={equippedItems.ring1}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="반지1"
                   />
                 </div>
@@ -123,23 +141,26 @@ export default function EquipmentPage() {
                 <div className="space-y-4">
                   <EquipmentSlot
                     slot="shield"
-                    item={equippedItems.shield}
-                    onEquip={(item) => equipItem(item, "shield")}
-                    onUnequip={() => unequipItem("shield")}
+                    equippedItemId={equippedItems.shield}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="방패"
                   />
                   <EquipmentSlot
                     slot="armor"
-                    item={equippedItems.armor}
-                    onEquip={(item) => equipItem(item, "armor")}
-                    onUnequip={() => unequipItem("armor")}
+                    equippedItemId={equippedItems.armor}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="갑옷"
                   />
                   <EquipmentSlot
                     slot="ring2"
-                    item={equippedItems.ring2}
-                    onEquip={(item) => equipItem(item, "ring2")}
-                    onUnequip={() => unequipItem("ring2")}
+                    equippedItemId={equippedItems.ring2}
+                    allEquipment={allEquipment}
+                    onEquip={equipItem}
+                    onUnequip={unequipItem}
                     label="반지2"
                   />
                 </div>
@@ -149,23 +170,26 @@ export default function EquipmentPage() {
               <div className="flex justify-center space-x-4 mt-6">
                 <EquipmentSlot
                   slot="gloves"
-                  item={equippedItems.gloves}
-                  onEquip={(item) => equipItem(item, "gloves")}
-                  onUnequip={() => unequipItem("gloves")}
+                  equippedItemId={equippedItems.gloves}
+                  allEquipment={allEquipment}
+                  onEquip={equipItem}
+                  onUnequip={unequipItem}
                   label="장갑"
                 />
                 <EquipmentSlot
                   slot="pants"
-                  item={equippedItems.pants}
-                  onEquip={(item) => equipItem(item, "pants")}
-                  onUnequip={() => unequipItem("pants")}
+                  equippedItemId={equippedItems.pants}
+                  allEquipment={allEquipment}
+                  onEquip={equipItem}
+                  onUnequip={unequipItem}
                   label="바지"
                 />
                 <EquipmentSlot
                   slot="boots"
-                  item={equippedItems.boots}
-                  onEquip={(item) => equipItem(item, "boots")}
-                  onUnequip={() => unequipItem("boots")}
+                  equippedItemId={equippedItems.boots}
+                  allEquipment={allEquipment}
+                  onEquip={equipItem}
+                  onUnequip={unequipItem}
                   label="신발"
                 />
               </div>
@@ -181,7 +205,7 @@ export default function EquipmentPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
-                {inventory.map((item) => (
+                {allEquipment.map((item) => (
                   <div
                     key={item.id}
                     className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
@@ -190,17 +214,23 @@ export default function EquipmentPage() {
                         : "border-gray-200 bg-gray-50 hover:border-gray-300"
                     }`}
                     onClick={() => {
-                      if (isEquipped(item.id)) return
+                      console.debug(`Inventory item ${item.name} clicked. isEquipped: ${isEquipped(item.id)}`);
+                      if (isEquipped(item.id)) {
+                        console.debug("Item already equipped, not doing anything.");
+                        return;
+                      }
 
                       // Auto-equip to appropriate slot
                       if (item.type === "ring") {
-                        if (!equippedItems.ring1) {
-                          equipItem(item, "ring1")
-                        } else if (!equippedItems.ring2) {
-                          equipItem(item, "ring2")
+                        if (equippedItems.ring1 === null) {
+                          equipItem(item.id, "ring1");
+                        } else if (equippedItems.ring2 === null) {
+                          equipItem(item.id, "ring2");
+                        } else {
+                            console.debug("Both ring slots are full.");
                         }
                       } else {
-                        equipItem(item, item.type as keyof EquipmentSlots)
+                        equipItem(item.id, item.type as keyof EquipmentSlots);
                       }
                     }}
                   >
@@ -222,21 +252,35 @@ export default function EquipmentPage() {
 }
 
 interface EquipmentSlotProps {
-  slot: string
-  item?: Equipment
-  onEquip: (item: Equipment) => void
-  onUnequip: () => void
-  label: string
+  slot: keyof EquipmentSlots;
+  equippedItemId?: number | null;
+  allEquipment: Equipment[];
+  onEquip: (itemId: number, slot: keyof EquipmentSlots) => void;
+  onUnequip: (slot: keyof EquipmentSlots) => void;
+  label: string;
 }
 
-function EquipmentSlot({ slot, item, onEquip, onUnequip, label }: EquipmentSlotProps) {
+function EquipmentSlot({ slot, equippedItemId, allEquipment, onEquip, onUnequip, label }: EquipmentSlotProps) {
+  console.debug(`EquipmentSlot rendered - slot: ${slot}, equippedItemId: ${equippedItemId}`);
+  const item = equippedItemId ? allEquipment.find(eq => eq.id === equippedItemId) : undefined;
+  console.debug(`EquipmentSlot - found item: ${item?.name || "None"}`);
+
   return (
     <div className="text-center">
       <div
         className={`w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${
           item ? "border-purple-500 bg-purple-50" : "border-gray-300 hover:border-gray-400"
         }`}
-        onClick={() => item && onUnequip()}
+        onClick={() => {
+            console.debug(`EquipmentSlot click - slot: ${slot}, current item: ${item?.name || "None"}`);
+            if (item) {
+                console.debug("Item found, unequipping.");
+                onUnequip(slot);
+            } else {
+                console.debug("No item, slot is empty. No action.");
+                // No action for empty slot click, as equip comes from inventory
+            }
+        }}
       >
         {item ? <div className="text-2xl">{item.icon}</div> : <div className="text-gray-400 text-xs">빈 슬롯</div>}
       </div>

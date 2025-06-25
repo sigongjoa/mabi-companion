@@ -5,34 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Plus, Minus } from "lucide-react"
+import { useCharacter } from "@/contexts/character-context"
+import skillsData from "@/data/skills.json"
 
 interface LifeSkill {
   id: number
   name: string
-  level: number
   category: string
 }
 
-const initialSkills: LifeSkill[] = [
-  { id: 1, name: "일상 채집", level: 1, category: "채집" },
-  { id: 2, name: "나무 베기", level: 1, category: "채집" },
-  { id: 3, name: "광석 캐기", level: 2, category: "채집" },
-  { id: 4, name: "약초 채집", level: 6, category: "채집" },
-  { id: 5, name: "양털 깎기", level: 1, category: "채집" },
-  { id: 6, name: "추수", level: 1, category: "채집" },
-  { id: 7, name: "낚시", level: 1, category: "채집" },
-  { id: 8, name: "대장 기술", level: 1, category: "제작" },
-  { id: 9, name: "목공", level: 1, category: "제작" },
-  { id: 10, name: "매직 크래프트", level: 1, category: "제작" },
-  { id: 11, name: "종합 제작", level: 1, category: "제작" },
-  { id: 12, name: "건강 제작", level: 1, category: "제작" },
-  { id: 13, name: "천옷 제작", level: 1, category: "제작" },
-  { id: 14, name: "물약 조제", level: 1, category: "제작" },
-  { id: 15, name: "요리", level: 1, category: "제작" },
-  { id: 16, name: "핸디크래프트", level: 1, category: "제작" },
-  { id: 17, name: "연금술", level: 1, category: "제작" },
-  { id: 18, name: "아르바이트", level: 1, category: "기타" },
-]
+const allSkillsData: LifeSkill[] = skillsData as LifeSkill[];
 
 const categories = ["전체", "채집", "제작", "기타"]
 
@@ -43,22 +25,34 @@ const categoryColors = {
 }
 
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<LifeSkill[]>(initialSkills)
+  console.debug("SkillsPage rendered.");
+  const { activeCharacter, updateCharacter } = useCharacter();
   const [selectedCategory, setSelectedCategory] = useState("전체")
 
   const updateSkillLevel = (skillId: number, change: number) => {
-    setSkills((prev) =>
-      prev.map((skill) => {
-        if (skill.id === skillId) {
-          const newLevel = Math.max(1, skill.level + change)
-          return { ...skill, level: newLevel }
-        }
-        return skill
-      }),
-    )
+    console.debug(`Entering updateSkillLevel - skillId: ${skillId}, change: ${change}`);
+    if (!activeCharacter) {
+      console.warn("No active character, cannot update skill level.");
+      return;
+    }
+
+    const currentLevel = activeCharacter.skills[skillId] || 1; // Default to 1 if not found
+    const newLevel = Math.max(1, currentLevel + change);
+
+    const newSkills = { ...activeCharacter.skills, [skillId]: newLevel };
+    updateCharacter(activeCharacter.id, { skills: newSkills });
+    console.debug(`Skill ${skillId} level updated to ${newLevel}. New skills:`, newSkills);
   }
 
-  const filteredSkills = skills.filter((skill) => selectedCategory === "전체" || skill.category === selectedCategory)
+  // Combine allSkillsData with active character's skill levels
+  const skillsWithLevels = allSkillsData.map(skill => ({
+    ...skill,
+    level: activeCharacter?.skills[skill.id] || 1 // Default to 1 if not found in activeCharacter
+  }));
+  console.debug("skillsWithLevels:", skillsWithLevels);
+
+  const filteredSkills = skillsWithLevels.filter((skill) => selectedCategory === "전체" || skill.category === selectedCategory)
+  console.debug("filteredSkills:", filteredSkills);
 
   const getSkillIcon = (skillName: string) => {
     const iconMap: Record<string, string> = {
@@ -84,6 +78,10 @@ export default function SkillsPage() {
     return iconMap[skillName] || "📋"
   }
 
+  // Calculate total skill levels based on active character's skills
+  const totalSkillLevels = skillsWithLevels.reduce((sum, skill) => sum + skill.level, 0);
+  console.debug("totalSkillLevels:", totalSkillLevels);
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between">
@@ -94,7 +92,7 @@ export default function SkillsPage() {
         <div className="flex items-center space-x-2">
           <Sparkles className="w-6 h-6 text-purple-600" />
           <span className="text-gray-900 font-medium">
-            총 {skills.reduce((sum, skill) => sum + skill.level, 0)} 레벨
+            총 {totalSkillLevels} 레벨
           </span>
         </div>
       </div>
@@ -105,7 +103,10 @@ export default function SkillsPage() {
             key={category}
             variant={selectedCategory === category ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => {
+                console.debug(`Category ${category} selected.`);
+                setSelectedCategory(category);
+            }}
             className={
               selectedCategory === category
                 ? "bg-purple-600 hover:bg-purple-700"
@@ -115,7 +116,7 @@ export default function SkillsPage() {
             {category}
             {category !== "전체" && (
               <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-700">
-                {skills.filter((s) => s.category === category).length}
+                {skillsWithLevels.filter((s) => s.category === category).length}
               </Badge>
             )}
           </Button>
@@ -142,7 +143,10 @@ export default function SkillsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => updateSkillLevel(skill.id, -1)}
+                    onClick={() => {
+                        console.debug(`Decrementing skill level for ${skill.name} (ID: ${skill.id})`);
+                        updateSkillLevel(skill.id, -1);
+                    }}
                     className="h-8 w-8 p-0 border-gray-300"
                     disabled={skill.level <= 1}
                   >
@@ -154,7 +158,10 @@ export default function SkillsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => updateSkillLevel(skill.id, 1)}
+                    onClick={() => {
+                        console.debug(`Incrementing skill level for ${skill.name} (ID: ${skill.id})`);
+                        updateSkillLevel(skill.id, 1);
+                    }}
                     className="h-8 w-8 p-0 border-gray-300"
                   >
                     <Plus className="w-3 h-3" />

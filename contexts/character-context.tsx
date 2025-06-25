@@ -4,6 +4,18 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 import allItemsData from "@/data/items.json"
+import questsData from "@/data/quests.json"
+import equipmentData from "@/data/equipment.json"
+import skillsData from "@/data/skills.json"
+import craftingFacilitiesData from "@/data/craftingFacilities.json"
+
+interface ProcessingQueue {
+  id: number
+  isProcessing: boolean
+  timeLeft: number
+  totalTime: number
+  itemName?: string
+}
 
 export interface Character {
   id: string
@@ -23,6 +35,10 @@ export interface Character {
   inventory: Record<number, number>
   equipment: Record<string, any>
   skills: Record<number, number>
+  completedDailyTasks: Record<string, boolean>;
+  completedWeeklyTasks: Record<string, boolean>;
+  equippedItems: Record<string, number | null>;
+  craftingQueues: Record<string, ProcessingQueue[]>;
 }
 
 interface CharacterContextType {
@@ -32,7 +48,7 @@ interface CharacterContextType {
   setActiveCharacter: (character: Character | null) => void
   setViewMode: (mode: "single" | "all") => void
   updateCharacter: (id: string, updates: Partial<Character>) => void
-  addCharacter: (character: Omit<Character, "id" | "lastActive">) => void
+  addCharacter: (character: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => void
   deleteCharacter: (id: string) => void
   toggleCharacterFavorite: (id: string) => void
 }
@@ -40,6 +56,10 @@ interface CharacterContextType {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined)
 
 const allItems: Record<string, any> = allItemsData;
+const allQuests: any = questsData;
+const allEquipment: any[] = equipmentData;
+const allSkillsData: any[] = skillsData;
+const allCraftingFacilitiesData: any[] = craftingFacilitiesData;
 
 const createInitialInventory = (initialQuantities: Record<number, number> = {}): Record<number, number> => {
   console.debug("Entering createInitialInventory with initialQuantities:", initialQuantities);
@@ -62,6 +82,100 @@ const createInitialInventory = (initialQuantities: Record<number, number> = {}):
   return inventory;
 };
 
+const createInitialQuestProgress = (initialCompletedDaily: Record<string, boolean> = {}, initialCompletedWeekly: Record<string, boolean> = {}): { completedDailyTasks: Record<string, boolean>, completedWeeklyTasks: Record<string, boolean> } => {
+  console.debug("Entering createInitialQuestProgress");
+  const dailyTasks: Record<string, boolean> = {};
+  const weeklyTasks: Record<string, boolean> = {};
+
+  // Initialize all daily quests to false, then merge existing completed states
+  Object.values(allQuests.daily).flat().forEach((task: any) => {
+    if (task && task.id) {
+      dailyTasks[task.id] = false;
+    }
+  });
+  for (const taskId in initialCompletedDaily) {
+    if (Object.prototype.hasOwnProperty.call(initialCompletedDaily, taskId)) {
+      dailyTasks[taskId] = initialCompletedDaily[taskId];
+    }
+  }
+  console.debug("Initial dailyTasks:", dailyTasks);
+
+  // Initialize all weekly quests to false, then merge existing completed states
+  Object.values(allQuests.weekly).flat().forEach((task: any) => {
+    if (task && task.id) {
+      weeklyTasks[task.id] = false;
+    }
+  });
+  for (const taskId in initialCompletedWeekly) {
+    if (Object.prototype.hasOwnProperty.call(initialCompletedWeekly, taskId)) {
+      weeklyTasks[taskId] = initialCompletedWeekly[taskId];
+    }
+  }
+  console.debug("Initial weeklyTasks:", weeklyTasks);
+
+  return { completedDailyTasks: dailyTasks, completedWeeklyTasks: weeklyTasks };
+};
+
+const createInitialEquipment = (initialEquipped: Record<string, number | null> = {}): Record<string, number | null> => {
+  console.debug("Entering createInitialEquipment with initialEquipped:", initialEquipped);
+  const equipped: Record<string, number | null> = {
+    weapon: null, shield: null, armor: null, gloves: null, pants: null, boots: null, ring1: null, ring2: null, belt: null
+  }; // Define all possible slots
+
+  // Merge provided initial equipped items
+  for (const slot in initialEquipped) {
+    if (Object.prototype.hasOwnProperty.call(initialEquipped, slot)) {
+      equipped[slot] = initialEquipped[slot];
+    }
+  }
+  console.debug("Exiting createInitialEquipment, merged equipped:", equipped);
+  return equipped;
+};
+
+const createInitialSkills = (initialSkillLevels: Record<number, number> = {}): Record<number, number> => {
+  console.debug("Entering createInitialSkills with initialSkillLevels:", initialSkillLevels);
+  const skills: Record<number, number> = {};
+  // Initialize all skills from skills.json with level 1
+  allSkillsData.forEach((skill: any) => {
+    if (skill && skill.id !== undefined) {
+      skills[skill.id] = 1;
+    }
+  });
+  console.debug("Initial skills with all levels set to 1:", skills);
+
+  // Merge provided initial skill levels
+  for (const skillId in initialSkillLevels) {
+    if (Object.prototype.hasOwnProperty.call(initialSkillLevels, skillId)) {
+      skills[Number(skillId)] = initialSkillLevels[skillId];
+    }
+  }
+  console.debug("Exiting createInitialSkills, merged skills:", skills);
+  return skills;
+};
+
+const createInitialCraftingQueues = (initialQueues: Record<string, ProcessingQueue[]> = {}): Record<string, ProcessingQueue[]> => {
+  console.debug("Entering createInitialCraftingQueues with initialQueues:", initialQueues);
+  const craftingQueues: Record<string, ProcessingQueue[]> = {};
+
+  allCraftingFacilitiesData.forEach((facility: any) => {
+    const facilityId = facility.id;
+    const defaultQueues: ProcessingQueue[] = Array(4)
+      .fill(null)
+      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0 }));
+
+    // Merge with existing queues if provided
+    craftingQueues[facilityId] = initialQueues[facilityId]
+      ? initialQueues[facilityId].map((q: ProcessingQueue, index: number) => ({
+          ...defaultQueues[index], // Ensure all default properties are present
+          ...q,
+        }))
+      : defaultQueues;
+  });
+
+  console.debug("Exiting createInitialCraftingQueues, merged craftingQueues:", craftingQueues);
+  return craftingQueues;
+};
+
 const defaultCharacters: Character[] = [
   {
     id: "1",
@@ -80,7 +194,10 @@ const defaultCharacters: Character[] = [
     },
     inventory: createInitialInventory({ 1: 10, 2: 59, 3: 30, 4: 21, 5: 45, 13: 10 }), // 13번 아이템 10개 추가
     equipment: {},
-    skills: { 1: 1, 2: 1, 3: 2, 4: 6 },
+    skills: createInitialSkills({ 1: 1, 2: 1, 3: 2, 4: 6 }),
+    ...createInitialQuestProgress({d1: true, d4: true, w1: true}),
+    equippedItems: createInitialEquipment({ weapon: 1, armor: 2, gloves: 3, shield: 4, ring1: 5, ring2: 6, pants: 7, boots: 8 }),
+    craftingQueues: createInitialCraftingQueues(),
   },
   {
     id: "2",
@@ -99,7 +216,10 @@ const defaultCharacters: Character[] = [
     },
     inventory: createInitialInventory({ 1: 5, 2: 30, 3: 15, 4: 8 }),
     equipment: {},
-    skills: { 1: 1, 2: 1, 8: 1, 14: 1 },
+    skills: createInitialSkills({ 1: 1, 2: 1, 8: 1, 14: 1 }),
+    ...createInitialQuestProgress({d2: true, w2: true}),
+    equippedItems: createInitialEquipment(),
+    craftingQueues: createInitialCraftingQueues(),
   },
   {
     id: "3",
@@ -118,7 +238,10 @@ const defaultCharacters: Character[] = [
     },
     inventory: createInitialInventory({ 1: 8, 2: 25, 3: 20 }),
     equipment: {},
-    skills: { 1: 1, 2: 1, 17: 1, 18: 1 },
+    skills: createInitialSkills({ 1: 1, 2: 1, 17: 1, 18: 1 }),
+    ...createInitialQuestProgress({d3: true, w3: true}),
+    equippedItems: createInitialEquipment(),
+    craftingQueues: createInitialCraftingQueues(),
   },
   {
     id: "4",
@@ -137,7 +260,10 @@ const defaultCharacters: Character[] = [
     },
     inventory: createInitialInventory({ 1: 15, 2: 40, 3: 10 }),
     equipment: {},
-    skills: { 1: 1, 2: 1, 3: 1 },
+    skills: createInitialSkills({ 1: 1, 2: 1, 3: 1 }),
+    ...createInitialQuestProgress({d10: true}),
+    equippedItems: createInitialEquipment(),
+    craftingQueues: createInitialCraftingQueues(),
   },
 ]
 
@@ -160,8 +286,23 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(savedCharacters)
         // Ensure loaded characters have all items initialized to 0 if missing
         const updatedParsedCharacters = parsed.map((char: Character) => {
-          console.debug(`Updating inventory for loaded character ${char.id}`);
-          return { ...char, inventory: createInitialInventory(char.inventory) };
+          console.debug(`Updating character data for loaded character ${char.id}`);
+          // Merge existing inventory with all items initialized to 0
+          const newInventory = createInitialInventory(char.inventory);
+
+          // Merge existing quest progress with all quests initialized to false
+          const newQuestProgress = createInitialQuestProgress(char.completedDailyTasks, char.completedWeeklyTasks);
+
+          // Merge existing equipped items with all slots initialized to null
+          const newEquippedItems = createInitialEquipment(char.equippedItems);
+
+          // Merge existing skills with all skills initialized to level 1
+          const newSkills = createInitialSkills(char.skills);
+
+          // Merge existing crafting queues with default queues
+          const newCraftingQueues = createInitialCraftingQueues(char.craftingQueues);
+
+          return { ...char, inventory: newInventory, ...newQuestProgress, equippedItems: newEquippedItems, skills: newSkills, craftingQueues: newCraftingQueues };
         });
         setCharacters(updatedParsedCharacters)
 
@@ -233,7 +374,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       console.debug(`updateCharacter called for ID: ${id}, updates:`, updates);
       setCharacters((prev: Character[]) => prev.map((c: Character) => (c.id === id ? { ...c, ...updates } : c)))
 
-      // Update active character if it's the one being updated
+      // Update active character if it\'s the one being updated
       if (activeCharacter?.id === id) {
         console.debug(`Updating active character state for ID: ${id}`);
         setActiveCharacterState((prev: Character | null) => (prev ? { ...prev, ...updates } : null))
@@ -242,12 +383,16 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     [activeCharacter],
   )
 
-  const addCharacter = useCallback((character: Omit<Character, "id" | "lastActive">) => {
+  const addCharacter = useCallback((character: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => {
     console.debug("addCharacter called with character data:", character);
     const newCharacter: Character = {
       ...character,
       id: Date.now().toString(),
       lastActive: new Date(),
+      ...createInitialQuestProgress(), // New characters start with all quests incomplete
+      equippedItems: createInitialEquipment(), // New characters start with no equipped items
+      skills: createInitialSkills(), // New characters start with all skills at level 1
+      craftingQueues: createInitialCraftingQueues(), // New characters start with empty crafting queues
     }
     console.debug("New character created:", newCharacter);
     setCharacters((prev: Character[]) => [...prev, newCharacter])

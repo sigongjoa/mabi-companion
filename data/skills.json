@@ -1,0 +1,20 @@
+[
+  { "id": 1, "name": "일상 채집", "category": "채집" },
+  { "id": 2, "name": "나무 베기", "category": "채집" },
+  { "id": 3, "name": "광석 캐기", "category": "채집" },
+  { "id": 4, "name": "약초 채집", "category": "채집" },
+  { "id": 5, "name": "양털 깎기", "category": "채집" },
+  { "id": 6, "name": "추수", "category": "채집" },
+  { "id": 7, "name": "낚시", "category": "채집" },
+  { "id": 8, "name": "대장 기술", "category": "제작" },
+  { "id": 9, "name": "목공", "category": "제작" },
+  { "id": 10, "name": "매직 크래프트", "category": "제작" },
+  { "id": 11, "name": "종합 제작", "category": "제작" },
+  { "id": 12, "name": "건강 제작", "category": "제작" },
+  { "id": 13, "name": "천옷 제작", "category": "제작" },
+  { "id": 14, "name": "물약 조제", "category": "제작" },
+  { "id": 15, "name": "요리", "category": "제작" },
+  { "id": 16, "name": "핸디크래프트", "category": "제작" },
+  { "id": 17, "name": "연금술", "category": "제작" },
+  { "id": 18, "name": "아르바이트", "category": "기타" }
+] 
