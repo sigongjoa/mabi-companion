@@ -269,183 +269,223 @@ const defaultCharacters: Character[] = [
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   console.debug("CharacterProvider rendered.");
-  const [characters, setCharacters] = useState<Character[]>(defaultCharacters)
-  const [activeCharacter, setActiveCharacterState] = useState<Character | null>(defaultCharacters[0])
-  const [viewMode, setViewMode] = useState<"single" | "all">("single")
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [activeCharacterState, setActiveCharacterState] = useState<Character | null>(null);
+  const [viewMode, _setViewModeState] = useState<"single" | "all">("single");
 
-  // Load from localStorage on mount
+  // Load characters from localStorage on mount
   useEffect(() => {
-    console.debug("CharacterProvider useEffect: Attempting to load from localStorage.");
+    console.debug("CharacterProvider useEffect: Initial load from localStorage.");
     try {
-      const savedCharacters = localStorage.getItem("mabinogi-characters")
-      const savedActiveId = localStorage.getItem("mabinogi-active-character")
-      const savedViewMode = localStorage.getItem("mabinogi-view-mode")
+      const savedCharacters = localStorage.getItem("mabinogi-characters");
+      const savedActiveCharacterId = localStorage.getItem("mabinogi-active-character-id");
 
+      let loadedChars: Character[] = [];
       if (savedCharacters) {
-        console.debug("Found savedCharacters in localStorage.");
-        const parsed = JSON.parse(savedCharacters)
-        // Ensure loaded characters have all items initialized to 0 if missing
-        const updatedParsedCharacters = parsed.map((char: Character) => {
-          console.debug(`Updating character data for loaded character ${char.id}`);
-          // Merge existing inventory with all items initialized to 0
-          const newInventory = createInitialInventory(char.inventory);
-
-          // Merge existing quest progress with all quests initialized to false
-          const newQuestProgress = createInitialQuestProgress(char.completedDailyTasks, char.completedWeeklyTasks);
-
-          // Merge existing equipped items with all slots initialized to null
-          const newEquippedItems = createInitialEquipment(char.equippedItems);
-
-          // Merge existing skills with all skills initialized to level 1
-          const newSkills = createInitialSkills(char.skills);
-
-          // Merge existing crafting queues with default queues
-          const newCraftingQueues = createInitialCraftingQueues(char.craftingQueues);
-
-          return { ...char, inventory: newInventory, ...newQuestProgress, equippedItems: newEquippedItems, skills: newSkills, craftingQueues: newCraftingQueues };
-        });
-        setCharacters(updatedParsedCharacters)
-
-        if (savedActiveId) {
-          console.debug("Found savedActiveId in localStorage.", savedActiveId);
-          const active = updatedParsedCharacters.find((c: Character) => c.id === savedActiveId)
-          setActiveCharacterState(active || updatedParsedCharacters[0])
-        } else if (updatedParsedCharacters.length > 0) {
-          console.debug("No savedActiveId, setting first character as active.");
-          setActiveCharacterState(updatedParsedCharacters[0])
-        }
+        console.debug("Found saved characters in localStorage.");
+        const parsedCharacters: Character[] = JSON.parse(savedCharacters).map((char: any) => ({ // Explicitly type char
+          ...char,
+          lastActive: char.lastActive ? new Date(char.lastActive) : new Date(), // Ensure Date objects
+          inventory: createInitialInventory(char.inventory), // Re-initialize inventory with all items
+          ...createInitialQuestProgress(char.completedDailyTasks, char.completedWeeklyTasks),
+          equippedItems: createInitialEquipment(char.equippedItems),
+          skills: createInitialSkills(char.skills),
+          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+        }));
+        loadedChars = parsedCharacters;
+        console.debug("Parsed characters from localStorage:", loadedChars);
       } else {
-        console.debug("No savedCharacters found, using defaultCharacters.");
-        setCharacters(defaultCharacters);
-        setActiveCharacterState(defaultCharacters[0]);
+        console.debug("No saved characters found, using default characters.");
+        loadedChars = defaultCharacters.map(char => ({
+          ...char, // Ensure default characters also go through initializers
+          inventory: createInitialInventory(char.inventory),
+          ...createInitialQuestProgress(char.completedDailyTasks, char.completedWeeklyTasks),
+          equippedItems: createInitialEquipment(char.equippedItems),
+          skills: createInitialSkills(char.skills),
+          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+        }));
       }
 
-      if (savedViewMode) {
-        console.debug("Found savedViewMode in localStorage.", savedViewMode);
-        setViewMode(savedViewMode as "single" | "all")
+      setCharacters(loadedChars);
+      console.debug("Characters state set to:", loadedChars);
+
+      let initialActiveChar: Character | null = null;
+      if (savedActiveCharacterId) {
+        initialActiveChar = loadedChars.find((char) => char.id === savedActiveCharacterId) || null;
+        if (initialActiveChar) {
+          console.debug(`Found active character from saved ID: ${initialActiveChar.name}`);
+        } else {
+          console.warn(`Saved active character ID ${savedActiveCharacterId} not found in loaded characters.`);
+        }
       }
-    } catch (error) {
-      console.warn("Failed to load character data:", error)
-    }
-  }, [])
 
-  // Save to localStorage when data changes
-  useEffect(() => {
-    console.debug("CharacterProvider useEffect: characters state changed, saving to localStorage.", characters);
-    try {
-      localStorage.setItem("mabinogi-characters", JSON.stringify(characters))
-    } catch (error) {
-      console.warn("Failed to save character data:", error)
-    }
-  }, [characters])
-
-  useEffect(() => {
-    console.debug("CharacterProvider useEffect: activeCharacter state changed, saving to localStorage.", activeCharacter);
-    try {
-      if (activeCharacter) {
-        localStorage.setItem("mabinogi-active-character", activeCharacter.id)
+      if (!initialActiveChar && loadedChars.length > 0) {
+        // If no saved active character or not found, select the most recently active or the first one
+        initialActiveChar = loadedChars.sort((a, b) => b.lastActive.getTime() - a.lastActive.getTime())[0];
+        console.debug(`No saved active character or not found, defaulting to: ${initialActiveChar.name}`);
       }
-    } catch (error) {
-      console.warn("Failed to save active character:", error)
-    }
-  }, [activeCharacter])
 
-  useEffect(() => {
-    console.debug("CharacterProvider useEffect: viewMode state changed, saving to localStorage.", viewMode);
-    try {
-      localStorage.setItem("mabinogi-view-mode", viewMode)
+      setActiveCharacterState(initialActiveChar);
+      console.debug("Active character state set to:", initialActiveChar?.name || "null");
+
+      // Set view mode from localStorage, default to 'single'
+      const savedViewMode = localStorage.getItem("mabinogi-view-mode");
+      if (savedViewMode === "all") {
+        _setViewModeState("all");
+        console.debug("View mode set to 'all' from localStorage.");
+      } else {
+        _setViewModeState("single");
+        console.debug("View mode defaulted to 'single'.");
+      }
+
     } catch (error) {
-      console.warn("Failed to save view mode:", error)
+      console.error("Failed to load characters from localStorage", error);
+      // Fallback to default if localStorage fails
+      const defaultLoadedChars = defaultCharacters.map(char => ({
+        ...char, // Ensure default characters also go through initializers
+        inventory: createInitialInventory(char.inventory),
+        ...createInitialQuestProgress(char.completedDailyTasks, char.completedWeeklyTasks),
+        equippedItems: createInitialEquipment(char.equippedItems),
+        skills: createInitialSkills(char.skills),
+        craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+      }));
+      setCharacters(defaultLoadedChars);
+      setActiveCharacterState(defaultLoadedChars.length > 0 ? defaultLoadedChars[0] : null);
+      _setViewModeState("single");
+      console.debug("Falling back to default characters due to localStorage error.");
     }
-  }, [viewMode])
+  }, []);
+
+  // Save characters and active character to localStorage whenever they change
+  useEffect(() => {
+    console.debug("CharacterProvider useEffect: Saving characters and active character to localStorage.");
+    if (characters.length > 0) {
+      localStorage.setItem("mabinogi-characters", JSON.stringify(characters));
+      console.debug("Characters saved to localStorage.", characters);
+    }
+    if (activeCharacterState) {
+      localStorage.setItem("mabinogi-active-character-id", activeCharacterState.id);
+      console.debug(`Active character ID ${activeCharacterState.id} saved to localStorage.`);
+    } else {
+      localStorage.removeItem("mabinogi-active-character-id");
+      console.debug("Active character ID removed from localStorage (no active character).");
+    }
+    localStorage.setItem("mabinogi-view-mode", viewMode);
+    console.debug(`View mode ${viewMode} saved to localStorage.`);
+  }, [characters, activeCharacterState, viewMode]);
 
   const setActiveCharacter = useCallback((character: Character | null) => {
-    console.debug("setActiveCharacter called with character:", character);
-    setActiveCharacterState(character)
-    if (character) {
-      // Update last active time
-      console.debug(`Updating lastActive for character: ${character.id}`);
-      setCharacters((prev: Character[]) => prev.map((c: Character) => (c.id === character.id ? { ...c, lastActive: new Date() } : c)))
-    }
-  }, [])
+    console.debug(`setActiveCharacter called. Character: ${character?.name || "null"}`);
+    setActiveCharacterState(character);
+    // The useEffect above will handle saving to localStorage
+  }, []);
 
-  const updateCharacter = useCallback(
-    (id: string, updates: Partial<Character>) => {
-      console.debug(`updateCharacter called for ID: ${id}, updates:`, updates);
-      setCharacters((prev: Character[]) => prev.map((c: Character) => (c.id === id ? { ...c, ...updates } : c)))
+  const setViewMode = useCallback((mode: "single" | "all") => {
+    console.debug(`setViewMode called. Mode: ${mode}`);
+    _setViewModeState(mode);
+  }, []);
 
-      // Update active character if it\'s the one being updated
-      if (activeCharacter?.id === id) {
-        console.debug(`Updating active character state for ID: ${id}`);
-        setActiveCharacterState((prev: Character | null) => (prev ? { ...prev, ...updates } : null))
+  const updateCharacter = useCallback((id: string, updates: Partial<Character>) => {
+    console.debug(`updateCharacter called. ID: ${id}, Updates:`, updates);
+    setCharacters((prevCharacters: Character[]) => {
+      const updatedChars = prevCharacters.map((char: Character) =>
+        char.id === id ? { ...char, ...updates, lastActive: new Date() } : char
+      );
+      // If the updated character is the active one, update activeCharacterState
+      if (activeCharacterState && activeCharacterState.id === id) {
+        console.debug("Updated character is active, updating activeCharacterState.");
+        setActiveCharacterState((prevActiveChar: Character | null) => {
+          const newActiveChar = updatedChars.find((c: Character) => c.id === id) || null; // c has type Character
+          console.debug("New active character state after update:", newActiveChar?.name || "null");
+          return newActiveChar;
+        });
       }
-    },
-    [activeCharacter],
-  )
+      console.debug("Characters state after update:", updatedChars);
+      return updatedChars;
+    });
+  }, [activeCharacterState]);
 
-  const addCharacter = useCallback((character: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => {
-    console.debug("addCharacter called with character data:", character);
-    const newCharacter: Character = {
-      ...character,
-      id: Date.now().toString(),
+  const addCharacter = useCallback((newChar: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => {
+    console.debug("addCharacter called. New character data:", newChar);
+    const characterId = Date.now().toString(); // Generate a unique string ID
+    const fullCharacter: Character = {
+      // Ensure newChar properties are applied first, then default values for missing ones
+      ...newChar,
+      id: characterId,
       lastActive: new Date(),
-      ...createInitialQuestProgress(), // New characters start with all quests incomplete
-      equippedItems: createInitialEquipment(), // New characters start with no equipped items
-      skills: createInitialSkills(), // New characters start with all skills at level 1
-      craftingQueues: createInitialCraftingQueues(), // New characters start with empty crafting queues
-    }
-    console.debug("New character created:", newCharacter);
-    setCharacters((prev: Character[]) => [...prev, newCharacter])
-  }, [])
+      silverCoins: 0,
+      demonTribute: 0,
+      favorite: false,
+      combatPower: 0,
+      questProgress: { daily: { completed: 0, total: Object.values(allQuests.daily).flat().length }, weekly: { completed: 0, total: Object.values(allQuests.weekly).flat().length } },
+      inventory: createInitialInventory(),
+      equipment: {},
+      skills: createInitialSkills(),
+      ...createInitialQuestProgress(),
+      equippedItems: createInitialEquipment(),
+      craftingQueues: createInitialCraftingQueues(),
+    };
+    console.debug("Full character to add:", fullCharacter);
+    setCharacters((prev: Character[]) => {
+      const updatedChars = [...prev, fullCharacter];
+      console.debug("Characters state after add:", updatedChars);
+      return updatedChars;
+    });
+    // Automatically set the newly added character as active if it's the first one or if needed
+    // This logic might need refinement based on UX preference
+    setActiveCharacterState(fullCharacter);
+    console.debug("Newly added character set as active:", fullCharacter.name);
+  }, []);
 
-  const deleteCharacter = useCallback(
-    (id: string) => {
-      console.debug(`deleteCharacter called for ID: ${id}`);
-      setCharacters((prev: Character[]) => prev.filter((c: Character) => c.id !== id))
-      if (activeCharacter?.id === id) {
-        console.debug(`Active character ${id} is being deleted, adjusting activeCharacterState.`);
-        const remaining = characters.filter((c: Character) => c.id !== id)
-        setActiveCharacterState(remaining[0] || null)
+  const deleteCharacter = useCallback((id: string) => {
+    console.debug(`deleteCharacter called. ID: ${id}`);
+    setCharacters((prev: Character[]) => {
+      const filteredChars = prev.filter((char) => char.id !== id);
+      console.debug("Characters state after delete:", filteredChars);
+
+      // If the deleted character was active, clear active character or set a new one
+      if (activeCharacterState && activeCharacterState.id === id) {
+        console.debug("Deleted character was active.");
+        const newActiveChar = filteredChars.length > 0 ? filteredChars[0] : null;
+        setActiveCharacterState(newActiveChar);
+        console.debug("New active character after delete:", newActiveChar?.name || "null");
       }
-    },
-    [activeCharacter, characters],
-  )
+      return filteredChars;
+    });
+  }, [activeCharacterState]);
 
-  const toggleCharacterFavorite = useCallback(
-    (id: string) => {
-      console.debug(`toggleCharacterFavorite called for ID: ${id}`);
-      updateCharacter(id, {
-        favorite: !characters.find((c: Character) => c.id === id)?.favorite,
-      })
-    },
-    [characters, updateCharacter],
-  )
+  const toggleCharacterFavorite = useCallback((id: string) => {
+    console.debug(`toggleCharacterFavorite called. ID: ${id}`);
+    setCharacters((prev: Character[]) => {
+      const updatedChars = prev.map((char: Character) =>
+        char.id === id ? { ...char, favorite: !char.favorite } : char
+      );
+      console.debug("Characters state after favorite toggle:", updatedChars);
+      return updatedChars;
+    });
+  }, []);
 
-  return (
-    <CharacterContext.Provider
-      value={{
-        characters,
-        activeCharacter,
-        viewMode,
-        setActiveCharacter,
-        setViewMode,
-        updateCharacter,
-        addCharacter,
-        deleteCharacter,
-        toggleCharacterFavorite,
-      }}
-    >
-      {children}
-    </CharacterContext.Provider>
-  )
+  const contextValue = {
+    characters,
+    activeCharacter: activeCharacterState,
+    viewMode,
+    setActiveCharacter,
+    setViewMode,
+    updateCharacter,
+    addCharacter,
+    deleteCharacter,
+    toggleCharacterFavorite,
+  };
+
+  console.debug("CharacterProvider returning context value.", contextValue);
+  return <CharacterContext.Provider value={contextValue}>{children}</CharacterContext.Provider>
 }
 
 export function useCharacter() {
-  const context = useContext(CharacterContext)
   console.debug("useCharacter hook called.");
+  const context = useContext(CharacterContext)
   if (context === undefined) {
-    console.error("useCharacter must be used within a CharacterProvider");
     throw new Error("useCharacter must be used within a CharacterProvider")
   }
-  return context;
+  return context
 }

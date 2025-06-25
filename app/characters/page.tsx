@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Users, Plus, Trash2, Star } from "lucide-react"
+import { useCharacter } from "@/contexts/character-context";
 
 interface Character {
-  id: number
+  id: string;
   name: string
   server: string
   level: number
@@ -23,38 +24,7 @@ interface Character {
 const servers = ["류트", "만돌린", "하프", "울프", "던컨"]
 
 export default function CharactersPage() {
-  const [characters, setCharacters] = useState<Character[]>([
-    {
-      id: 1,
-      name: "기사단장 테오",
-      server: "류트",
-      level: 120,
-      profession: "석궁사수",
-      silverCoins: 15000,
-      demonTribute: 300,
-      favorite: true,
-    },
-    {
-      id: 2,
-      name: "마법사 에리나",
-      server: "만돌린",
-      level: 95,
-      profession: "화염술사",
-      silverCoins: 8200,
-      demonTribute: 120,
-      favorite: false,
-    },
-    {
-      id: 3,
-      name: "음유시인 리안",
-      server: "하프",
-      level: 88,
-      profession: "바드",
-      silverCoins: 25000,
-      demonTribute: 50,
-      favorite: false,
-    },
-  ])
+  const { characters, addCharacter: contextAddCharacter, deleteCharacter: contextDeleteCharacter, toggleCharacterFavorite, setActiveCharacter } = useCharacter();
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [newCharacter, setNewCharacter] = useState({
@@ -64,11 +34,10 @@ export default function CharactersPage() {
     profession: "",
   })
 
-  const addCharacter = () => {
+  const handleAddCharacter = () => {
     if (!newCharacter.name || !newCharacter.server) return
 
-    const character: Character = {
-      id: Date.now(),
+    contextAddCharacter({
       name: newCharacter.name,
       server: newCharacter.server,
       level: Number.parseInt(newCharacter.level) || 1,
@@ -76,19 +45,17 @@ export default function CharactersPage() {
       silverCoins: 0,
       demonTribute: 0,
       favorite: false,
-    }
-
-    setCharacters((prev) => [...prev, character])
+    });
     setNewCharacter({ name: "", server: "", level: "", profession: "" })
     setShowAddForm(false)
   }
 
-  const deleteCharacter = (id: number) => {
-    setCharacters((prev) => prev.filter((char) => char.id !== id))
+  const handleDeleteCharacter = (id: string) => {
+    contextDeleteCharacter(id);
   }
 
-  const toggleFavorite = (id: number) => {
-    setCharacters((prev) => prev.map((char) => (char.id === id ? { ...char, favorite: !char.favorite } : char)))
+  const handleToggleFavorite = (id: string) => {
+    toggleCharacterFavorite(id);
   }
 
   return (
@@ -181,7 +148,7 @@ export default function CharactersPage() {
               <Button onClick={() => setShowAddForm(false)} className="form-button-secondary">
                 취소
               </Button>
-              <Button onClick={addCharacter} className="form-button-primary">
+              <Button onClick={handleAddCharacter} className="form-button-primary">
                 저장
               </Button>
             </div>
@@ -198,51 +165,54 @@ export default function CharactersPage() {
                   <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                     {character.name.charAt(0)}
                   </div>
-                  <div>
-                    <CardTitle className="text-gray-900 text-lg">{character.name}</CardTitle>
-                    <p className="text-gray-600 text-sm">{character.server} 서버</p>
+                  <div className="flex-1">
+                    <CardTitle className="text-gray-900 text-lg">
+                      {character.name}
+                      {character.favorite && <Star className="w-4 h-4 ml-2 inline text-yellow-400 fill-current" />}
+                    </CardTitle>
+                    <p className="text-gray-600 text-sm">
+                      {character.server} • Lv.{character.level} • {character.profession}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => toggleFavorite(character.id)}
-                  className={character.favorite ? "text-yellow-500" : "text-gray-400"}
-                >
-                  <Star className={`w-4 h-4 ${character.favorite ? "fill-current" : ""}`} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">레벨</span>
-                  <Badge className="status-medium">Lv. {character.level}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">직업</span>
-                  <span className="text-gray-900">{character.profession}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">은동전</span>
-                  <span className="text-yellow-600 font-medium">{character.silverCoins.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">마족공물</span>
-                  <span className="text-red-600 font-medium">{character.demonTribute.toLocaleString()}</span>
-                </div>
-                <div className="flex space-x-2 pt-2">
-                  <Button size="sm" className="flex-1 form-button-primary">
-                    활성화
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleToggleFavorite(character.id)}
+                    className="text-yellow-500 border-yellow-500 hover:bg-yellow-50"
+                  >
+                    <Star className="w-4 h-4" />
                   </Button>
                   <Button
-                    size="sm"
-                    onClick={() => deleteCharacter(character.id)}
-                    className="form-button-secondary text-red-600 hover:bg-red-50"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDeleteCharacter(character.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">실버 코인</p>
+                <p className="font-medium text-gray-900">{character.silverCoins.toLocaleString()}개</p>
+              </div>
+              <div>
+                <p className="text-gray-500">데몬 헌터 공물</p>
+                <p className="font-medium text-gray-900">{character.demonTribute.toLocaleString()}개</p>
+              </div>
+              <div className="col-span-2 mt-2">
+                <Button
+                  onClick={() => {
+                    console.debug(`'활성화' button clicked for character: ${character.name}`);
+                    setActiveCharacter(character);
+                  }}
+                  className="form-button-primary w-full"
+                >
+                  활성화
+                </Button>
               </div>
             </CardContent>
           </Card>

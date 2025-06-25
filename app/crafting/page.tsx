@@ -11,6 +11,7 @@ import craftingFacilitiesData from "@/data/craftingFacilities.json"
 interface CraftingItem {
   name: string
   icon: string
+  description: string
 }
 
 interface FacilityData {
@@ -247,33 +248,36 @@ interface CraftingItemCardProps {
 }
 
 function CraftingItemCard({ item, onCraft }: CraftingItemCardProps) {
-  const [quantity, setQuantity] = useState(1)
+  console.debug(`Entering CraftingItemCard for item: ${item.name}`);
+  const [quantity, setQuantity] = useState(1);
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.debug(`handleQuantityChange called with value: ${e.target.value}`);
+    const value = parseInt(e.target.value);
+    setQuantity(isNaN(value) || value < 1 ? 1 : value);
+    console.debug(`Quantity updated to: ${isNaN(value) || value < 1 ? 1 : value}`);
+  };
 
   return (
-    <Card className="bg-gray-50 border-gray-200">
-      <CardContent className="p-4 text-center">
-        <div className="text-3xl mb-2">{item.icon}</div>
-        <p className="text-gray-900 text-sm font-medium mb-3">{item.name}</p>
-        <div className="space-y-2">
-          <Input
-            type="number"
-            value={quantity}
-            onChange={(e) => {
-                console.debug(`Crafting quantity changed for ${item.name}: ${e.target.value}`);
-                setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1));
-            }}
-            min="1"
-            className="bg-white border-gray-300 text-gray-900 text-center"
-            placeholder="수량"
-          />
-          <Button onClick={() => {
-              console.debug(`Craft button clicked for ${item.name}, quantity: ${quantity}`);
-              onCraft(quantity);
-          }} size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
-            제작
-          </Button>
-        </div>
-      </CardContent>
+    <Card className="flex flex-col items-center p-4 bg-white border-gray-200 shadow-sm">
+      <div className="text-4xl mb-2">{item.icon}</div>
+      <h4 className="font-semibold text-gray-800 text-center">{item.name}</h4>
+      <p className="text-gray-600 text-sm text-center mb-4">{item.description}</p>
+      <div className="flex items-center space-x-2 mb-4">
+        <Input
+          type="number"
+          min="1"
+          value={quantity}
+          onChange={handleQuantityChange}
+          className="w-24 text-center"
+        />
+        <Button onClick={() => {
+            console.debug(`'활성화' button clicked for item: ${item.name}, quantity: ${quantity}`);
+            onCraft(quantity);
+        }} className="bg-purple-600 hover:bg-purple-700">
+          활성화
+        </Button>
+      </div>
     </Card>
-  )
+  );
 }

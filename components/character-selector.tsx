@@ -11,10 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Users, User, Star, Clock } from "lucide-react"
 
 export function CharacterSelector() {
+  console.debug("CharacterSelector rendered.");
   const { characters, activeCharacter, viewMode, setActiveCharacter, setViewMode, toggleCharacterFavorite } =
     useCharacter()
 
   const [isExpanded, setIsExpanded] = useState(false)
+  console.debug("CharacterSelector - Current viewMode:", viewMode);
 
   const formatLastActive = (date: Date) => {
     const now = new Date()
@@ -37,7 +39,10 @@ export function CharacterSelector() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+                console.debug("Toggle expand button clicked.");
+                setIsExpanded(!isExpanded);
+            }}
             className="text-gray-500 hover:text-gray-700"
           >
             {isExpanded ? "접기" : "펼치기"}
@@ -49,7 +54,10 @@ export function CharacterSelector() {
           <Switch
             id="view-mode"
             checked={viewMode === "all"}
-            onCheckedChange={(checked) => setViewMode(checked ? "all" : "single")}
+            onCheckedChange={(checked) => {
+                console.debug(`View mode switch changed to: ${checked ? 'all' : 'single'}`);
+                setViewMode(checked ? "all" : "single");
+            }}
           />
           <Label htmlFor="view-mode" className="text-sm font-medium">
             {viewMode === "all" ? "전체 캐릭터 보기" : "단일 캐릭터 보기"}
@@ -68,8 +76,10 @@ export function CharacterSelector() {
             <Select
               value={activeCharacter?.id || ""}
               onValueChange={(value) => {
-                const character = characters.find((c) => c.id === value)
-                setActiveCharacter(character || null)
+                console.debug("Select - 선택한 value:", value);
+                const character = characters.find((c) => c.id === value);
+                console.debug("Select - 찾은 캐릭터:", character);
+                setActiveCharacter(character || null);
               }}
             >
               <SelectTrigger className="form-input">
@@ -129,8 +139,9 @@ export function CharacterSelector() {
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                   onClick={() => {
+                    console.debug(`Expanded list click - character: ${character.name}, viewMode: ${viewMode}`);
                     if (viewMode === "single") {
-                      setActiveCharacter(character)
+                      setActiveCharacter(character);
                     }
                   }}
                 >
@@ -149,6 +160,7 @@ export function CharacterSelector() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation()
+                              console.debug(`Toggle favorite clicked for character: ${character.name}`);
                               toggleCharacterFavorite(character.id)
                             }}
                             className="p-0 h-auto"
