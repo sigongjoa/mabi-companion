@@ -10,6 +10,7 @@ import { Package, Sword, CheckSquare, Users, Hammer, Sparkles, Brain, Map, Menu,
 const navigation = [
   { name: "대시보드", href: "/", icon: BarChart3 },
   { name: "아이템 관리", href: "/inventory", icon: Package },
+  { name: "재료 관리", href: "/materials", icon: Package },
   { name: "캐릭터 장비", href: "/equipment", icon: Sword },
   { name: "퀘스트 관리", href: "/quests", icon: CheckSquare },
   { name: "캐릭터 관리", href: "/characters", icon: Users },
