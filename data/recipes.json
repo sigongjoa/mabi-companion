@@ -1,0 +1,17 @@
+[
+  {
+    "resultId": 10,
+    "materials": [
+      { "itemId": 1, "quantity": 5 },
+      { "itemId": 4, "quantity": 10 }
+    ]
+  },
+  {
+    "resultId": 11,
+    "materials": [{ "itemId": 5, "quantity": 50 }]
+  },
+  {
+    "resultId": 12,
+    "materials": [{ "itemId": 2, "quantity": 10 }]
+  }
+] 

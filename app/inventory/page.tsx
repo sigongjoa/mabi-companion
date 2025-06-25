@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useCharacter } from "@/contexts/character-context"
+import { useCharacter, Character } from "@/contexts/character-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Plus, Minus, Package, Sparkles } from "lucide-react"
+
+import allItemsData from "@/data/items.json"
+import recipesData from "@/data/recipes.json"
 
 interface Item {
   id: number
@@ -27,178 +30,134 @@ interface Recipe {
   materials: { itemId: number; quantity: number }[]
 }
 
-const allItems: Record<number, Item> = {
-  1: {
-    id: 1,
-    name: "붕대",
-    category: "소모품",
-    icon: "🩹",
-    description: "가벼운 상처를 치료하는 데 사용되는 기본적인 붕대.",
-    weight: 0.1,
-    price: 5,
-    tradeable: true,
-    sellable: true,
-  },
-  2: {
-    id: 2,
-    name: "고기",
-    category: "음식",
-    icon: "🥩",
-    description: "요리의 기본 재료. 구워먹으면 허기를 채워준다.",
-    weight: 0.5,
-    price: 10,
-    tradeable: true,
-    sellable: true,
-  },
-  3: {
-    id: 3,
-    name: "마나 포션",
-    category: "소모품",
-    icon: "🧪",
-    description: "마나를 즉시 회복시켜주는 신비한 물약.",
-    weight: 0.2,
-    price: 50,
-    tradeable: true,
-    sellable: true,
-  },
-  4: {
-    id: 4,
-    name: "거미줄",
-    category: "재료",
-    icon: "🕸️",
-    description: "옷감이나 붕대를 만드는 데 사용되는 질긴 거미줄.",
-    weight: 0.1,
-    price: 2,
-    tradeable: true,
-    sellable: true,
-  },
-  5: {
-    id: 5,
-    name: "생가죽",
-    category: "재료",
-    icon: "🦌",
-    description: "무두질하여 가죽으로 만들 수 있는 동물의 생가죽.",
-    weight: 1.0,
-    price: 8,
-    tradeable: true,
-    sellable: true,
-  },
-  10: {
-    id: 10,
-    name: "질긴 붕대",
-    category: "소모품",
-    icon: "🩹",
-    description: "일반 붕대보다 더 효과가 좋은 붕대. 응급처치에 유용하다.",
-    weight: 0.2,
-    price: 15,
-    tradeable: true,
-    sellable: true,
-  },
-  11: {
-    id: 11,
-    name: "최고급 가죽",
-    category: "재료",
-    icon: "🦌",
-    description: "장인이 무두질한 최고급 가죽. 방어구 제작에 쓰인다.",
-    weight: 0.8,
-    price: 150,
-    tradeable: true,
-    sellable: true,
-  },
-  12: {
-    id: 12,
-    name: "스테이크",
-    category: "음식",
-    icon: "🥩",
-    description: "먹음직스럽게 잘 구워진 스테이크. 포만감을 크게 채워준다.",
-    weight: 0.4,
-    price: 45,
-    tradeable: true,
-    sellable: true,
-  },
-}
+const allItems: Record<string, Item> = allItemsData as Record<string, Item>
 
-const recipes: Recipe[] = [
-  {
-    resultId: 10,
-    materials: [
-      { itemId: 1, quantity: 5 },
-      { itemId: 4, quantity: 10 },
-    ],
-  },
-  { resultId: 11, materials: [{ itemId: 5, quantity: 50 }] },
-  { resultId: 12, materials: [{ itemId: 2, quantity: 10 }] },
-]
+const recipes: Recipe[] = recipesData as Recipe[]
 
 const categories = ["전체", "소모품", "음식", "재료"]
 
 export default function InventoryPage() {
   const { activeCharacter, viewMode, characters, updateCharacter } = useCharacter()
+  console.debug(`InventoryPage rendered - viewMode: ${viewMode}, activeCharacter: ${activeCharacter?.id}`);
   const [selectedCategory, setSelectedCategory] = useState("전체")
+  console.debug(`Initial selectedCategory: ${selectedCategory}`);
 
   // Get inventory data based on view mode
   const getInventoryData = () => {
+    console.debug(`Entering getInventoryData - viewMode: ${viewMode}, activeCharacter: ${activeCharacter?.id}`);
+    let currentInventoryMap = new Map<number, number>(); // Initialize map
     if (viewMode === "single" && activeCharacter) {
-      return new Map(Object.entries(activeCharacter.inventory).map(([k, v]) => [Number(k), v]))
+      console.debug(`getInventoryData - single view for character: ${activeCharacter.id}`);
+      currentInventoryMap = new Map(Object.entries(activeCharacter.inventory as Record<string, number>).map(([k, v]) => [Number(k), v]))
+      console.debug("Exiting getInventoryData - single view, currentInventoryMap:", currentInventoryMap);
     } else if (viewMode === "all") {
+      console.debug("getInventoryData - all view");
       // Aggregate all character inventories
       const aggregated = new Map<number, number>()
-      characters.forEach((character) => {
-        Object.entries(character.inventory).forEach(([itemId, quantity]) => {
+      characters.forEach((character: Character) => {
+        console.debug(`Processing character ${character.id} for aggregated inventory`);
+        Object.entries(character.inventory as Record<string, number>).forEach(([itemId, quantity]: [string, number]) => {
           const id = Number(itemId)
+          console.debug(`Processing item ${id} with quantity ${quantity} from character ${character.id}'s inventory`);
           aggregated.set(id, (aggregated.get(id) || 0) + quantity)
+          console.debug(`Aggregated quantity for item ${id}: ${aggregated.get(id)}`);
         })
       })
-      return aggregated
+      currentInventoryMap = aggregated;
+      console.debug("Exiting getInventoryData - all view, aggregated inventory:", currentInventoryMap);
+    } else {
+      console.debug("Exiting getInventoryData - no active character or viewMode is not single/all");
     }
-    return new Map<number, number>()
+    return currentInventoryMap;
   }
 
   const inventory = getInventoryData()
+  console.debug("Current inventory state:", inventory);
 
   const updateQuantity = (itemId: number, change: number) => {
+    console.debug(`Entering updateQuantity for item ${itemId} with change ${change}`);
     if (viewMode === "single" && activeCharacter) {
+      console.debug("updateQuantity - single view mode and active character exists");
       const currentQuantity = activeCharacter.inventory[itemId] || 0
+      console.debug(`updateQuantity - currentQuantity for item ${itemId}: ${currentQuantity}`);
       const newQuantity = Math.max(0, currentQuantity + change)
+      console.debug(`updateQuantity - newQuantity for item ${itemId}: ${newQuantity}`);
 
       const newInventory = { ...activeCharacter.inventory }
+      console.debug("updateQuantity - newInventory before update:", newInventory);
       if (newQuantity === 0) {
+        console.debug(`updateQuantity - newQuantity is 0, deleting item ${itemId} from inventory`);
         delete newInventory[itemId]
       } else {
+        console.debug(`updateQuantity - setting newQuantity for item ${itemId}: ${newQuantity}`);
         newInventory[itemId] = newQuantity
       }
+      console.debug("updateQuantity - newInventory after update:", newInventory);
 
       updateCharacter(activeCharacter.id, { inventory: newInventory })
+      console.debug("Exiting updateQuantity - character inventory updated");
     }
   }
 
   const canCraft = (recipe: Recipe) => {
-    return recipe.materials.every((material) => (inventory.get(material.itemId) || 0) >= material.quantity)
+    console.debug(`Entering canCraft for recipe resultId: ${recipe.resultId}`);
+    const result = recipe.materials.every((material) => {
+      const currentInventory = inventory.get(material.itemId) || 0;
+      const requiredQuantity = material.quantity;
+      console.debug(`canCraft - checking material ${material.itemId}: current ${currentInventory}, required ${requiredQuantity}`);
+      return currentInventory >= requiredQuantity;
+    });
+    console.debug(`Exiting canCraft for recipe ${recipe.resultId}, result: ${result}`);
+    return result;
   }
 
   const craftItem = (recipe: Recipe) => {
-    if (!canCraft(recipe) || viewMode !== "single" || !activeCharacter) return
+    console.debug(`Entering craftItem for recipe resultId: ${recipe.resultId}`);
+    if (!canCraft(recipe) || viewMode !== "single" || !activeCharacter) {
+      console.debug("craftItem - cannot craft or conditions not met, returning");
+      return
+    }
+    console.debug("craftItem - crafting conditions met");
 
     const newInventory = { ...activeCharacter.inventory }
+    console.debug("craftItem - newInventory before crafting:", newInventory);
 
     // 재료 소모
     recipe.materials.forEach((material) => {
       const current = newInventory[material.itemId] || 0
       newInventory[material.itemId] = current - material.quantity
+      console.debug(`craftItem - consumed material ${material.itemId}, new quantity: ${newInventory[material.itemId]}`);
     })
 
     // 결과물 추가
     const currentResult = newInventory[recipe.resultId] || 0
     newInventory[recipe.resultId] = currentResult + 1
+    console.debug(`craftItem - added result item ${recipe.resultId}, new quantity: ${newInventory[recipe.resultId]}`);
 
     updateCharacter(activeCharacter.id, { inventory: newInventory })
+    console.debug("Exiting craftItem - character inventory updated");
   }
 
   const filteredItems = Array.from(inventory.entries())
-    .map(([id, quantity]) => ({ ...allItems[id], quantity }))
-    .filter((item) => item && (selectedCategory === "전체" || item.category === selectedCategory))
+    .map(([id, quantity]) => {
+      console.debug(`Filtering item with ID: ${id}, quantity: ${quantity}`);
+      const item = allItems[id.toString()];
+      if (!item) {
+        console.warn(`Item with ID ${id} not found in allItems. Skipping.`);
+        return null; // Item not found, skip this entry
+      }
+      const filteredItem = { ...item, quantity };
+      console.debug("Filtered item:", filteredItem);
+      return filteredItem;
+    })
+    .filter((item): item is (Item & { quantity: number }) => {
+      console.debug(`Checking item for filter: ${item?.name}, category: ${item?.category}, selectedCategory: ${selectedCategory}`);
+      return item !== null && (selectedCategory === "전체" || item.category === selectedCategory);
+    });
+  console.debug("Final filteredItems:", filteredItems);
 
   const craftableRecipes = recipes.filter(canCraft)
+  console.debug("Craftable recipes:", craftableRecipes);
 
   return (
     <div className="min-h-screen" style={{ paddingTop: "120px" }}>
@@ -344,7 +303,7 @@ export default function InventoryPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {craftableRecipes.map((recipe) => {
-                  const resultItem = allItems[recipe.resultId]
+                  const resultItem = allItems[recipe.resultId.toString()]
                   return (
                     <Card key={recipe.resultId} className="card">
                       <CardHeader>
@@ -369,7 +328,7 @@ export default function InventoryPage() {
                             <p className="text-xs text-gray-500 mb-2">필요 재료:</p>
                             <div className="space-y-1">
                               {recipe.materials.map((material) => {
-                                const materialItem = allItems[material.itemId]
+                                const materialItem = allItems[material.itemId.toString()]
                                 const owned = inventory.get(material.itemId) || 0
                                 return (
                                   <div key={material.itemId} className="flex items-center justify-between text-xs">
