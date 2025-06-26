@@ -39,6 +39,7 @@ export interface Character {
   completedWeeklyTasks: Record<string, boolean>;
   equippedItems: Record<string, number | null>;
   craftingQueues: Record<string, ProcessingQueue[]>;
+  favoriteCraftingFacilities: Record<string, boolean>;
 }
 
 interface CharacterContextType {
@@ -48,9 +49,10 @@ interface CharacterContextType {
   setActiveCharacter: (character: Character | null) => void
   setViewMode: (mode: "single" | "all") => void
   updateCharacter: (id: string, updates: Partial<Character>) => void
-  addCharacter: (character: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => void
+  addCharacter: (character: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues" | "favoriteCraftingFacilities">) => void
   deleteCharacter: (id: string) => void
   toggleCharacterFavorite: (id: string) => void
+  toggleCraftingFacilityFavorite: (facilityId: string) => void;
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined)
@@ -176,6 +178,21 @@ const createInitialCraftingQueues = (initialQueues: Record<string, ProcessingQue
   return craftingQueues;
 };
 
+const createInitialFavoriteCraftingFacilities = (initialFavorites: Record<string, boolean> = {}): Record<string, boolean> => {
+  console.debug("Entering createInitialFavoriteCraftingFacilities with initialFavorites:", initialFavorites);
+  const favorites: Record<string, boolean> = {};
+  allCraftingFacilitiesData.forEach((facility: any) => {
+    favorites[facility.id] = false;
+  });
+  for (const facilityId in initialFavorites) {
+    if (Object.prototype.hasOwnProperty.call(initialFavorites, facilityId)) {
+      favorites[facilityId] = initialFavorites[facilityId];
+    }
+  }
+  console.debug("Exiting createInitialFavoriteCraftingFacilities, merged favorites:", favorites);
+  return favorites;
+};
+
 const defaultCharacters: Character[] = [
   {
     id: "1",
@@ -198,6 +215,7 @@ const defaultCharacters: Character[] = [
     ...createInitialQuestProgress({d1: true, d4: true, w1: true}),
     equippedItems: createInitialEquipment({ weapon: 1, armor: 2, gloves: 3, shield: 4, ring1: 5, ring2: 6, pants: 7, boots: 8 }),
     craftingQueues: createInitialCraftingQueues(),
+    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities({"metal": true}), // Example: metal facility is favorite
   },
   {
     id: "2",
@@ -220,6 +238,7 @@ const defaultCharacters: Character[] = [
     ...createInitialQuestProgress({d2: true, w2: true}),
     equippedItems: createInitialEquipment(),
     craftingQueues: createInitialCraftingQueues(),
+    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
   },
   {
     id: "3",
@@ -242,6 +261,7 @@ const defaultCharacters: Character[] = [
     ...createInitialQuestProgress({d3: true, w3: true}),
     equippedItems: createInitialEquipment(),
     craftingQueues: createInitialCraftingQueues(),
+    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
   },
   {
     id: "4",
@@ -264,6 +284,7 @@ const defaultCharacters: Character[] = [
     ...createInitialQuestProgress({d10: true}),
     equippedItems: createInitialEquipment(),
     craftingQueues: createInitialCraftingQueues(),
+    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
   },
 ]
 
@@ -291,6 +312,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           equippedItems: createInitialEquipment(char.equippedItems),
           skills: createInitialSkills(char.skills),
           craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
         }));
         loadedChars = parsedCharacters;
         console.debug("Parsed characters from localStorage:", loadedChars);
@@ -303,6 +325,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           equippedItems: createInitialEquipment(char.equippedItems),
           skills: createInitialSkills(char.skills),
           craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
         }));
       }
 
@@ -348,6 +371,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         equippedItems: createInitialEquipment(char.equippedItems),
         skills: createInitialSkills(char.skills),
         craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
       }));
       setCharacters(defaultLoadedChars);
       setActiveCharacterState(defaultLoadedChars.length > 0 ? defaultLoadedChars[0] : null);
@@ -405,7 +429,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     });
   }, [activeCharacterState]);
 
-  const addCharacter = useCallback((newChar: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues">) => {
+  const addCharacter = useCallback((newChar: Omit<Character, "id" | "lastActive" | "completedDailyTasks" | "completedWeeklyTasks" | "equippedItems" | "skills" | "craftingQueues" | "favoriteCraftingFacilities">) => {
     console.debug("addCharacter called. New character data:", newChar);
     const characterId = Date.now().toString(); // Generate a unique string ID
     const fullCharacter: Character = {
@@ -424,6 +448,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       ...createInitialQuestProgress(),
       equippedItems: createInitialEquipment(),
       craftingQueues: createInitialCraftingQueues(),
+      favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
     };
     console.debug("Full character to add:", fullCharacter);
     setCharacters((prev: Character[]) => {
@@ -465,6 +490,21 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const toggleCraftingFacilityFavorite = useCallback((facilityId: string) => {
+    console.debug(`toggleCraftingFacilityFavorite called for facility ID: ${facilityId}`);
+    if (!activeCharacterState) {
+      console.warn("No active character to toggle favorite crafting facility.");
+      return;
+    }
+
+    updateCharacter(activeCharacterState.id, {
+      favoriteCraftingFacilities: {
+        ...activeCharacterState.favoriteCraftingFacilities,
+        [facilityId]: !activeCharacterState.favoriteCraftingFacilities[facilityId],
+      },
+    });
+  }, [activeCharacterState, updateCharacter]);
+
   const contextValue = {
     characters,
     activeCharacter: activeCharacterState,
@@ -475,6 +515,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     addCharacter,
     deleteCharacter,
     toggleCharacterFavorite,
+    toggleCraftingFacilityFavorite,
   };
 
   console.debug("CharacterProvider returning context value.", contextValue);

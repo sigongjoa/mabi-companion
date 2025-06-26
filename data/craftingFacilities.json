@@ -1,35 +1,355 @@
 [
   {
     "id": "metal",
-    "name": "금속 가공 시설",
-    "level": 4,
-    "image": "🔥",
-    "items": [
-      { "name": "철괴", "icon": "⚙️" },
-      { "name": "강철괴", "icon": "🔩" },
-      { "name": "합금괴", "icon": "⚡" }
+    "name": "금속 가공",
+    "description": "광석을 여러 번 녹이고 굳혀 주괴 형태로 만든다.",
+    "recipes": [
+      {
+        "product": "철괴",
+        "materials": [{"item": "광석", "quantity": 20}],
+        "time": 60,
+        "level_condition": 1
+      },
+      {
+        "product": "철괴",
+        "materials": [{"item": "철광석", "quantity": 10}],
+        "time": 60,
+        "level_condition": 1
+      },
+      {
+        "product": "강철괴",
+        "materials": [{"item": "철괴", "quantity": 3}, {"item": "석탄", "quantity": 4}],
+        "time": 960,
+        "level_condition": 1
+      },
+      {
+        "product": "합금강괴",
+        "materials": [{"item": "강철괴", "quantity": 3}, {"item": "동 광석", "quantity": 15}, {"item": "석탄", "quantity": 8}],
+        "time": 14400,
+        "level_condition": 2
+      },
+      {
+        "product": "특수 강괴",
+        "materials": [{"item": "합금강괴", "quantity": 4}, {"item": "백동 광석", "quantity": 20}, {"item": "석탄", "quantity": 12}],
+        "time": 36000,
+        "level_condition": 3
+      },
+      {
+        "product": "은합금괴",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      }
     ]
   },
   {
     "id": "wood",
-    "name": "목재 가공 시설",
-    "level": 3,
-    "image": "🪵",
-    "items": [
-      { "name": "목재", "icon": "🌳" },
-      { "name": "상급 목재", "icon": "🌲" },
-      { "name": "부드러운 목재", "icon": "🍃" }
+    "name": "목재 가공",
+    "description": "통나무를 알맞은 크기로 잘라내 목재를 만든다.",
+    "recipes": [
+      {
+        "product": "목재",
+        "materials": [{"item": "통나무", "quantity": 10}],
+        "time": 90,
+        "level_condition": 1
+      },
+      {
+        "product": "목재+",
+        "materials": [{"item": "목재", "quantity": 3}, {"item": "나무 진액", "quantity": 4}],
+        "time": 1080,
+        "level_condition": 1
+      },
+      {
+        "product": "상급 목재",
+        "materials": [{"item": "목재+", "quantity": 3}, {"item": "상급 통나무", "quantity": 15}, {"item": "나무 진액", "quantity": 8}],
+        "time": 14400,
+        "level_condition": 2
+      },
+      {
+        "product": "상급 목재+",
+        "materials": [{"item": "상급 목재", "quantity": 4}, {"item": "상급 통나무+", "quantity": 20}, {"item": "나무 진액", "quantity": 12}],
+        "time": 36000,
+        "level_condition": 3
+      },
+      {
+        "product": "최상급 목재",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      }
+    ]
+  },
+  {
+    "id": "leather",
+    "name": "가죽 가공",
+    "description": "생가죽을 씻고 손질해 적당한 형태로 다듬는다.",
+    "recipes": [
+      {
+        "product": "가죽",
+        "materials": [{"item": "생가죽", "quantity": 10}],
+        "time": 60,
+        "level_condition": 1
+      },
+      {
+        "product": "가죽+",
+        "materials": [{"item": "가죽", "quantity": 3}, {"item": "타닌 가루", "quantity": 4}],
+        "time": 960,
+        "level_condition": 1
+      },
+      {
+        "product": "상급 가죽",
+        "materials": [{"item": "가죽+", "quantity": 3}, {"item": "상급 생가죽", "quantity": 15}, {"item": "타닌 가루", "quantity": 8}],
+        "time": 14400,
+        "level_condition": 2
+      },
+      {
+        "product": "상급 가죽+",
+        "materials": [{"item": "상급 가죽", "quantity": 4}, {"item": "상급 생가죽+", "quantity": 20}, {"item": "타닌 가루", "quantity": 12}],
+        "time": 36000,
+        "level_condition": 3
+      },
+      {
+        "product": "최상급 가죽",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      }
+    ]
+  },
+  {
+    "id": "fabric",
+    "name": "옷감 가공",
+    "description": "양털이나 거미줄에서 뽑은 실을 엮어 직물을 짠다.",
+    "recipes": [
+      {
+        "product": "옷감",
+        "materials": [{"item": "양털", "quantity": 10}],
+        "time": 90,
+        "level_condition": 1
+      },
+      {
+        "product": "실크",
+        "materials": [{"item": "거미줄", "quantity": 10}],
+        "time": 180,
+        "level_condition": 1
+      },
+      {
+        "product": "옷감+",
+        "materials": [{"item": "옷감", "quantity": 3}, {"item": "양털", "quantity": 4}],
+        "time": 1080,
+        "level_condition": 1
+      },
+      {
+        "product": "상급 옷감",
+        "materials": [{"item": "옷감+", "quantity": 3}, {"item": "상급 양털", "quantity": 15}, {"item": "양털", "quantity": 8}],
+        "time": 14400,
+        "level_condition": 2
+      },
+      {
+        "product": "상급 실크",
+        "materials": [{"item": "실크", "quantity": 4}, {"item": "튼튼 버섯 진액", "quantity": 8}],
+        "time": 21600,
+        "level_condition": 2
+      },
+      {
+        "product": "상급 옷감+",
+        "materials": [{"item": "상급 옷감", "quantity": 4}, {"item": "상급 양털+", "quantity": 20}, {"item": "양털", "quantity": 12}],
+        "time": 36000,
+        "level_condition": 3
+      },
+      {
+        "product": "최상급 옷감",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      }
     ]
   },
   {
     "id": "potion",
     "name": "약품 가공",
-    "level": 3,
-    "image": "🧪",
-    "items": [
-      { "name": "새벽 버섯 진액", "icon": "🍄" },
-      { "name": "튼튼 버섯 가루", "icon": "🟫" },
-      { "name": "불꽃의 결정", "icon": "💎" }
+    "description": "자연의 원료를 말리고 끓여 약품 재료를 만든다.",
+    "recipes": [
+      {
+        "product": "새록 버섯 진액",
+        "materials": [{"item": "새록 버섯 포자", "quantity": 10}, {"item": "물이 든 병", "quantity": 1}],
+        "time": 60,
+        "level_condition": 1
+      },
+      {
+        "product": "튼튼 버섯 가루",
+        "materials": [{"item": "튼튼 버섯", "quantity": 20}],
+        "time": 300,
+        "level_condition": 1
+      },
+      {
+        "product": "튼튼 버섯 진액",
+        "materials": [{"item": "튼튼 버섯 포자", "quantity": 10}, {"item": "물이 든 병", "quantity": 1}],
+        "time": 600,
+        "level_condition": 1
+      },
+      {
+        "product": "광휘의 결정",
+        "materials": [{"item": "유령반딧불이", "quantity": 3}, {"item": "마나허브", "quantity": 10}, {"item": "점토", "quantity": 3}],
+        "time": 1200,
+        "level_condition": 1
+      },
+      {
+        "product": "새록 버섯 포자",
+        "materials": [{"item": "새록 버섯", "quantity": 30}, {"item": "종이", "quantity": 3}],
+        "time": 600,
+        "level_condition": 2
+      },
+      {
+        "product": "튼튼 버섯 포자",
+        "materials": [{"item": "튼튼 버섯", "quantity": 30}, {"item": "종이", "quantity": 3}],
+        "time": 600,
+        "level_condition": 2
+      },
+      {
+        "product": "쑥쑥 버섯 포자",
+        "materials": [{"item": "쑥쑥 버섯", "quantity": 30}, {"item": "종이", "quantity": 3}],
+        "time": 720,
+        "level_condition": 2
+      },
+      {
+        "product": "쑥쑥 버섯 진액",
+        "materials": [{"item": "쑥쑥 버섯 포자", "quantity": 10}, {"item": "물이 든 병", "quantity": 1}],
+        "time": 3600,
+        "level_condition": 2
+      },
+      {
+        "product": "불꽃의 결정",
+        "materials": [{"item": "석양나비", "quantity": 3}, {"item": "마나허브", "quantity": 10}, {"item": "점토", "quantity": 3}],
+        "time": 1200,
+        "level_condition": 2
+      },
+      {
+        "product": "숨숨꽃 가루",
+        "materials": [{"item": "숨숨꽃", "quantity": 20}],
+        "time": 1800,
+        "level_condition": 2
+      },
+      {
+        "product": "깔끔 버섯 포자",
+        "materials": [{"item": "깔끔 버섯", "quantity": 30}, {"item": "종이", "quantity": 3}],
+        "time": 3000,
+        "level_condition": 3
+      },
+      {
+        "product": "깔끔 버섯 진액",
+        "materials": [{"item": "깔끔 버섯 포자", "quantity": 10}, {"item": "물이 든 병", "quantity": 1}],
+        "time": 7200,
+        "level_condition": 3
+      },
+      {
+        "product": "얼음의 결정",
+        "materials": [{"item": "흰얼음풍뎅이", "quantity": 3}, {"item": "마나허브", "quantity": 10}, {"item": "점토", "quantity": 3}],
+        "time": 1200,
+        "level_condition": 3
+      },
+      {
+        "product": "생채기꽃 가루",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      },
+      {
+        "product": "증폭 버섯 포자",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      },
+      {
+        "product": "증폭 버섯 진액",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      },
+      {
+        "product": "낙엽나방 (전기의 결정)",
+        "materials": [{"item": "재료1", "quantity": 10}, {"item": "재료2", "quantity": 5}],
+        "time": 10000,
+        "level_condition": 4
+      }
+    ]
+  },
+  {
+    "id": "color",
+    "name": "색재료 가공",
+    "description": "꽃을 가공해 염료를 만든다.",
+    "recipes": [
+      {
+        "product": "색재료",
+        "materials": [{"item": "꽃", "quantity": 10}],
+        "time": 60,
+        "level_condition": 1
+      }
+    ]
+  },
+  {
+    "id": "weapon-craft",
+    "name": "무기 제작대",
+    "description": "강력한 무기를 제작한다.",
+    "recipes": [
+      {
+        "product": "목재 지팡이",
+        "materials": [{"item": "목재", "quantity": 5}],
+        "time": 300,
+        "level_condition": 1
+      }
+    ]
+  },
+  {
+    "id": "armor-craft",
+    "name": "방어구 제작대",
+    "description": "튼튼한 방어구를 제작한다.",
+    "recipes": [
+      {
+        "product": "가죽 갑옷",
+        "materials": [{"item": "가죽", "quantity": 5}],
+        "time": 300,
+        "level_condition": 1
+      }
+    ]
+  },
+  {
+    "id": "potion-craft",
+    "name": "약품 제작대",
+    "description": "다양한 효과의 약품을 제작한다.",
+    "recipes": [
+      {
+        "product": "중급 생명력 포션",
+        "materials": [{"item": "새록 버섯 진액", "quantity": 3}, {"item": "마나 포션", "quantity": 1}],
+        "time": 300,
+        "level_condition": 1
+      }
+    ]
+  },
+  {
+    "id": "food-craft",
+    "name": "음식 제작대",
+    "description": "맛있는 음식을 제작한다.",
+    "recipes": [
+      {
+        "product": "사과 수플레",
+        "materials": [{"item": "사과", "quantity": 3}, {"item": "밀가루", "quantity": 1}, {"item": "생크림", "quantity": 1}],
+        "time": 300,
+        "level_condition": 1
+      }
+    ]
+  },
+  {
+    "id": "multi-craft",
+    "name": "다목적 제작대",
+    "description": "다양한 종류의 아이템을 제작한다.",
+    "recipes": [
+      {
+        "product": "캠프파이어 키트",
+        "materials": [{"item": "통나무", "quantity": 5}, {"item": "나무 진액", "quantity": 2}],
+        "time": 300,
+        "level_condition": 1
+      }
     ]
   }
 ] 
