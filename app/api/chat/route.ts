@@ -1,89 +1,72 @@
-import { NextResponse } from 'next/server'
-
 export async function POST(request: Request) {
-  console.debug('POST /api/chat: Google Gemini Function entry.')
   try {
-    const { prompt, context, image } = await request.json()
-    console.debug(`POST /api/chat: Received prompt: "${prompt}", context length: ${context ? context.length : 0}, image present: ${!!image}`)
+    const { prompt, image, context } = await request.json()
 
-    const apiKey = process.env.GOOGLE_API_KEY
-    if (!apiKey) {
-      console.debug('POST /api/chat: GOOGLE_API_KEY not configured. Returning 500.')
-      return NextResponse.json({ error: 'Google API key not configured.' }, { status: 500 })
-    }
-    console.debug('POST /api/chat: Google API key found. Preparing request to Google Gemini.')
+    // Enhanced system prompt with comprehensive game data context
+    const systemPrompt = `당신은 마비노기 모바일 게임의 전문 AI 어시스턴트입니다. 
+    
+사용자의 게임 데이터를 실시간으로 분석하여 최적의 조언을 제공합니다.
 
-    let model = 'gemini-pro' // 기본 텍스트 전용 모델
-    const contents: any[] = []
+주요 기능:
+- 캐릭터 관리 및 성장 전략 제안
+- 가공 시설 최적화 및 제작 계획 수립
+- 인벤토리 관리 및 아이템 활용 방안
+- 퀘스트 진행 상황 분석 및 우선순위 제안
+- 전투력 향상을 위한 맞춤형 조언
 
-    // 기존 대화 컨텍스트를 Google Gemini 형식으로 변환
-    if (context && Array.isArray(context)) {
-      context.forEach((msg: any) => {
-        if (msg.role === 'user') {
-          contents.push({ role: 'user', parts: [{ text: msg.content }] })
-        } else if (msg.role === 'assistant') {
-          contents.push({ role: 'model', parts: [{ text: msg.content }] })
-        }
-      })
-      console.debug(`POST /api/chat: Converted ${context.length} context messages.`)
-    }
+응답 스타일:
+- 한국어로 친근하고 전문적인 톤
+- 이모지와 구조화된 형식 사용
+- 구체적이고 실행 가능한 조언 제공
+- 게임 데이터 기반의 정확한 분석
 
-    // 시스템 메시지 또는 첫 프롬프트 구성
-    const systemInstruction = 'You are a helpful assistant that analyzes game data and provides advice.'
-    let userPromptParts: any[] = [{ type: 'text', text: systemInstruction + "\n\n" + prompt }]
+이미지가 제공된 경우, 게임 스크린샷을 분석하여 더 정확한 조언을 제공하세요.`
 
-    if (image) {
-      console.debug('POST /api/chat: Image detected. Setting model to gemini-pro-vision and adding image content.')
-      model = 'gemini-pro-vision'
-      const parts = image.split(';base64,')
-      const mimeType = parts[0].split(':')[1]
-      const base64Data = parts[1]
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...context,
+      {
+        role: "user",
+        content: image
+          ? `${prompt}\n\n[이미지가 첨부되었습니다. 이미지를 분석하여 관련된 조언을 제공해주세요.]`
+          : prompt,
+      },
+    ]
 
-      userPromptParts = [
-        { text: prompt || 'Analyze this image and provide advice.' }, // 이미지가 있을 때 프롬프트가 비어있으면 기본 텍스트 사용
-        { inline_data: { mime_type: mimeType, data: base64Data } },
-      ]
-    } else {
-      console.debug('POST /api/chat: No image detected. Using gemini-pro for text content.')
-      userPromptParts = [{ text: prompt }]
-    }
-
-    contents.push({ role: 'user', parts: userPromptParts })
-
-    const googleApiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
+    // Use a more sophisticated AI model for better responses
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents: contents,
-        safetySettings: [
-          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1000,
-        },
+        model: "gpt-4o", // Use GPT-4 with vision capabilities
+        messages: image
+          ? [
+              ...messages.slice(0, -1),
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: prompt },
+                  { type: "image_url", image_url: { url: image } },
+                ],
+              },
+            ]
+          : messages,
+        max_tokens: 1000,
+        temperature: 0.7,
       }),
     })
 
-    const data = await googleApiResponse.json()
-    console.debug(`POST /api/chat: Google Gemini response status: ${googleApiResponse.status}`)
-
-    if (!googleApiResponse.ok) {
-      console.debug('POST /api/chat: Google Gemini response not OK. Returning error.')
-      return NextResponse.json({ error: data }, { status: googleApiResponse.status })
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`)
     }
 
-    const message = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    console.debug(`POST /api/chat: Successfully got message from Google Gemini. Message length: ${message.length}`)
-    console.debug('POST /api/chat: Function exit (success).')
-    return NextResponse.json({ message })
-
-  } catch (error: any) {
-    console.debug(`POST /api/chat: Caught error: ${error.message}. Returning 500.`)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const data = await response.json()
+    return Response.json({ message: data.choices[0].message.content })
+  } catch (error) {
+    console.error("Chat API Error:", error)
+    return Response.json({ error: { message: error.message || "Internal server error" } }, { status: 500 })
   }
-} 
+}

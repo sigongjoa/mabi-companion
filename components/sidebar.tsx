@@ -1,10 +1,12 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
   Home,
   Package,
@@ -24,8 +26,6 @@ import {
   BarChart3,
   Calculator,
   Clock,
-  Menu,
-  X,
   Star,
 } from "lucide-react"
 
@@ -105,12 +105,13 @@ const ribbonTabs = [
 ]
 
 interface SidebarProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
 }
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [activeTab, setActiveTab] = useState("home")
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const pathname = usePathname()
 
   const handleAction = useCallback((action: string) => {
@@ -132,21 +133,18 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile menu button (Removed as it's now in layout.tsx) */}
-      {/* Overlay (Removed as it's now in layout.tsx) */}
-
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full transform transition-all duration-300 ease-in-out shadow-sm",
-          isOpen ? "translate-x-0 w-64" : "-translate-x-full w-0 overflow-hidden"
+          "fixed left-0 top-0 z-40 h-full transform transition-all duration-300 ease-in-out bg-white border-r border-gray-200 shadow-lg",
+          isOpen ? "translate-x-0 w-64" : "-translate-x-full w-0 overflow-hidden",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-gray-200 bg-white">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-sm flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -156,61 +154,82 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </div>
           </div>
 
-          {/* Tab Headers (for wide screens) */}
-          <div className="flex flex-col p-4 border-b border-gray-200 overflow-y-auto bg-gray-100">
+          {/* Favorites Toggle */}
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="sidebar-favorites"
+                className="text-sm font-medium text-gray-700 flex items-center space-x-2"
+              >
+                <Star className="w-4 h-4" />
+                <span>즐겨찾기만 표시</span>
+              </Label>
+              <Switch id="sidebar-favorites" checked={showFavoritesOnly} onCheckedChange={setShowFavoritesOnly} />
+            </div>
+          </div>
+
+          {/* Tab Headers */}
+          <div className="flex flex-col p-4 border-b border-gray-200 bg-white">
             {ribbonTabs.map((tab) => (
               <Button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 variant="ghost"
-                className={cn("justify-start mb-1", activeTab === tab.id ? "bg-white text-blue-600 shadow-sm" : "text-gray-700 hover:bg-white hover:text-gray-900")}
+                className={cn(
+                  "justify-start mb-1 h-9 px-3 font-medium transition-all duration-200",
+                  activeTab === tab.id
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                )}
               >
                 {tab.label}
               </Button>
             ))}
           </div>
 
-          {/* Navigation Content (based on activeTab) */}
-          <nav className="flex-1 p-4 space-y-4 bg-gray-50 overflow-y-auto">
+          {/* Navigation Content */}
+          <nav className="flex-1 p-4 space-y-4 bg-white overflow-y-auto">
             {ribbonTabs.map((tab) => (
-              <div key={tab.id} className={cn("space-y-2", activeTab !== tab.id && "hidden")}>
+              <div key={tab.id} className={cn("space-y-3", activeTab !== tab.id && "hidden")}>
                 {tab.groups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="flex flex-col space-y-1">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{group.title}</h3>
-                    {group.items.map((item, itemIndex) => (
-                      <div key={itemIndex}>
-                        {item.href ? (
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              "flex items-center space-x-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors",
-                              pathname === item.href
-                                ? "bg-blue-600 text-white shadow-sm"
-                                : "text-gray-700 hover:bg-blue-100 hover:text-blue-700 hover:shadow-sm",
-                            )}
-                            onClick={() => setIsOpen(false)} // Close sidebar on navigation
-                          >
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.label}</span>
-                          </Link>
-                        ) : (
-                          <Button
-                            onClick={() => {
-                              item.action && handleAction(item.action);
-                              setIsOpen(false); // Close sidebar on action
-                            }}
-                            variant="ghost"
-                            className={cn(
-                              "flex items-center space-x-3 w-full justify-start px-3 py-2",
-                              "text-gray-700 hover:bg-blue-100 hover:text-blue-700 hover:shadow-sm"
-                            )}
-                          >
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.label}</span>
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                  <div key={groupIndex} className="space-y-2">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">{group.title}</h3>
+                    <div className="space-y-1">
+                      {group.items.map((item, itemIndex) => (
+                        <div key={itemIndex}>
+                          {item.href ? (
+                            <Link
+                              href={item.href}
+                              className={cn(
+                                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                                pathname === item.href
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm border border-transparent hover:border-blue-200",
+                              )}
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <item.icon className="w-5 h-5 flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </Link>
+                          ) : (
+                            <Button
+                              onClick={() => {
+                                item.action && handleAction(item.action)
+                                setIsOpen(false)
+                              }}
+                              variant="ghost"
+                              className={cn(
+                                "flex items-center space-x-3 w-full justify-start px-3 py-2 h-auto rounded-lg font-medium transition-all duration-200",
+                                "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm border border-transparent hover:border-blue-200",
+                              )}
+                            >
+                              <item.icon className="w-5 h-5 flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -218,8 +237,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 bg-white">
-            <p className="text-xs text-gray-400 text-center">v2.0.0 - Office Edition</p>
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-xs text-gray-500 text-center font-medium">v2.0.0 - Clean Edition</p>
           </div>
         </div>
       </div>

@@ -1,25 +1,25 @@
 "use client"
 
-import { useCharacter } from "@/contexts/character-context"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CurrencyTimer } from "@/components/currency-timer"
+import { useCharacter } from "@/contexts/character-context"
 import { CharacterSelector } from "@/components/character-selector"
+import { CurrencyTimer } from "@/components/currency-timer"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import {
-  Package,
-  CheckSquare,
   Users,
-  Hammer,
-  Brain,
+  CheckSquare,
   TrendingUp,
   Clock,
   Star,
-  Target,
-  Calendar,
   Activity,
+  BarChart3,
+  Calendar,
+  Target,
   Zap,
+  Package,
   FileSpreadsheet,
 } from "lucide-react"
 import Link from "next/link"
@@ -46,7 +46,7 @@ const quickStats = [
     title: "제작 가능 아이템",
     value: "24개",
     change: "+3",
-    icon: Hammer,
+    icon: Package,
     color: "text-orange-600",
     bgColor: "bg-orange-50",
   },
@@ -78,19 +78,19 @@ const upcomingTasks = [
 
 function StatCard({ stat, index }: { stat: (typeof quickStats)[0]; index: number }) {
   return (
-    <div className="card gpu-accelerated">
-      <div className="card-content">
+    <div className="modern-card scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+      <div className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-green-600 font-medium">{stat.change}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+            <p className="text-xs text-green-600 font-medium mt-1">{stat.change}</p>
           </div>
-          <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+          <div className={`p-3 rounded-xl ${stat.bgColor}`}>
             <stat.icon className={`w-6 h-6 ${stat.color}`} />
           </div>
         </div>
-        <div className="mt-2 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <FavoriteToggle id={`stat-${index}`} name={stat.title} type="stat" />
         </div>
       </div>
@@ -105,28 +105,29 @@ function CurrencySection() {
   }
 
   return (
-    <Card className="card">
-      <CardHeader className="card-header">
+    <Card className="modern-card">
+      <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5" />
+            <Clock className="w-5 h-5 text-blue-600" />
             <span>실시간 재화 타이머</span>
           </CardTitle>
           <FavoriteToggle id="currency-timers" name="재화 타이머" type="timer" />
         </div>
-        <CardDescription>캐릭터별 은동전 및 마족공물 충전 상황</CardDescription>
+        <p className="text-gray-600 mt-2">캐릭터별 은동전 및 마족공물 충전 상황</p>
       </CardHeader>
-      <CardContent className="card-content">
+      <CardContent className="p-6">
         <div className="section-spacing">
           {characters.map((character) => (
             <div key={character.id} className="card-spacing">
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
                   {character.name.charAt(0)}
                 </div>
-                <h3 className="font-semibold text-gray-900">
-                  {character.name} (Lv.{character.level})
-                </h3>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{character.name}</h3>
+                  <p className="text-sm text-gray-500">Lv.{character.level}</p>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Suspense fallback={<div className="loading-skeleton h-32 rounded-lg"></div>}>
@@ -156,21 +157,42 @@ function CurrencySection() {
 
 export default function DashboardPage() {
   const { characters } = useCharacter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="p-6 space-y-6">
+          <div className="loading-skeleton h-32 rounded-xl"></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="loading-skeleton h-32 rounded-xl"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <div className="content-padding section-spacing">
-        {/* Header */}
-        <div className="card">
-          <div className="card-content">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0">
-                  <FileSpreadsheet className="w-6 md:w-8 h-6 md:h-8 text-blue-600" />
+        {/* Enhanced Header */}
+        <div className="modern-card fade-in">
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
+                  <FileSpreadsheet className="w-8 h-8 text-blue-600" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-xl md:text-3xl font-bold text-gray-900">마비노기 모바일 - 통합 관리 시스템</h1>
-                  <p className="text-sm md:text-base text-gray-600 mt-1">실시간 캐릭터 및 재화 관리 대시보드</p>
+                  <h1 className="text-4xl font-bold text-gray-900">마비노기 모바일</h1>
+                  <p className="text-lg text-gray-600 mt-1">통합 관리 시스템</p>
+                  <p className="text-sm text-gray-500 mt-1">실시간 캐릭터 및 재화 관리 대시보드</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
@@ -185,28 +207,30 @@ export default function DashboardPage() {
         </div>
 
         {/* Character Selector */}
-        <CharacterSelector />
+        <div className="slide-up">
+          <CharacterSelector />
+        </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 slide-up">
           {quickStats.map((stat, index) => (
             <StatCard key={index} stat={stat} index={index} />
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Currency Timers */}
           <div className="lg:col-span-2 section-spacing">
-            <Suspense fallback={<div className="loading-skeleton h-96 rounded-lg"></div>}>
+            <Suspense fallback={<div className="loading-skeleton h-96 rounded-xl"></div>}>
               <CurrencySection />
             </Suspense>
 
             {/* Character Progress Table */}
-            <Card className="card">
-              <CardHeader className="card-header">
+            <Card className="modern-card">
+              <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
-                    <Activity className="w-5 h-5" />
+                    <Activity className="w-5 h-5 text-green-600" />
                     <span>캐릭터 진행 상황</span>
                   </CardTitle>
                   <FavoriteToggle id="character-progress" name="캐릭터 진행 상황" type="table" />
@@ -225,23 +249,27 @@ export default function DashboardPage() {
                     </thead>
                     <tbody>
                       {characters.map((character) => {
-                        const progress = Math.round((character.level / 150) * 100) // Calculate progress based on level
+                        const progress = Math.round((character.level / 150) * 100)
                         return (
                           <tr key={character.id}>
                             <td className="font-medium">{character.name}</td>
                             <td>Lv.{character.level}</td>
                             <td>
                               <div className="flex items-center space-x-2">
-                                <div className="progress-bar flex-1">
-                                  <div className="progress-fill" style={{ width: `${progress}%` }} />
+                                <div className="progress-modern flex-1">
+                                  <div className="progress-fill-modern" style={{ width: `${progress}%` }} />
                                 </div>
-                                <span className="text-xs whitespace-nowrap">{progress}%</span>
+                                <span className="text-xs whitespace-nowrap font-medium">{progress}%</span>
                               </div>
                             </td>
                             <td>
                               <Badge
                                 className={
-                                  progress >= 80 ? "status-complete" : progress >= 60 ? "status-medium" : "status-low"
+                                  progress >= 80
+                                    ? "status-complete"
+                                    : progress >= 60
+                                      ? "status-warning"
+                                      : "status-error"
                                 }
                               >
                                 {progress >= 80 ? "우수" : progress >= 60 ? "보통" : "개선필요"}
@@ -260,25 +288,28 @@ export default function DashboardPage() {
           {/* Sidebar */}
           <div className="section-spacing">
             {/* Recent Activities */}
-            <Card className="card">
-              <CardHeader className="card-header">
+            <Card className="modern-card">
+              <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
-                    <Zap className="w-5 h-5" />
+                    <Zap className="w-5 h-5 text-yellow-600" />
                     <span>최근 활동</span>
                   </CardTitle>
                   <FavoriteToggle id="recent-activities" name="최근 활동" type="activity" />
                 </div>
               </CardHeader>
-              <CardContent className="card-content">
+              <CardContent className="p-6">
                 <div className="card-spacing">
                   {recentActivities.map((activity, index) => (
-                    <div key={index} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                    <div
+                      key={index}
+                      className="p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-200"
+                    >
                       <div className="flex items-start space-x-3">
                         <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-900 break-words">{activity.action}</p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
+                          <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                         </div>
                       </div>
                     </div>
@@ -288,32 +319,35 @@ export default function DashboardPage() {
             </Card>
 
             {/* Upcoming Tasks */}
-            <Card className="card">
-              <CardHeader className="card-header">
+            <Card className="modern-card">
+              <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
-                    <Target className="w-5 h-5" />
+                    <Target className="w-5 h-5 text-purple-600" />
                     <span>예정된 작업</span>
                   </CardTitle>
                   <FavoriteToggle id="upcoming-tasks" name="예정된 작업" type="task" />
                 </div>
               </CardHeader>
-              <CardContent className="card-content">
+              <CardContent className="p-6">
                 <div className="card-spacing">
                   {upcomingTasks.map((task, index) => (
-                    <div key={index} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                      <div className="flex items-center justify-between gap-2">
+                    <div
+                      key={index}
+                      className="p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-200"
+                    >
+                      <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-900 break-words">{task.task}</p>
-                          <p className="text-xs text-gray-500">{task.time}</p>
+                          <p className="text-xs text-gray-500 mt-1">{task.time}</p>
                         </div>
                         <Badge
                           className={
                             task.priority === "high"
-                              ? "status-high"
+                              ? "status-error"
                               : task.priority === "medium"
-                                ? "status-medium"
-                                : "status-low"
+                                ? "status-warning"
+                                : "status-success"
                           }
                         >
                           {task.priority === "high" ? "높음" : task.priority === "medium" ? "보통" : "낮음"}
@@ -326,37 +360,37 @@ export default function DashboardPage() {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="card">
-              <CardHeader className="card-header">
+            <Card className="modern-card">
+              <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
-                    <Star className="w-5 h-5" />
+                    <Star className="w-5 h-5 text-yellow-600" />
                     <span>빠른 작업</span>
                   </CardTitle>
                   <FavoriteToggle id="quick-actions" name="빠른 작업" type="action" />
                 </div>
               </CardHeader>
-              <CardContent className="card-content">
+              <CardContent className="p-6">
                 <div className="card-spacing">
-                  <Button className="w-full justify-start form-button-primary" asChild>
+                  <Button className="w-full justify-start btn-primary-modern" asChild>
                     <Link href="/quests">
                       <CheckSquare className="w-4 h-4 mr-2" />
                       일일 퀘스트 확인
                     </Link>
                   </Button>
-                  <Button className="w-full justify-start form-button-secondary" asChild>
-                    <Link href="/inventory">
+                  <Button className="w-full justify-start btn-secondary-modern" asChild>
+                    <Link href="/crafting">
                       <Package className="w-4 h-4 mr-2" />
                       아이템 제작
                     </Link>
                   </Button>
-                  <Button className="w-full justify-start form-button-secondary" asChild>
+                  <Button className="w-full justify-start btn-secondary-modern" asChild>
                     <Link href="/assistant">
-                      <Brain className="w-4 h-4 mr-2" />
+                      <BarChart3 className="w-4 h-4 mr-2" />
                       AI 어시스턴트
                     </Link>
                   </Button>
-                  <Button className="w-full justify-start form-button-secondary" asChild>
+                  <Button className="w-full justify-start btn-secondary-modern" asChild>
                     <Link href="/favorites">
                       <Star className="w-4 h-4 mr-2" />
                       즐겨찾기 관리
@@ -369,11 +403,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Today's Summary Table */}
-        <Card className="card">
-          <CardHeader className="card-header">
+        <Card className="modern-card">
+          <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-5 h-5 text-indigo-600" />
                 <span>오늘의 요약</span>
               </CardTitle>
               <FavoriteToggle id="daily-summary" name="오늘의 요약" type="summary" />
@@ -398,7 +432,7 @@ export default function DashboardPage() {
                     <td>12개</td>
                     <td>67%</td>
                     <td>
-                      <Badge className="status-medium">진행중</Badge>
+                      <Badge className="status-warning">진행중</Badge>
                     </td>
                   </tr>
                   <tr>
@@ -407,7 +441,7 @@ export default function DashboardPage() {
                     <td>20개</td>
                     <td>120%</td>
                     <td>
-                      <Badge className="status-complete">목표 달성</Badge>
+                      <Badge className="status-success">목표 달성</Badge>
                     </td>
                   </tr>
                   <tr>
@@ -416,7 +450,7 @@ export default function DashboardPage() {
                     <td>+2,000</td>
                     <td>108%</td>
                     <td>
-                      <Badge className="status-complete">목표 달성</Badge>
+                      <Badge className="status-success">목표 달성</Badge>
                     </td>
                   </tr>
                 </tbody>

@@ -45,7 +45,7 @@ const currencyConfigs: Record<string, CurrencyConfig> = {
 interface CurrencyTimerProps {
   characterId: string
   characterName: string
-  type: "silver" | "demon"
+  type?: "silver" | "demon"
   onDataChange?: (data: any) => void
 }
 
@@ -55,7 +55,10 @@ export const CurrencyTimer = memo(function CurrencyTimer({
   type,
   onDataChange,
 }: CurrencyTimerProps) {
-  const config = useMemo(() => currencyConfigs[type], [type])
+  // If an invalid or missing type is passed, gracefully fall back to “silver”
+  const config = useMemo<CurrencyConfig>(() => {
+    return currencyConfigs[type] ?? currencyConfigs.silver
+  }, [type])
   const [inputValue, setInputValue] = useState("")
   const [timerState, setTimerState] = useState<TimerState>({
     current: 0,
