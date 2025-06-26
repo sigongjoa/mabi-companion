@@ -158,7 +158,7 @@ export default function DashboardPage() {
   const { characters } = useCharacter()
 
   return (
-    <div className="min-h-screen" style={{ paddingTop: "120px" }}>
+    <div className="min-h-screen">
       <div className="content-padding section-spacing">
         {/* Header */}
         <div className="card">

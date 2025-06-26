@@ -1,11 +1,7 @@
-import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { RibbonNavigation } from "@/components/ribbon-navigation"
-import { CharacterProvider } from "@/contexts/character-context"
-import { FavoritesProvider } from "@/contexts/favorites-context"
-import { Toaster } from "@/components/ui/toaster"
+import ClientProviders from "./ClientProviders"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -47,15 +43,7 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body className={inter.className}>
-        <CharacterProvider>
-          <FavoritesProvider>
-            <div className="min-h-screen bg-gray-50">
-              <RibbonNavigation />
-              <main className="overflow-auto pt-0 md:pt-0">{children}</main>
-            </div>
-            <Toaster />
-          </FavoritesProvider>
-        </CharacterProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   )

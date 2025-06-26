@@ -1,13 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useFavorites } from "@/contexts/favorites-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
-import { Star, Trash2, ExternalLink, Calendar, Filter } from "lucide-react"
+import { Star, Trash2, ExternalLink, Calendar, Filter, X } from "lucide-react"
 import Link from "next/link"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Label } from "@/components/ui/label"
+import { useCharacter } from "@/contexts/character-context"
+import craftingFacilitiesData from "@/data/craftingFacilities.json"
+import { cn } from "@/lib/utils"
+import { Popover as UIPopover } from "@/components/ui/popover"
 
 const typeColors: Record<string, string> = {
   inventory: "bg-blue-100 text-blue-800",
@@ -19,9 +29,32 @@ const typeColors: Record<string, string> = {
   default: "bg-gray-100 text-gray-800",
 }
 
+interface CraftingFacility {
+  id: number;
+  name: string;
+  type: string;
+  recipes: Array<{ itemId: number; quantity: number }>;
+}
+
+interface CraftingQueueItem {
+  recipeId: number;
+  facilityId: number;
+  startTime: number;
+  duration: number;
+  outputItemId: number;
+  outputQuantity: number;
+}
+
+// Explicitly type craftingFacilitiesData to ensure correct data structure
+const allCraftingFacilities: CraftingFacility[] = craftingFacilitiesData as CraftingFacility[];
+
 export default function FavoritesPage() {
   const { favorites, removeFavorite, getFavoritesByType } = useFavorites()
   const [selectedType, setSelectedType] = useState("all")
+  const { activeCharacter, updateCharacter } = useCharacter()
+  const { favoriteCraftingFacilities, toggleCraftingFacilityFavorite } = useFavorites()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([])
 
   const types = Array.from(new Set(favorites.map((f) => f.type)))
   const filteredFavorites = selectedType === "all" ? favorites : getFavoritesByType(selectedType)
@@ -64,8 +97,125 @@ export default function FavoritesPage() {
     return pageNames[path] || path
   }
 
+  const facilityTypes = useMemo(() => {
+    const types = new Set<string>()
+    allCraftingFacilities.forEach((facility) => types.add(facility.type))
+    return Array.from(types).sort()
+  }, [])
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }, [])
+
+  const handleTypeChange = useCallback((type: string) => {
+    setSelectedFacilityTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    )
+  }, [])
+
+  const filteredAndFavoritedFacilities = useMemo(() => {
+    let facilities = allCraftingFacilities.filter(facility =>
+      favoriteCraftingFacilities.includes(facility.id)
+    )
+
+    if (searchQuery) {
+      facilities = facilities.filter(facility =>
+        facility.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    if (selectedFacilityTypes.length > 0) {
+      facilities = facilities.filter(facility =>
+        selectedFacilityTypes.includes(facility.type)
+      )
+    }
+
+    return facilities
+  }, [favoriteCraftingFacilities, searchQuery, selectedFacilityTypes])
+
+  const getFacilityById = useCallback((facilityId: number) => {
+    const facility = allCraftingFacilities.find(f => f.id === facilityId);
+    return facility;
+  }, []);
+
+  const favoriteCraftingQueues = useMemo(() => {
+    const queues = (activeCharacter?.craftingQueues || []).filter(queueItem =>
+      favoriteCraftingFacilities.includes(queueItem.facilityId)
+    );
+    return queues;
+  }, [activeCharacter?.craftingQueues, favoriteCraftingFacilities]);
+
+  const getRemainingTime = useCallback((queueItem: CraftingQueueItem): string => {
+    const now = Date.now();
+    const endTime = queueItem.startTime + queueItem.duration * 1000; // duration is in seconds
+    const remaining = endTime - now;
+
+    if (remaining <= 0) {
+      return "완료";
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const timeString = [
+      hours > 0 ? `${hours}시간` : "",
+      minutes > 0 ? `${minutes}분` : "",
+      seconds > 0 ? `${seconds}초` : "",
+    ].filter(Boolean).join(" ") || "0초";
+
+    return timeString;
+  }, []);
+
+  const cancelQueueItem = useCallback((queueItemToCancel: CraftingQueueItem) => {
+    if (activeCharacter) {
+      const updatedQueues = activeCharacter.craftingQueues.filter(
+        (item) => item !== queueItemToCancel
+      );
+      updateCharacter({ ...activeCharacter, craftingQueues: updatedQueues });
+    }
+  }, [activeCharacter, updateCharacter]);
+
+  const claimCompletedItems = useCallback(() => {
+    if (activeCharacter) {
+      const completedItems: CraftingQueueItem[] = [];
+      const remainingQueues: CraftingQueueItem[] = [];
+
+      activeCharacter.craftingQueues.forEach((queueItem) => {
+        if (Date.now() >= queueItem.startTime + queueItem.duration * 1000) {
+          completedItems.push(queueItem);
+        } else {
+          remainingQueues.push(queueItem);
+        }
+      });
+
+      if (completedItems.length > 0) {
+        const updatedInventory = { ...activeCharacter.inventory };
+        completedItems.forEach((item) => {
+          updatedInventory[item.outputItemId] = (
+            updatedInventory[item.outputItemId] || 0
+          ) + item.outputQuantity;
+        });
+        updateCharacter({
+          ...activeCharacter,
+          inventory: updatedInventory,
+          craftingQueues: remainingQueues,
+        });
+        // Optionally, add a toast notification here
+      }
+    }
+  }, [activeCharacter, updateCharacter]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      claimCompletedItems();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [claimCompletedItems]);
+
   return (
-    <div className="min-h-screen" style={{ paddingTop: "120px" }}>
+    <div className="min-h-screen">
       <div className="content-padding section-spacing">
         <CharacterScopedHeader
           title="즐겨찾기"
@@ -240,6 +390,115 @@ export default function FavoritesPage() {
             )}
           </div>
         </div>
+
+        {/* Search and Filter Controls */}
+        <div className="mb-6 flex flex-wrap gap-4 items-center">
+          <Input
+            type="text"
+            placeholder="시설 검색..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="max-w-xs"
+          />
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                시설 타입 <span className="text-gray-500">({selectedFacilityTypes.length})</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-2 max-h-60 overflow-y-auto">
+              {facilityTypes.map((type) => (
+                <Label
+                  key={type}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md cursor-pointer"
+                >
+                  <Checkbox
+                    checked={selectedFacilityTypes.includes(type)}
+                    onCheckedChange={() => handleTypeChange(type)}
+                  />
+                  <span>{type}</span>
+                </Label>
+              ))}
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Favorite Crafting Facilities */}
+        <h2 className="text-2xl font-bold mb-4">즐겨찾는 제작 시설</h2>
+        {filteredAndFavoritedFacilities.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAndFavoritedFacilities.map((facility) => (
+              <Card key={facility.id} className="group relative">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg font-medium">
+                    {facility.name}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toggleCraftingFacilityFavorite(facility.id)}
+                    className="text-yellow-500 opacity-100 transition-opacity"
+                  >
+                    <Star className="h-5 w-5 fill-current" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-500 mb-2">타입: {facility.type}</p>
+                  <h3 className="text-base font-semibold mt-4 mb-2">가능한 레시피:</h3>
+                  <ScrollArea className="h-[150px] w-full rounded-md border p-2 mb-2">
+                    {facility.recipes.length > 0 ? (
+                      <ul>
+                        {facility.recipes.map((recipe, index) => (
+                          <li key={index} className="text-sm text-gray-700">
+                            {allCraftingFacilities.find(f => f.id === facility.id)?.recipes.find(r => r.itemId === recipe.itemId)?.output?.quantity}x {recipe.itemId} (Item ID)
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">레시피 없음.</p>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">즐겨찾는 제작 시설이 없습니다.</p>
+        )}
+
+        {/* Active Crafting Queues for Favorites */}
+        <h2 className="text-2xl font-bold mt-8 mb-4">즐겨찾는 시설의 진행 중인 제작</h2>
+        {favoriteCraftingQueues.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {favoriteCraftingQueues.map((queueItem) => {
+              const facility = getFacilityById(queueItem.facilityId);
+              const remainingTime = getRemainingTime(queueItem);
+              return facility ? (
+                <Card key={queueItem.recipeId} className="group relative">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-medium">
+                      {facility.name} - {queueItem.outputQuantity}x Item ID {queueItem.outputItemId}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => cancelQueueItem(queueItem)}
+                      className="text-red-500 opacity-100 transition-opacity"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-500 mb-2">남은 시간: {remainingTime}</p>
+                  </CardContent>
+                </Card>
+              ) : null;
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500">즐겨찾는 시설의 진행 중인 제작이 없습니다.</p>
+        )}
       </div>
     </div>
   )

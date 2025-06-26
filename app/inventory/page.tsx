@@ -1,15 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useCharacter, Character } from "@/contexts/character-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
-import { FavoriteToggle } from "@/components/favorite-toggle"
+import { FavoriteToggle } from "@/components/ui/favorite-toggle"
 import { Plus, Minus, Package, Sparkles, LayoutGrid, Table2 } from "lucide-react"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
 
 import allItemsData from "@/data/items.json"
 import recipesData from "@/data/recipes.json"
@@ -169,7 +177,7 @@ export default function InventoryPage() {
   console.debug("Craftable recipes:", craftableRecipes);
 
   return (
-    <div className="min-h-screen" style={{ paddingTop: "120px" }}>
+    <div className="min-h-screen">
       <div className="content-padding section-spacing">
         <CharacterScopedHeader
           title="아이템 관리"
