@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BarChart3, TrendingUp, Users, Target, Calendar, Activity } from "lucide-react"
+import { FavoriteToggle } from "@/components/favorite-toggle"
+import { Input } from "@/components/ui/input"
 
 const statsData = {
   overview: {
@@ -53,17 +55,50 @@ const statsData = {
 }
 
 export default function StatsPage() {
+  console.debug("StatsPage rendered.")
   const [selectedPeriod, setSelectedPeriod] = useState("week")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredCharacters = statsData.characters.filter(character =>
+    character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    character.favoriteActivity.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredAchievements = statsData.achievements.filter(achievement =>
+    achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    achievement.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="document-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">게임 통계</h1>
-            <p className="text-gray-600">플레이 기록 및 성과 분석</p>
+      {/* Enhanced Header - Dashboard style */}
+      <div className="modern-card fade-in mb-6">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
+                <BarChart3 className="w-8 h-8 text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">게임 통계</h1>
+                <p className="text-lg text-gray-600 mt-1">플레이 기록 및 성과 분석</p>
+                <p className="text-sm text-gray-500 mt-1">나의 게임 데이터를 분석하여 성장 목표를 설정하고 효율적인 플레이를 계획하세요.</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="stats-header" name="게임 통계 헤더" type="header" />
+              <Input
+                type="text"
+                placeholder="통계 검색..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  console.debug(`Stats search query changed: ${e.target.value}`);
+                }}
+                className="max-w-xs"
+              />
+            </div>
           </div>
-          <BarChart3 className="w-8 h-8 text-blue-600" />
         </div>
       </div>
 
@@ -186,86 +221,78 @@ export default function StatsPage() {
             <CardHeader className="excel-header">
               <CardTitle>캐릭터별 상세 통계</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {statsData.characters.map((character, index) => (
-                  <div key={index} className="excel-cell hover:excel-selected p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                          {character.name.charAt(0)}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{character.name}</h3>
-                          <p className="text-sm text-gray-600">Lv.{character.level}</p>
-                        </div>
-                      </div>
-                      <Badge className="status-complete">활성</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">전투력</p>
-                        <p className="font-medium">{character.combatPower.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">플레이 시간</p>
-                        <p className="font-medium">{character.playTime}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">완료 퀘스트</p>
-                        <p className="font-medium">{character.questsCompleted}개</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">선호 활동</p>
-                        <p className="font-medium">{character.favoriteActivity}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="p-0">
+              <table className="excel-grid w-full">
+                <thead>
+                  <tr>
+                    <th className="excel-header excel-cell">이름</th>
+                    <th className="excel-header excel-cell">레벨</th>
+                    <th className="excel-header excel-cell">전투력</th>
+                    <th className="excel-header excel-cell">주요 활동</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCharacters.length > 0 ? (
+                    filteredCharacters.map((char, index) => (
+                      <tr key={index}>
+                        <td className="excel-cell font-medium">{char.name}</td>
+                        <td className="excel-cell">Lv.{char.level}</td>
+                        <td className="excel-cell">{char.combatPower.toLocaleString()}</td>
+                        <td className="excel-cell">{char.favoriteActivity}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="excel-cell text-center text-gray-500">검색 결과가 없습니다.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         </div>
 
         {/* Achievements */}
-        <div>
-          <Card className="document-card">
+        <div className="lg:col-span-1">
+          <Card className="document-card h-full">
             <CardHeader className="excel-header">
-              <CardTitle>업적 진행도</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Target className="w-5 h-5" />
+                <span>내 업적</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-4">
-                {statsData.achievements.map((achievement, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-900 text-sm">{achievement.name}</h4>
-                        <p className="text-xs text-gray-600">{achievement.description}</p>
+            <CardContent className="p-0">
+              <ul className="space-y-4 p-6">
+                {filteredAchievements.length > 0 ? (
+                  filteredAchievements.map((achievement, index) => (
+                    <li key={index} className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Target className="w-5 h-5 text-blue-600" />
+                        </div>
                       </div>
-                      <Badge
-                        className={
-                          achievement.progress >= achievement.total
-                            ? "status-complete"
-                            : achievement.progress >= achievement.total * 0.7
-                              ? "status-medium"
-                              : "status-low"
-                        }
-                      >
-                        {Math.round((achievement.progress / achievement.total) * 100)}%
-                      </Badge>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {achievement.progress}/{achievement.total}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{achievement.name}</p>
+                        <p className="text-sm text-gray-600">{achievement.description}</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {achievement.progress.toLocaleString()}/{achievement.total.toLocaleString()} ({(
+                            (achievement.progress / achievement.total) *
+                            100
+                          ).toFixed(0)}%)
+                        </p>
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">검색 결과가 없습니다.</p>
+                )}
+              </ul>
             </CardContent>
           </Card>
         </div>

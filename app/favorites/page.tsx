@@ -18,6 +18,7 @@ import { useCharacter } from "@/contexts/character-context"
 import craftingFacilitiesData from "@/data/craftingFacilities.json"
 import { cn } from "@/lib/utils"
 import { Popover as UIPopover } from "@/components/ui/popover"
+import { FavoriteToggle } from "@/components/favorite-toggle"
 
 const typeColors: Record<string, string> = {
   inventory: "bg-blue-100 text-blue-800",
@@ -30,7 +31,7 @@ const typeColors: Record<string, string> = {
 }
 
 interface CraftingFacility {
-  id: number;
+  id: string;
   name: string;
   type: string;
   recipes: Array<{ itemId: number; quantity: number }>;
@@ -49,17 +50,26 @@ interface CraftingQueueItem {
 const allCraftingFacilities: CraftingFacility[] = craftingFacilitiesData as CraftingFacility[];
 
 export default function FavoritesPage() {
+  console.debug("Rendering FavoritesPage component");
   const { favorites, removeFavorite, getFavoritesByType } = useFavorites()
   const [selectedType, setSelectedType] = useState("all")
-  const { activeCharacter, updateCharacter } = useCharacter()
-  const { favoriteCraftingFacilities, toggleCraftingFacilityFavorite } = useFavorites()
+  const { activeCharacter, updateCharacter, favoriteCraftingFacilities, toggleCraftingFacilityFavorite } = useCharacter()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([])
 
   const types = Array.from(new Set(favorites.map((f) => f.type)))
   const filteredFavorites = selectedType === "all" ? favorites : getFavoritesByType(selectedType)
 
-  const groupedByPage = filteredFavorites.reduce(
+  const filteredFavoritesBySearch = useMemo(() => {
+    if (!searchQuery) return filteredFavorites;
+    return filteredFavorites.filter(favorite =>
+      favorite.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (favorite.type && favorite.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (favorite.page && favorite.page.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [filteredFavorites, searchQuery]);
+
+  const groupedByPage = filteredFavoritesBySearch.reduce(
     (acc, favorite) => {
       const page = favorite.page || "기타"
       if (!acc[page]) acc[page] = []
@@ -133,14 +143,14 @@ export default function FavoritesPage() {
     return facilities
   }, [favoriteCraftingFacilities, searchQuery, selectedFacilityTypes])
 
-  const getFacilityById = useCallback((facilityId: number) => {
+  const getFacilityById = useCallback((facilityId: string) => {
     const facility = allCraftingFacilities.find(f => f.id === facilityId);
     return facility;
   }, []);
 
   const favoriteCraftingQueues = useMemo(() => {
-    const queues = (activeCharacter?.craftingQueues || []).filter(queueItem =>
-      favoriteCraftingFacilities.includes(queueItem.facilityId)
+    const queues = activeCharacter?.craftingQueues?.filter(queueItem =>
+      favoriteCraftingFacilities.includes(queueItem.facilityId.toString())
     );
     return queues;
   }, [activeCharacter?.craftingQueues, favoriteCraftingFacilities]);
@@ -173,7 +183,7 @@ export default function FavoritesPage() {
       const updatedQueues = activeCharacter.craftingQueues.filter(
         (item) => item !== queueItemToCancel
       );
-      updateCharacter({ ...activeCharacter, craftingQueues: updatedQueues });
+      updateCharacter(activeCharacter.id, { craftingQueues: updatedQueues });
     }
   }, [activeCharacter, updateCharacter]);
 
@@ -197,309 +207,267 @@ export default function FavoritesPage() {
             updatedInventory[item.outputItemId] || 0
           ) + item.outputQuantity;
         });
-        updateCharacter({
-          ...activeCharacter,
+        updateCharacter(activeCharacter.id, {
           inventory: updatedInventory,
           craftingQueues: remainingQueues,
         });
-        // Optionally, add a toast notification here
       }
     }
   }, [activeCharacter, updateCharacter]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      claimCompletedItems();
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [claimCompletedItems]);
-
   return (
-    <div className="min-h-screen">
-      <div className="content-padding section-spacing">
-        <CharacterScopedHeader
-          title="즐겨찾기"
-          description="자주 사용하는 컴포넌트와 기능들을 관리하세요"
-          icon={Star}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Summary Cards */}
-          <div className="lg:col-span-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="card">
-                <CardContent className="card-content">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">총 즐겨찾기</p>
-                      <p className="text-2xl font-bold text-gray-900">{favorites.length}개</p>
-                    </div>
-                    <Star className="w-6 h-6 text-yellow-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card">
-                <CardContent className="card-content">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">페이지 수</p>
-                      <p className="text-2xl font-bold text-gray-900">{Object.keys(groupedByPage).length}개</p>
-                    </div>
-                    <ExternalLink className="w-6 h-6 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card">
-                <CardContent className="card-content">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">컴포넌트 유형</p>
-                      <p className="text-2xl font-bold text-gray-900">{types.length}개</p>
-                    </div>
-                    <Filter className="w-6 h-6 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card">
-                <CardContent className="card-content">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">최근 추가</p>
-                      <p className="text-sm font-bold text-gray-900">
-                        {favorites.length > 0
-                          ? formatDate(
-                              favorites.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime())[0].addedAt,
-                            ).split(" ")[0]
-                          : "없음"}
-                      </p>
-                    </div>
-                    <Calendar className="w-6 h-6 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Enhanced Header - Dashboard style */}
+      <div className="modern-card fade-in mb-6">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-red-100 rounded-2xl flex-shrink-0">
+                <Star className="w-8 h-8 text-red-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">즐겨찾기</h1>
+                <p className="text-lg text-gray-600 mt-1">자주 사용하는 정보 모아보기</p>
+                <p className="text-sm text-gray-500 mt-1">즐겨찾는 캐릭터, 아이템, 퀘스트 등을 빠르게 확인하세요.</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="favorites-header" name="즐겨찾기 헤더" type="header" />
+              <Input
+                type="text"
+                placeholder="즐겨찾기 검색..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  console.debug(`Favorites search query changed: ${e.target.value}`);
+                }}
+                className="max-w-xs"
+              />
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Filters */}
-          <div className="lg:col-span-1">
-            <Card className="card">
-              <CardHeader className="card-header">
-                <CardTitle className="flex items-center space-x-2">
-                  <Filter className="w-5 h-5" />
-                  <span>필터</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="card-content">
-                <div className="space-y-2">
-                  <Button
-                    variant={selectedType === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedType("all")}
-                    className="w-full justify-start"
-                  >
-                    전체 ({favorites.length})
-                  </Button>
-                  {types.map((type) => (
-                    <Button
-                      key={type}
-                      variant={selectedType === type ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedType(type)}
-                      className="w-full justify-start"
+      <CharacterScopedHeader title="내 즐겨찾기 목록" />
+
+      {/* Favorite Categories */}
+      <div className="document-card p-4">
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant={selectedType === "all" ? "default" : "outline"}
+            onClick={() => setSelectedType("all")}
+            className={selectedType === "all" ? "bg-blue-600 text-white" : ""}
+          >
+            모두 보기 ({favorites.length})
+          </Button>
+          {types.map((type) => (
+            <Button
+              key={type}
+              variant={selectedType === type ? "default" : "outline"}
+              onClick={() => setSelectedType(type)}
+              className={selectedType === type ? "bg-blue-600 text-white" : ""}
+            >
+              <Badge className={cn("mr-2", typeColors[type] || typeColors.default)}>{type}</Badge>
+              {type} ({getFavoritesByType(type).length})
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {Object.entries(groupedByPage).map(([page, pageFavorites]) => (
+        <Card key={page} className="document-card">
+          <CardHeader className="excel-header">
+            <CardTitle className="text-gray-900 text-lg border-l-4 border-blue-500 pl-3 flex items-center justify-between">
+              <span>{getPageName(page)}</span>
+              <Badge className="bg-gray-200 text-gray-700">총 {pageFavorites.length}개</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pageFavorites.map((favorite) => (
+              <div
+                key={favorite.id}
+                className="excel-cell hover:excel-selected p-3 rounded-lg flex items-center justify-between"
+              >
+                <div className="flex items-center space-x-3">
+                  <Badge className={cn("h-6", typeColors[favorite.type] || typeColors.default)}>
+                    {favorite.type}
+                  </Badge>
+                  <span className="text-gray-700 font-medium">{favorite.name}</span>
+                  {favorite.lastUpdated && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      (마지막 업데이트: {formatDate(new Date(favorite.lastUpdated))})
+                    </span>
+                  )}
+                  {favorite.url && (
+                    <Link
+                      href={favorite.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline text-sm ml-2"
                     >
-                      {type} ({getFavoritesByType(type).length})
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeFavorite(favorite.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Favorite Crafting Facilities Section */}
+      <Card className="document-card">
+        <CardHeader className="excel-header">
+          <CardTitle className="text-gray-900 text-lg border-l-4 border-orange-500 pl-3 flex items-center justify-between">
+            <span>즐겨찾는 가공 시설</span>
+            <Badge className="bg-gray-200 text-gray-700">총 {filteredAndFavoritedFacilities.length}개</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredAndFavoritedFacilities.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <Input
+                  placeholder="시설 이름 검색..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="max-w-xs"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Filter className="w-4 h-4" />
+                      시설 유형 필터
+                      {selectedFacilityTypes.length > 0 && (
+                        <Badge className="ml-2">{selectedFacilityTypes.length}</Badge>
+                      )}
                     </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-4">
+                    <Label className="text-sm font-semibold mb-2 block">유형 선택</Label>
+                    <div className="space-y-2">
+                      {facilityTypes.map((type) => (
+                        <div key={type} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={type}
+                            checked={selectedFacilityTypes.includes(type)}
+                            onCheckedChange={() => handleTypeChange(type)}
+                          />
+                          <Label htmlFor={type}>{type}</Label>
+                        </div>
+                      ))}
+                      {selectedFacilityTypes.length > 0 && (
+                        <>
+                          <Separator className="my-2" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedFacilityTypes([])}
+                            className="w-full justify-center text-red-500 hover:bg-red-50"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            필터 초기화
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <ScrollArea className="h-[300px] rounded-md border p-4">
+                <div className="space-y-3">
+                  {filteredAndFavoritedFacilities.map((facility) => (
+                    <div
+                      key={facility.id}
+                      className="flex items-center justify-between excel-cell p-3 rounded-lg hover:excel-selected"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Badge className="bg-orange-100 text-orange-800">{facility.type}</Badge>
+                        <span className="font-medium text-gray-700">{facility.name}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleCraftingFacilityFavorite(facility.id)}
+                        className="text-yellow-500 hover:text-yellow-700"
+                      >
+                        <Star className="w-4 h-4 fill-current" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </ScrollArea>
+            </div>
+          ) : (
+            <p className="text-gray-500">즐겨찾는 가공 시설이 없습니다.</p>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Favorites List */}
-          <div className="lg:col-span-3">
-            {favorites.length === 0 ? (
-              <Card className="card">
-                <CardContent className="p-8 text-center">
-                  <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">아직 즐겨찾기가 없습니다.</p>
-                  <p className="text-gray-500 text-sm">
-                    각 페이지의 컴포넌트에서 ⭐ 버튼을 클릭하여 즐겨찾기에 추가하세요.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedByPage).map(([page, pageFavorites]) => (
-                  <Card key={page} className="card">
-                    <CardHeader className="card-header">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center space-x-2">
-                          <ExternalLink className="w-5 h-5" />
-                          <span>{getPageName(page)}</span>
-                        </CardTitle>
-                        <Badge variant="secondary" className="text-xs">
-                          {pageFavorites.length}개
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="card-content">
-                      <div className="space-y-3">
-                        {pageFavorites.map((favorite) => (
-                          <div
-                            key={favorite.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                              <div>
-                                <div className="font-medium text-gray-900">{favorite.name}</div>
-                                <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                  <Badge className={`text-xs ${typeColors[favorite.type] || typeColors.default}`}>
-                                    {favorite.type}
-                                  </Badge>
-                                  <span>•</span>
-                                  <span>{formatDate(favorite.addedAt)}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm" asChild className="text-blue-600 hover:text-blue-700">
-                                <Link href={favorite.page}>
-                                  <ExternalLink className="w-4 h-4" />
-                                </Link>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeFavorite(favorite.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+      {/* Favorite Crafting Queues Section */}
+      <Card className="document-card">
+        <CardHeader className="excel-header">
+          <CardTitle className="text-gray-900 text-lg border-l-4 border-blue-500 pl-3 flex items-center justify-between">
+            <span>진행 중인 즐겨찾기 제작</span>
+            <Badge className="bg-gray-200 text-gray-700">총 {favoriteCraftingQueues?.length || 0}개</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activeCharacter && favoriteCraftingQueues && favoriteCraftingQueues.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex justify-end mb-4">
+                <Button onClick={claimCompletedItems} className="btn-primary-modern text-sm">
+                  완료된 아이템 모두 수령
+                </Button>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Search and Filter Controls */}
-        <div className="mb-6 flex flex-wrap gap-4 items-center">
-          <Input
-            type="text"
-            placeholder="시설 검색..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="max-w-xs"
-          />
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                시설 타입 <span className="text-gray-500">({selectedFacilityTypes.length})</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-2 max-h-60 overflow-y-auto">
-              {facilityTypes.map((type) => (
-                <Label
-                  key={type}
-                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedFacilityTypes.includes(type)}
-                    onCheckedChange={() => handleTypeChange(type)}
-                  />
-                  <span>{type}</span>
-                </Label>
-              ))}
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Favorite Crafting Facilities */}
-        <h2 className="text-2xl font-bold mb-4">즐겨찾는 제작 시설</h2>
-        {filteredAndFavoritedFacilities.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndFavoritedFacilities.map((facility) => (
-              <Card key={facility.id} className="group relative">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">
-                    {facility.name}
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => toggleCraftingFacilityFavorite(facility.id)}
-                    className="text-yellow-500 opacity-100 transition-opacity"
-                  >
-                    <Star className="h-5 w-5 fill-current" />
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-500 mb-2">타입: {facility.type}</p>
-                  <h3 className="text-base font-semibold mt-4 mb-2">가능한 레시피:</h3>
-                  <ScrollArea className="h-[150px] w-full rounded-md border p-2 mb-2">
-                    {facility.recipes.length > 0 ? (
-                      <ul>
-                        {facility.recipes.map((recipe, index) => (
-                          <li key={index} className="text-sm text-gray-700">
-                            {allCraftingFacilities.find(f => f.id === facility.id)?.recipes.find(r => r.itemId === recipe.itemId)?.output?.quantity}x {recipe.itemId} (Item ID)
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-500">레시피 없음.</p>
+              {favoriteCraftingQueues.map((queueItem, index) => {
+                const facility = getFacilityById(queueItem.facilityId.toString());
+                const isCompleted = getRemainingTime(queueItem) === "완료";
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "excel-cell p-3 rounded-lg flex items-center justify-between",
+                      isCompleted ? "bg-green-50 border-green-300" : "bg-blue-50 border-blue-300"
                     )}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">즐겨찾는 제작 시설이 없습니다.</p>
-        )}
-
-        {/* Active Crafting Queues for Favorites */}
-        <h2 className="text-2xl font-bold mt-8 mb-4">즐겨찾는 시설의 진행 중인 제작</h2>
-        {favoriteCraftingQueues.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {favoriteCraftingQueues.map((queueItem) => {
-              const facility = getFacilityById(queueItem.facilityId);
-              const remainingTime = getRemainingTime(queueItem);
-              return facility ? (
-                <Card key={queueItem.recipeId} className="group relative">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-lg font-medium">
-                      {facility.name} - {queueItem.outputQuantity}x Item ID {queueItem.outputItemId}
-                    </CardTitle>
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Badge className="bg-blue-100 text-blue-800">
+                        {facility ? facility.name : "알 수 없음"}
+                      </Badge>
+                      <span className="font-medium text-gray-700">
+                        {queueItem.outputItemId} ({queueItem.outputQuantity}개)
+                      </span>
+                      <span className="text-sm font-mono text-gray-600">
+                        {getRemainingTime(queueItem)}
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => cancelQueueItem(queueItem)}
-                      className="text-red-500 opacity-100 transition-opacity"
+                      className="text-red-500 hover:text-red-700"
                     >
-                      <X className="h-5 w-5" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500 mb-2">남은 시간: {remainingTime}</p>
-                  </CardContent>
-                </Card>
-              ) : null;
-            })}
-          </div>
-        ) : (
-          <p className="text-gray-500">즐겨찾는 시설의 진행 중인 제작이 없습니다.</p>
-        )}
-      </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500">즐겨찾는 시설의 진행 중인 제작이 없습니다.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

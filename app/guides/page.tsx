@@ -2,6 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Map, Sword, Infinity, Users, Target, Zap, Shield } from "lucide-react"
+import { FavoriteToggle } from "@/components/favorite-toggle"
+import { Input } from "@/components/ui/input"
+import { useState } from "react"
 
 const dungeonData = [
   { name: "알비 1층", level: "~Lv.20", weaponRunes: "혹한", armorRunes: "방호, 결핍", note: "초보자~중급자 추천" },
@@ -171,15 +174,75 @@ const combatTips = [
 ]
 
 export default function GuidesPage() {
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredDungeonData = dungeonData.filter(dungeon =>
+    dungeon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dungeon.level.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dungeon.weaponRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dungeon.armorRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dungeon.note.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredInfiniteCollectionData = infiniteCollectionData.filter(item =>
+    item.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.method.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.tip.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredJobData = jobData.map(series => ({
+    ...series,
+    jobs: series.jobs.filter(job =>
+      job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.feature.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  })).filter(series => series.jobs.length > 0);
+
+  const filteredRuneData = runeData.filter(rune =>
+    rune.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    rune.effect.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    rune.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    rune.tier.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCombatTips = combatTips.map(category => ({
+    ...category,
+    tips: category.tips.filter(tip =>
+      tip.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(category => category.tips.length > 0);
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="office-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">종합 가이드</h1>
-            <p className="text-gray-600">던전, 직업, 무한채집, 룬 티어, 전투력 가이드</p>
+      {/* Enhanced Header - Dashboard style */}
+      <div className="modern-card fade-in mb-6">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
+                <Map className="w-8 h-8 text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">종합 가이드</h1>
+                <p className="text-lg text-gray-600 mt-1">던전, 직업, 무한채집, 룬 티어, 전투력 가이드</p>
+                <p className="text-sm text-gray-500 mt-1">게임 플레이에 필요한 모든 정보를 한 곳에서 찾아보세요.</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="guides-header" name="가이드 헤더" type="header" />
+              <Input
+                type="text"
+                placeholder="가이드 검색..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                className="max-w-xs"
+              />
+            </div>
           </div>
-          <Map className="w-8 h-8 text-blue-600" />
         </div>
       </div>
 
@@ -229,7 +292,7 @@ export default function GuidesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dungeonData.map((dungeon, index) => (
+                    {filteredDungeonData.map((dungeon, index) => (
                       <tr key={index}>
                         <td className="font-medium">{dungeon.name}</td>
                         <td>{dungeon.level}</td>
@@ -255,7 +318,7 @@ export default function GuidesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {infiniteCollectionData.map((item, index) => (
+                {filteredInfiniteCollectionData.map((item, index) => (
                   <Card key={index} className="office-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-gray-900 text-lg flex items-center space-x-3">
@@ -300,7 +363,7 @@ export default function GuidesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {jobData.map((series, index) => (
+                {filteredJobData.map((series, index) => (
                   <div key={index}>
                     <h3 className="text-xl font-bold text-blue-700 mb-4">{series.series}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -361,7 +424,7 @@ export default function GuidesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {runeData.map((rune, index) => (
+                    {filteredRuneData.map((rune, index) => (
                       <tr key={index}>
                         <td>
                           <Badge
@@ -396,7 +459,7 @@ export default function GuidesPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {combatTips.map((section, index) => (
+                {filteredCombatTips.map((section, index) => (
                   <Card key={index} className="office-card">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg text-gray-900 flex items-center space-x-2">

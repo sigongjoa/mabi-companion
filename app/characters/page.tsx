@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Users, Plus, Trash2, Star } from "lucide-react"
 import { useCharacter } from "@/contexts/character-context";
+import { FavoriteToggle } from "@/components/favorite-toggle"
 
 interface Character {
   id: string;
@@ -42,6 +43,7 @@ export default function CharactersPage() {
     level: "",
     profession: "",
   })
+  const [searchQuery, setSearchQuery] = useState("")
 
   const handleAddCharacter = () => {
     console.debug("Entering handleAddCharacter function");
@@ -79,26 +81,54 @@ export default function CharactersPage() {
   }
 
   console.debug("Rendering CharactersPage component");
+
+  const filteredCharacters = characters.filter((character) =>
+    character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    character.server.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    character.profession.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    character.level.toString().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="document-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">캐릭터 관리</h1>
-            <p className="text-gray-600">다중 캐릭터 정보 관리</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-purple-600" />
-              <span className="text-gray-900">{characters.length}명의 캐릭터</span>
+      {/* Enhanced Header - Dashboard style */}
+      <div className="modern-card fade-in mb-6">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">캐릭터 관리</h1>
+                <p className="text-lg text-gray-600 mt-1">다중 캐릭터 정보 관리</p>
+                <p className="text-sm text-gray-500 mt-1">내 모든 캐릭터의 정보를 한눈에 보고 관리하세요.</p>
+              </div>
             </div>
-            <Button onClick={() => {
-              console.debug("Toggle add form button clicked");
-              setShowAddForm(!showAddForm);
-            }} className="form-button-primary">
-              <Plus className="w-4 h-4 mr-2" />
-              캐릭터 추가
-            </Button>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="characters-header" name="캐릭터 헤더" type="header" />
+              <Input
+                type="text"
+                placeholder="캐릭터 검색..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  console.debug(`Character search query changed: ${e.target.value}`);
+                }}
+                className="max-w-xs"
+              />
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-purple-600" />
+                <span className="text-gray-900">{filteredCharacters.length}명의 캐릭터</span>
+              </div>
+              <Button onClick={() => {
+                console.debug("Toggle add form button clicked");
+                setShowAddForm(!showAddForm);
+              }} className="form-button-primary">
+                <Plus className="w-4 h-4 mr-2" />
+                캐릭터 추가
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -195,66 +225,70 @@ export default function CharactersPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {characters.map((character) => (
-          <Card key={character.id} className="document-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {character.name.charAt(0)}
+        {filteredCharacters.length > 0 ? (
+          filteredCharacters.map((character) => (
+            <Card key={character.id} className="document-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {character.name.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-gray-900 text-lg">
+                        {character.name}
+                        {character.favorite && <Star className="w-4 h-4 ml-2 inline text-yellow-400 fill-current" />}
+                      </CardTitle>
+                      <p className="text-gray-600 text-sm">
+                        {character.server} • Lv.{character.level} • {character.profession}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-gray-900 text-lg">
-                      {character.name}
-                      {character.favorite && <Star className="w-4 h-4 ml-2 inline text-yellow-400 fill-current" />}
-                    </CardTitle>
-                    <p className="text-gray-600 text-sm">
-                      {character.server} • Lv.{character.level} • {character.profession}
-                    </p>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleToggleFavorite(character.id)}
+                      className="text-yellow-500 border-yellow-500 hover:bg-yellow-50"
+                    >
+                      <Star className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteCharacter(character.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">실버 코인</p>
+                  <p className="font-medium text-gray-900">{character.silverCoins.toLocaleString()}개</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">데몬 헌터 공물</p>
+                  <p className="font-medium text-gray-900">{character.demonTribute.toLocaleString()}개</p>
+                </div>
+                <div className="col-span-2 mt-2">
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleToggleFavorite(character.id)}
-                    className="text-yellow-500 border-yellow-500 hover:bg-yellow-50"
+                    onClick={() => {
+                      console.debug(`'활성화' button clicked for character: ${character.name}`);
+                      setActiveCharacter(character);
+                    }}
+                    className="form-button-primary w-full"
                   >
-                    <Star className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDeleteCharacter(character.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
+                    활성화
                   </Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500">실버 코인</p>
-                <p className="font-medium text-gray-900">{character.silverCoins.toLocaleString()}개</p>
-              </div>
-              <div>
-                <p className="text-gray-500">데몬 헌터 공물</p>
-                <p className="font-medium text-gray-900">{character.demonTribute.toLocaleString()}개</p>
-              </div>
-              <div className="col-span-2 mt-2">
-                <Button
-                  onClick={() => {
-                    console.debug(`'활성화' button clicked for character: ${character.name}`);
-                    setActiveCharacter(character);
-                  }}
-                  className="form-button-primary w-full"
-                >
-                  활성화
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <p>검색 결과가 없습니다.</p>
+        )}
       </div>
     </div>
   )

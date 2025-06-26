@@ -6,12 +6,13 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Hammer, Clock, Package, Star, Activity, Target, Settings } from "lucide-react"
+import { Hammer, Clock, Package, Star, Activity, Target, Settings, XCircle } from "lucide-react"
 import { useCharacter } from "@/contexts/character-context"
 import craftingFacilitiesData from "@/data/craftingFacilities.json"
 import { Badge } from "@/components/ui/badge"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import allItemsData from "@/data/items.json"
+import { FavoriteToggle } from "@/components/favorite-toggle"
 
 // Define the structure for a material within a recipe
 interface Material {
@@ -46,24 +47,20 @@ interface ProcessingQueue {
 const allCraftingFacilitiesData: FacilityData[] = craftingFacilitiesData as FacilityData[]
 
 export default function CraftingPage() {
-  console.debug("Entering CraftingPage component.")
   const { activeCharacter, updateCharacter, toggleCraftingFacilityFavorite } = useCharacter()
   const [selectedFacilityIds, setSelectedFacilityIds] = useState<string[]>([])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false) // New state for favorite filter
+  const [searchQuery, setSearchQuery] = useState("") // 검색 쿼리 상태 추가
 
   // Get all unique facility IDs for filter buttons
   const facilityTypes = allCraftingFacilitiesData.map((f) => ({ id: f.id, name: f.name }))
-  console.debug("Available facility types for filtering:", facilityTypes)
 
   // Timer effect
   useEffect(() => {
-    console.debug("CraftingPage useEffect: Setting up timer interval.")
     const interval = setInterval(() => {
       if (!activeCharacter) {
-        console.debug("No active character, stopping timer interval.")
         return
       }
-      console.debug("Timer tick for activeCharacter.id:", activeCharacter.id)
       const updatedQueues = { ...activeCharacter.craftingQueues }
 
       let shouldUpdate = false
@@ -80,13 +77,11 @@ export default function CraftingPage() {
       }
 
       if (shouldUpdate) {
-        console.debug("Updating character with new queue times.", updatedQueues)
         updateCharacter(activeCharacter.id, { craftingQueues: updatedQueues })
       }
     }, 1000)
 
     return () => {
-      console.debug("CraftingPage useEffect cleanup: Clearing timer interval.")
       clearInterval(interval)
     }
   }, [activeCharacter, updateCharacter]) // Depend on activeCharacter and updateCharacter
@@ -103,27 +98,20 @@ export default function CraftingPage() {
       itemNameMap[item.name] = item.id
     }
   }
-  console.debug("Created itemNameMap:", itemNameMap)
 
   const startProcessing = (facilityId: string, itemName: string, quantity: number, recipeTime: number) => {
-    console.debug(
-      `Entering startProcessing - facilityId: ${facilityId}, itemName: ${itemName}, quantity: ${quantity}, recipeTime: ${recipeTime}`,
-    )
     if (!activeCharacter) {
-      console.warn("No active character, cannot start processing.")
       return
     }
 
     const currentFacilityQueues = activeCharacter.craftingQueues[facilityId]
     if (!currentFacilityQueues) {
-      console.warn(`Facility ${facilityId} not found in active character's crafting queues.`)
       return
     }
 
     const availableQueueIndex = currentFacilityQueues.findIndex((q) => !q.isProcessing)
 
     if (availableQueueIndex === -1) {
-      console.warn(`No available queue in facility ${facilityId}.`)
       return
     }
 
@@ -142,28 +130,20 @@ export default function CraftingPage() {
       [facilityId]: newQueues,
     }
     updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
-    console.debug(
-      `Started processing ${itemName} in facility ${facilityId}. New craftingQueues:`,
-      updatedCraftingQueues,
-    )
   }
 
   const claimCompletedItems = (facilityId: string) => {
-    console.debug(`Entering claimCompletedItems - facilityId: ${facilityId}`)
     if (!activeCharacter) {
-      console.warn("No active character, cannot claim items.")
       return
     }
 
     const currentFacilityQueues = activeCharacter.craftingQueues[facilityId]
     if (!currentFacilityQueues) {
-      console.warn(`Facility ${facilityId} not found in active character's crafting queues.`)
       return
     }
 
     const newQueues = currentFacilityQueues.map((queue) => {
       if (queue.timeLeft === 0 && queue.isProcessing) {
-        console.debug(`Claiming item ${queue.itemName} from queue ${queue.id} in facility ${facilityId}.`)
         return { ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0 }
       }
       return queue
@@ -174,25 +154,20 @@ export default function CraftingPage() {
       [facilityId]: newQueues,
     }
     updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
-    console.debug(`Claimed all items from facility ${facilityId}. New craftingQueues:`, updatedCraftingQueues)
   }
 
   const cancelQueueItem = (facilityId: string, queueId: number) => {
-    console.debug(`Entering cancelQueueItem - facilityId: ${facilityId}, queueId: ${queueId}`)
     if (!activeCharacter) {
-      console.warn("No active character, cannot cancel queue item.")
       return
     }
 
     const currentFacilityQueues = activeCharacter.craftingQueues[facilityId]
     if (!currentFacilityQueues) {
-      console.warn(`Facility ${facilityId} not found in active character's crafting queues.`)
       return
     }
 
     const newQueues = currentFacilityQueues.map((queue) => {
       if (queue.id === queueId) {
-        console.debug(`Cancelling item ${queue.itemName} from queue ${queue.id} in facility ${facilityId}.`)
         return { ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0 }
       }
       return queue
@@ -203,288 +178,250 @@ export default function CraftingPage() {
       [facilityId]: newQueues,
     }
     updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
-    console.debug(
-      `Cancelled queue item ${queueId} in facility ${facilityId}. New craftingQueues:`,
-      updatedCraftingQueues,
-    )
   }
 
   const cancelAllQueues = (facilityId: string) => {
-    console.debug(`Entering cancelAllQueues - facilityId: ${facilityId}`)
     if (!activeCharacter) {
-      console.warn("No active character, cannot cancel all queues.")
       return
     }
 
     const currentFacilityQueues = activeCharacter.craftingQueues[facilityId]
     if (!currentFacilityQueues) {
-      console.warn(`Facility ${facilityId} not found in active character's crafting queues.`)
       return
     }
 
-    const newQueues = currentFacilityQueues.map((queue) => {
-      console.debug(`Cancelling item ${queue.itemName} from queue ${queue.id} in facility ${facilityId}.`)
-      return { ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0 }
-    })
+    const newQueues = currentFacilityQueues.map((queue) => ({ ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0 }));
 
     const updatedCraftingQueues = {
       ...activeCharacter.craftingQueues,
       [facilityId]: newQueues,
     }
     updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
-    console.debug(`Cancelled all queues in facility ${facilityId}. New craftingQueues:`, updatedCraftingQueues)
   }
 
   const handleFilterChange = (value: string[]) => {
-    console.debug("Filter change detected:", value)
     setSelectedFacilityIds(value)
   }
 
   const filteredFacilities = allCraftingFacilitiesData.filter((facility) => {
-    const matchesCategory = selectedFacilityIds.length === 0 || selectedFacilityIds.includes(facility.id)
-    const matchesFavorite = !showFavoritesOnly || activeCharacter?.favoriteCraftingFacilities[facility.id]
-    console.debug(`Facility ${facility.name}: matchesCategory=${matchesCategory}, matchesFavorite=${matchesFavorite}`)
-    return matchesCategory && matchesFavorite
-  })
-  console.debug(
-    "Filtered facilities to display:",
-    filteredFacilities.map((f) => f.name),
-  )
+    const isFavorite = activeCharacter?.favoriteCraftingFacilities?.[facility.id];
+
+    const matchesSearchQuery = 
+      facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      facility.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      facility.recipes.some(recipe => 
+        recipe.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.materials.some(material => material.item.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+
+    if (showFavoritesOnly && !isFavorite) {
+      return false;
+    }
+    if (selectedFacilityIds.length > 0 && !selectedFacilityIds.includes(facility.id)) {
+      return false;
+    }
+    return matchesSearchQuery;
+  });
+
+  const sortFacilities = (a: FacilityData, b: FacilityData) => {
+    const aIsFavorite = activeCharacter?.favoriteCraftingFacilities?.[a.id];
+    const bIsFavorite = activeCharacter?.favoriteCraftingFacilities?.[b.id];
+
+    if (aIsFavorite && !bIsFavorite) return -1;
+    if (!aIsFavorite && bIsFavorite) return 1;
+    return a.name.localeCompare(b.name);
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="p-6 space-y-8">
+      <div className="content-padding section-spacing">
         {/* Enhanced Header */}
         <div className="modern-card fade-in">
           <div className="p-8">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center space-x-4">
-                <div className="p-4 bg-orange-100 rounded-2xl flex-shrink-0">
-                  <Hammer className="w-8 h-8 text-orange-600" />
+                <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
+                  <Hammer className="w-8 h-8 text-blue-600" />
                 </div>
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900">가공 시설</h1>
-                  <p className="text-lg text-gray-600 mt-1">원재료를 상위 아이템으로 가공하고 진행 상황을 확인하세요</p>
+                <div className="min-w-0">
+                  <h1 className="text-4xl font-bold text-gray-900">제작 관리</h1>
+                  <p className="text-lg text-gray-600 mt-1">아이템 제작 현황 및 레시피</p>
+                  <p className="text-sm text-gray-500 mt-1">캐릭터별 제작 큐 및 재료 관리</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-orange-600">{filteredFacilities.length}</div>
-                  <div className="text-sm text-gray-500">활성 시설</div>
+                <FavoriteToggle id="crafting-header" name="제작 관리 헤더" type="header" />
+                <Input
+                  type="text"
+                  placeholder="제작 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-xs"
+                />
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Clock className="w-4 h-4" />
+                  <span>마지막 업데이트: 방금 전</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Enhanced Filter Section */}
-        <div className="modern-card slide-up">
-          <div className="p-6">
-            <div className="flex flex-wrap gap-3 items-center">
-              <span className="text-sm font-medium text-gray-700 flex items-center">
-                <Settings className="w-4 h-4 mr-2" />
-                필터:
-              </span>
-              <ToggleGroup type="multiple" value={selectedFacilityIds} onValueChange={handleFilterChange}>
-                {facilityTypes.map((type) => (
-                  <ToggleGroupItem
-                    key={type.id}
-                    value={type.id}
-                    aria-label={`${type.name} 토글`}
-                    className="data-[state=on]:bg-blue-600 data-[state=on]:text-white"
-                  >
-                    {type.name}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+        {/* Main Content Area */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filters and Search */}
+          <div className="document-card p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <ToggleGroup type="multiple" value={selectedFacilityIds} onValueChange={handleFilterChange} className="flex-wrap">
+              {facilityTypes.map((type) => (
+                <ToggleGroupItem key={type.id} value={type.id} aria-label={`Toggle ${type.name}`}>
+                  {type.name}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            <div className="flex items-center space-x-2">
               <Button
                 variant={showFavoritesOnly ? "default" : "outline"}
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={showFavoritesOnly ? "bg-blue-600 text-white" : ""}
+                onClick={() => {
+                  setShowFavoritesOnly(!showFavoritesOnly);
+                }}
+                className="flex items-center space-x-2"
               >
-                <Star
-                  className={`w-4 h-4 mr-2 ${showFavoritesOnly ? "fill-current text-yellow-400" : "text-yellow-400"}`}
-                />
-                즐겨찾기만 보기
+                <Star className="w-4 h-4" />
+                <span>즐겨찾기만 보기</span>
               </Button>
             </div>
           </div>
-        </div>
 
-        {/* Enhanced Facility Cards */}
-        <div className="space-y-8">
-          {filteredFacilities.map((facility, index) => {
-            const currentQueues =
-              activeCharacter?.craftingQueues[facility.id] ||
-              Array(4)
-                .fill(null)
-                .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0 }))
-            const isFavorite = activeCharacter?.favoriteCraftingFacilities[facility.id] || false
-            const activeQueues = currentQueues.filter((q) => q.isProcessing).length
-            const completedQueues = currentQueues.filter((q) => q.isProcessing && q.timeLeft === 0).length
+          {/* Crafting Facilities List */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredFacilities.sort(sortFacilities).map((facility) => {
+              const currentQueues = activeCharacter?.craftingQueues?.[facility.id] || [];
+              const activeQueuesCount = currentQueues.filter(q => q.isProcessing).length;
+              const completedQueuesCount = currentQueues.filter(q => q.timeLeft === 0 && q.isProcessing).length;
+              const totalAvailableSlots = 4; // Assuming 4 slots per facility
+              const occupiedSlots = activeQueuesCount;
 
-            return (
-              <Card key={facility.id} className="modern-card scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-xl">
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">
-                        ⚙️
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">{facility.name}</h3>
-                        <div className="flex items-center space-x-3 mt-2">
-                          <Badge className={`status-indicator ${activeQueues > 0 ? "status-success" : "status-info"}`}>
-                            <Activity className="w-3 h-3 mr-1" />
-                            {activeQueues}/4 가동
-                          </Badge>
-                          {completedQueues > 0 && (
-                            <Badge className="status-error animate-pulse">
-                              <Package className="w-3 h-3 mr-1" />
-                              {completedQueues}개 완료
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+              return (
+                <Card key={facility.id} className="document-card">
+                  <CardHeader className="excel-header flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center space-x-2">
+                      <Hammer className="h-5 w-5 text-yellow-600" />
+                      <CardTitle className="text-2xl font-bold">{facility.name}</CardTitle>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleCraftingFacilityFavorite(facility.id)}
-                      className={`w-12 h-12 rounded-xl transition-all duration-300 ${
-                        isFavorite
-                          ? "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
-                          : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
-                      }`}
-                    >
-                      <Star className={`w-6 h-6 ${isFavorite ? "fill-current" : ""}`} />
-                    </Button>
-                  </CardTitle>
-                  <p className="text-gray-600 mt-2">{facility.description}</p>
-                </CardHeader>
-
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Enhanced Processing Queues */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-                          <Clock className="w-5 h-5 mr-2 text-blue-600" />
-                          가공 대기열
-                        </h4>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => claimCompletedItems(facility.id)}
-                            className="btn-primary-modern text-xs"
-                            disabled={completedQueues === 0}
-                          >
-                            <Package className="w-3 h-3 mr-1" />
-                            모두 받기
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => cancelAllQueues(facility.id)}
-                            className="text-xs"
-                            disabled={activeQueues === 0}
-                          >
-                            모두 취소
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        {currentQueues.map((queue) => (
-                          <div
-                            key={queue.id}
-                            className={`relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
-                              queue.isProcessing
-                                ? queue.timeLeft > 0
-                                  ? "border-blue-300 bg-blue-50 shadow-lg hover:shadow-xl"
-                                  : "border-green-300 bg-green-50 shadow-lg hover:shadow-xl animate-pulse"
-                                : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
-                            }`}
-                            onClick={() => {
-                              if (queue.timeLeft === 0 && queue.isProcessing) {
-                                claimCompletedItems(facility.id)
-                              }
-                            }}
-                          >
-                            {queue.isProcessing ? (
-                              queue.timeLeft > 0 ? (
-                                <div className="text-center space-y-2">
-                                  <Clock className="w-8 h-8 text-blue-600 mx-auto" />
-                                  <div className="text-lg font-bold text-blue-600 font-mono">
-                                    {Math.floor(queue.timeLeft / 60)}:
-                                    {(queue.timeLeft % 60).toString().padStart(2, "0")}
-                                  </div>
-                                  <div className="text-xs text-blue-500 font-medium truncate">{queue.itemName}</div>
-                                  <div className="progress-modern mt-2">
-                                    <div
-                                      className="progress-fill-modern"
-                                      style={{
-                                        width: `${((queue.totalTime - queue.timeLeft) / queue.totalTime) * 100}%`,
-                                      }}
-                                    />
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      cancelQueueItem(facility.id, queue.id)
-                                    }}
-                                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white p-0 text-xs"
-                                  >
-                                    ×
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="text-center space-y-2">
-                                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                                    <Package className="w-6 h-6 text-green-600" />
-                                  </div>
-                                  <div className="text-lg font-bold text-green-600">완료!</div>
-                                  <div className="text-xs text-green-500 font-medium">클릭하여 수령</div>
-                                </div>
-                              )
-                            ) : (
-                              <div className="text-center space-y-2">
-                                <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center mx-auto">
-                                  <span className="text-gray-400 text-2xl">+</span>
-                                </div>
-                                <div className="text-sm text-gray-500 font-medium">대기 중</div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Enhanced Recipe Cards */}
-                    <div className="lg:col-span-2">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <Hammer className="w-5 h-5 mr-2 text-orange-600" />
-                        제작 가능 아이템
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {facility.recipes.map((recipe, index) => (
+                    <FavoriteToggle
+                      id={facility.id}
+                      name={facility.name}
+                      type="crafting-facility"
+                      isFavorite={activeCharacter?.favoriteCraftingFacilities?.[facility.id]}
+                      onToggle={toggleCraftingFacilityFavorite}
+                    />
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-gray-600 mb-4">{facility.description}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      {facility.recipes
+                        .filter(recipe => // Filter recipes based on searchQuery here as well
+                          recipe.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          recipe.materials.some(material => material.item.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map((recipe, index) => (
                           <CraftingRecipeCard
                             key={index}
                             recipe={recipe}
                             inventory={activeCharacter?.inventory || {}}
                             itemNameMap={itemNameMap}
-                            onCraft={(quantity) => startProcessing(facility.id, recipe.product, quantity, recipe.time)}
+                            onCraft={(quantity, recipeTime) =>
+                              startProcessing(facility.id, recipe.product, quantity, recipeTime)
+                            }
                           />
                         ))}
-                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+
+                    <h3 className="text-lg font-semibold mb-3 flex items-center space-x-2">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                      <span>진행 중인 제작 ({occupiedSlots}/{totalAvailableSlots})</span>
+                    </h3>
+                    {currentQueues.length > 0 ? (
+                      <div className="space-y-3">
+                        {currentQueues.map((queue) => (
+                          <div key={queue.id} className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
+                            <div>
+                              <p className="font-medium">
+                                {queue.isProcessing ? (queue.itemName || "알 수 없는 아이템") : "비어있음"}
+                              </p>
+                              {queue.isProcessing && queue.timeLeft > 0 && (
+                                <p className="text-sm text-gray-600">
+                                  남은 시간: {Math.floor(queue.timeLeft / 60)}분 {queue.timeLeft % 60}초
+                                </p>
+                              )}
+                              {queue.timeLeft === 0 && queue.isProcessing && (
+                                <Badge variant="default" className="bg-green-500 text-white">
+                                  제작 완료!
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex space-x-2">
+                              {queue.timeLeft === 0 && queue.isProcessing && (
+                                <Button
+                                  variant="success"
+                                  size="sm"
+                                  onClick={() => {
+                                    claimCompletedItems(facility.id);
+                                  }}
+                                >
+                                  <Package className="w-4 h-4 mr-1" />
+                                  수령
+                                </Button>
+                              )}
+                              {queue.isProcessing && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    cancelQueueItem(facility.id, queue.id);
+                                  }}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  취소
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">진행 중인 제작이 없습니다.</p>
+                    )}
+
+                    {completedQueuesCount > 0 && (
+                      <Button
+                        variant="outline"
+                        className="mt-4 w-full"
+                        onClick={() => {
+                          claimCompletedItems(facility.id);
+                        }}
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        완료된 아이템 모두 수령
+                      </Button>
+                    )}
+                    {activeQueuesCount > 0 && (
+                      <Button
+                        variant="outline"
+                        className="mt-2 w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => {
+                          cancelAllQueues(facility.id);
+                        }}
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        모든 제작 취소
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -618,3 +555,4 @@ function CraftingRecipeCard({ recipe, onCraft, inventory, itemNameMap }: Craftin
     </Card>
   )
 }
+

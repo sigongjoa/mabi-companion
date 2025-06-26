@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Brain,
   Send,
@@ -20,7 +21,9 @@ import {
   CheckSquare,
   Package,
   Sword,
+  Clock,
 } from "lucide-react"
+import { FavoriteToggle } from "@/components/favorite-toggle"
 
 interface Message {
   id: string
@@ -129,6 +132,7 @@ export default function AssistantPage() {
       facility3: [],
     },
   })
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Simulate receiving real-time data updates
   useEffect(() => {
@@ -147,36 +151,33 @@ export default function AssistantPage() {
     return () => clearInterval(interval)
   }, [])
 
+  const filteredMessages = messages.filter((message) =>
+    message.content.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.debug("handleFileChange: Function entry.")
     const file = event.target.files?.[0]
     if (file) {
-      console.debug(`handleFileChange: File selected: ${file.name}`)
       const reader = new FileReader()
       reader.onloadend = () => {
         setSelectedImageBase64(reader.result as string)
-        console.debug("handleFileChange: File read as Base64.")
       }
       reader.readAsDataURL(file)
     } else {
-      console.debug("handleFileChange: No file selected.")
       setSelectedImageBase64(null)
     }
   }
 
   const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    console.debug("handlePaste: Function entry.")
     const items = event.clipboardData?.items
     if (items) {
       for (const item of items) {
         if (item.type.indexOf("image") !== -1) {
-          console.debug("handlePaste: Image found in clipboard.")
           const blob = item.getAsFile()
           if (blob) {
             const reader = new FileReader()
             reader.onloadend = () => {
               setSelectedImageBase64(reader.result as string)
-              console.debug("handlePaste: Image pasted and read as Base64.")
             }
             reader.readAsDataURL(blob)
             event.preventDefault() // Prevent default paste behavior (e.g., pasting text if image is also text)
@@ -185,16 +186,13 @@ export default function AssistantPage() {
         }
       }
     }
-    console.debug("handlePaste: No image found in clipboard.")
   }
 
   const handleClearImage = () => {
-    console.debug("handleClearImage: Function entry.")
     setSelectedImageBase64(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = "" // Clear file input value
     }
-    console.debug("handleClearImage: Selected image cleared.")
   }
 
   const generateContextualResponse = (userInput: string, context: DashboardData): string => {
@@ -286,9 +284,7 @@ export default function AssistantPage() {
   }
 
   const sendMessage = async () => {
-    console.debug("sendMessage: Function entry.")
     if (!input.trim() && !selectedImageBase64) {
-      console.debug("sendMessage: Input and image are both empty. Returning.")
       return
     }
 
@@ -306,7 +302,6 @@ export default function AssistantPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "" // Clear file input value as well
     }
-    console.debug("sendMessage: User message added, input cleared, loading set to true, image cleared.")
 
     try {
       const response = await fetch("/api/chat", {
@@ -320,7 +315,6 @@ export default function AssistantPage() {
             .map((msg: Message) => ({ role: msg.role, content: msg.content })),
         }),
       })
-      console.debug(`sendMessage: API call to /api/chat responded with status: ${response.status}`)
 
       const result = await response.json()
       if (response.ok) {
@@ -331,10 +325,7 @@ export default function AssistantPage() {
           timestamp: new Date(),
         }
         setMessages((prev: Message[]) => [...prev, aiMessage])
-        console.debug("sendMessage: AI message successfully added to state.")
       } else {
-        console.error("sendMessage: API Error:", result.error)
-        console.debug("sendMessage: API Error encountered. Setting AI response to error message.")
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
@@ -344,10 +335,6 @@ export default function AssistantPage() {
         setMessages((prev: Message[]) => [...prev, errorMessage])
       }
     } catch (err: any) {
-      console.error("sendMessage: Fetch Error:", err)
-      console.debug(
-        `sendMessage: Fetch Error encountered: ${err.message}. Setting AI response to generic error message.`,
-      )
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -357,12 +344,10 @@ export default function AssistantPage() {
       setMessages((prev: Message[]) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
-      console.debug("sendMessage: Loading set to false. Function exit.")
     }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    console.debug("handleKeyPress: Function entry.")
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
@@ -371,33 +356,41 @@ export default function AssistantPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="p-6 h-[calc(100vh-2rem)] flex flex-col">
+      <div className="content-padding section-spacing">
         {/* Enhanced Header */}
-        <div className="modern-card p-8 mb-8 fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
-                <Brain className="w-8 h-8 text-purple-600" />
+        <div className="modern-card fade-in">
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
+                  <Brain className="w-8 h-8 text-blue-600" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-4xl font-bold text-gray-900">AI 어시스턴트</h1>
+                  <p className="text-lg text-gray-600 mt-1">실시간 데이터 기반 조언</p>
+                  <p className="text-sm text-gray-500 mt-1">모험에 필요한 모든 정보를 여기서</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-4xl font-bold text-gray-900">AI 어시스턴트</h1>
-                <p className="text-lg text-gray-600 mt-1">실시간 데이터 기반 맞춤형 게임 조언</p>
+              <div className="flex items-center space-x-4">
+                <FavoriteToggle id="assistant-header" name="AI 어시스턴트 헤더" type="header" />
+                <Input
+                  type="text"
+                  placeholder="메시지 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-xs"
+                />
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Clock className="w-4 h-4" /> {/* Clock icon needs to be imported */}
+                  <span>마지막 업데이트: 방금 전</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge className="status-success flex items-center space-x-2 px-4 py-2">
-                <Database className="w-4 h-4" />
-                <span>실시간 연동</span>
-              </Badge>
-              <Badge className="status-info flex items-center space-x-2 px-4 py-2">
-                <Zap className="w-4 h-4" />
-                <span>AI 분석 중</span>
-              </Badge>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1">
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 section-spacing">
           {/* Enhanced Chat Interface */}
           <div className="lg:col-span-3">
             <Card className="modern-card flex-1 flex flex-col h-full">
@@ -408,7 +401,7 @@ export default function AssistantPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-                {messages.map((message, index) => (
+                {filteredMessages.map((message, index) => (
                   <div
                     key={message.id}
                     className={`flex items-start space-x-4 fade-in ${

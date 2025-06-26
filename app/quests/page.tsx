@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckSquare, Clock, Calendar } from "lucide-react"
 import { useCharacter, Character } from "@/contexts/character-context"
+import { FavoriteToggle } from "@/components/favorite-toggle"
 
 import questsData from "@/data/quests.json"
 
@@ -113,13 +114,23 @@ export default function QuestsPage() {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="document-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">퀘스트 관리</h1>
-            <p className="text-gray-600">일일/주간 숙제 체크리스트</p>
+      <div className="modern-card fade-in">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
+                <CheckSquare className="w-8 h-8 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">퀘스트 관리</h1>
+                <p className="text-lg text-gray-600 mt-1">일일/주간 숙제 체크리스트</p>
+                <p className="text-sm text-gray-500 mt-1">캐릭터별 퀘스트 진행 상황 및 초기화 정보</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="quests-header" name="퀘스트 헤더" type="header" />
+            </div>
           </div>
-          <CheckSquare className="w-8 h-8 text-purple-600" />
         </div>
       </div>
 

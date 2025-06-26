@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Sparkles, Plus, Minus } from "lucide-react"
 import { useCharacter } from "@/contexts/character-context"
 import skillsData from "@/data/skills.json"
+import { FavoriteToggle } from "@/components/favorite-toggle"
+import { Input } from "@/components/ui/input"
 
 interface LifeSkill {
   id: number
@@ -28,6 +30,7 @@ export default function SkillsPage() {
   console.debug("SkillsPage rendered.");
   const { activeCharacter, updateCharacter } = useCharacter();
   const [selectedCategory, setSelectedCategory] = useState("전체")
+  const [searchQuery, setSearchQuery] = useState("")
 
   const updateSkillLevel = (skillId: number, change: number) => {
     console.debug(`Entering updateSkillLevel - skillId: ${skillId}, change: ${change}`);
@@ -51,7 +54,12 @@ export default function SkillsPage() {
   }));
   console.debug("skillsWithLevels:", skillsWithLevels);
 
-  const filteredSkills = skillsWithLevels.filter((skill) => selectedCategory === "전체" || skill.category === selectedCategory)
+  const filteredSkills = skillsWithLevels.filter((skill) => {
+    const categoryMatch = selectedCategory === "전체" || skill.category === selectedCategory;
+    const searchMatch = skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        skill.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return categoryMatch && searchMatch;
+  });
   console.debug("filteredSkills:", filteredSkills);
 
   const getSkillIcon = (skillName: string) => {
@@ -84,20 +92,44 @@ export default function SkillsPage() {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">생활 스킬</h1>
-          <p className="text-gray-600">생활 스킬 레벨 관리</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Sparkles className="w-6 h-6 text-purple-600" />
-          <span className="text-gray-900 font-medium">
-            총 {totalSkillLevels} 레벨
-          </span>
+      {/* Enhanced Header - Dashboard style */}
+      <div className="modern-card fade-in mb-6">
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
+                <Sparkles className="w-8 h-8 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold text-gray-900">생활 스킬</h1>
+                <p className="text-lg text-gray-600 mt-1">생활 스킬 레벨 관리 및 효율적인 육성</p>
+                <p className="text-sm text-gray-500 mt-1">다양한 생활 스킬의 레벨을 관리하고 필요한 정보를 확인하세요.</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FavoriteToggle id="skills-header" name="생활 스킬 헤더" type="header" />
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+                <span className="text-gray-900 font-medium">
+                  총 {totalSkillLevels} 레벨
+                </span>
+              </div>
+              <Input
+                type="text"
+                placeholder="스킬 검색..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  console.debug(`Skill search query changed: ${e.target.value}`);
+                }}
+                className="max-w-xs"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mb-6">
         {categories.map((category) => (
           <Button
             key={category}
@@ -124,53 +156,57 @@ export default function SkillsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredSkills.map((skill) => (
-          <Card key={skill.id} className="bg-white border-gray-200 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <div className="text-3xl">{getSkillIcon(skill.name)}</div>
-                <div className="flex-1">
-                  <CardTitle className="text-gray-900 text-sm">{skill.name}</CardTitle>
-                  <Badge className={`text-xs ${categoryColors[skill.category as keyof typeof categoryColors]}`}>
-                    {skill.category}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                        console.debug(`Decrementing skill level for ${skill.name} (ID: ${skill.id})`);
-                        updateSkillLevel(skill.id, -1);
-                    }}
-                    className="h-8 w-8 p-0 border-gray-300"
-                    disabled={skill.level <= 1}
-                  >
-                    <Minus className="w-3 h-3" />
-                  </Button>
-                  <div className="w-16 text-center">
-                    <span className="text-gray-900 font-medium text-sm">Lv. {skill.level}</span>
+        {filteredSkills.length > 0 ? (
+          filteredSkills.map((skill) => (
+            <Card key={skill.id} className="bg-white border-gray-200 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="text-3xl">{getSkillIcon(skill.name)}</div>
+                  <div className="flex-1">
+                    <CardTitle className="text-gray-900 text-sm">{skill.name}</CardTitle>
+                    <Badge className={`text-xs ${categoryColors[skill.category as keyof typeof categoryColors]}`}>
+                      {skill.category}
+                    </Badge>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                        console.debug(`Incrementing skill level for ${skill.name} (ID: ${skill.id})`);
-                        updateSkillLevel(skill.id, 1);
-                    }}
-                    className="h-8 w-8 p-0 border-gray-300"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                          console.debug(`Decrementing skill level for ${skill.name} (ID: ${skill.id})`);
+                          updateSkillLevel(skill.id, -1);
+                      }}
+                      className="h-8 w-8 p-0 border-gray-300"
+                      disabled={skill.level <= 1}
+                    >
+                      <Minus className="w-3 h-3" />
+                    </Button>
+                    <div className="w-16 text-center">
+                      <span className="text-gray-900 font-medium text-sm">Lv. {skill.level}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                          console.debug(`Incrementing skill level for ${skill.name} (ID: ${skill.id})`);
+                          updateSkillLevel(skill.id, 1);
+                      }}
+                      className="h-8 w-8 p-0 border-gray-300"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <p className="text-gray-500 col-span-full text-center">검색 결과가 없습니다.</p>
+        )}
       </div>
     </div>
   )
