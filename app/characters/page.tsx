@@ -21,9 +21,18 @@ interface Character {
   favorite: boolean
 }
 
-const servers = ["류트", "만돌린", "하프", "울프", "던컨"]
+const servers = ["데이안", "아이라", "던컨", "알리사", "메이븐", "라사", "칼릭스"];
+const professions = [
+  "전사", "대검전사", "검술사",
+  "궁수", "석궁사수", "장궁병",
+  "마법사", "화염술사", "빙결술사", "전격술사",
+  "힐러", "사제", "수도사",
+  "음유시인", "댄서", "악사",
+  "도적", "격투가", "듀얼블레이드"
+];
 
 export default function CharactersPage() {
+  console.debug("Entering CharactersPage component");
   const { characters, addCharacter: contextAddCharacter, deleteCharacter: contextDeleteCharacter, toggleCharacterFavorite, setActiveCharacter } = useCharacter();
 
   const [showAddForm, setShowAddForm] = useState(false)
@@ -35,7 +44,12 @@ export default function CharactersPage() {
   })
 
   const handleAddCharacter = () => {
-    if (!newCharacter.name || !newCharacter.server) return
+    console.debug("Entering handleAddCharacter function");
+    if (!newCharacter.name || !newCharacter.server) {
+      console.debug("Validation failed: name or server is missing");
+      return;
+    }
+    console.debug(`New character data: ${JSON.stringify(newCharacter)}`);
 
     contextAddCharacter({
       name: newCharacter.name,
@@ -46,18 +60,25 @@ export default function CharactersPage() {
       demonTribute: 0,
       favorite: false,
     });
+    console.debug("Character added, resetting form");
     setNewCharacter({ name: "", server: "", level: "", profession: "" })
     setShowAddForm(false)
+    console.debug("Exiting handleAddCharacter function");
   }
 
   const handleDeleteCharacter = (id: string) => {
+    console.debug(`Entering handleDeleteCharacter function for ID: ${id}`);
     contextDeleteCharacter(id);
+    console.debug("Exiting handleDeleteCharacter function");
   }
 
   const handleToggleFavorite = (id: string) => {
+    console.debug(`Entering handleToggleFavorite function for ID: ${id}`);
     toggleCharacterFavorite(id);
+    console.debug("Exiting handleToggleFavorite function");
   }
 
+  console.debug("Rendering CharactersPage component");
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       <div className="document-card p-6">
@@ -71,7 +92,10 @@ export default function CharactersPage() {
               <Users className="w-5 h-5 text-purple-600" />
               <span className="text-gray-900">{characters.length}명의 캐릭터</span>
             </div>
-            <Button onClick={() => setShowAddForm(!showAddForm)} className="form-button-primary">
+            <Button onClick={() => {
+              console.debug("Toggle add form button clicked");
+              setShowAddForm(!showAddForm);
+            }} className="form-button-primary">
               <Plus className="w-4 h-4 mr-2" />
               캐릭터 추가
             </Button>
@@ -126,7 +150,10 @@ export default function CharactersPage() {
                   id="level"
                   type="number"
                   value={newCharacter.level}
-                  onChange={(e) => setNewCharacter((prev) => ({ ...prev, level: e.target.value }))}
+                  onChange={(e) => {
+                    console.debug(`Level input changed: ${e.target.value}`);
+                    setNewCharacter((prev) => ({ ...prev, level: e.target.value }));
+                  }}
                   placeholder="65"
                   className="form-input"
                 />
@@ -135,13 +162,24 @@ export default function CharactersPage() {
                 <Label htmlFor="profession" className="text-gray-700">
                   직업
                 </Label>
-                <Input
-                  id="profession"
+                <Select
                   value={newCharacter.profession}
-                  onChange={(e) => setNewCharacter((prev) => ({ ...prev, profession: e.target.value }))}
-                  placeholder="모험가"
-                  className="form-input"
-                />
+                  onValueChange={(value) => {
+                    console.debug(`Profession select changed: ${value}`);
+                    setNewCharacter((prev) => ({ ...prev, profession: value }));
+                  }}
+                >
+                  <SelectTrigger className="form-input">
+                    <SelectValue placeholder="직업 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {professions.map((profession) => (
+                      <SelectItem key={profession} value={profession}>
+                        {profession}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex justify-end space-x-2 mt-4">
