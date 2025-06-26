@@ -1,6 +1,11 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+// import dynamic from "next/dynamic";
+
+// const ClientProviders = dynamic(() => import("./ClientProviders"), {
+//   ssr: false, // 클라이언트 전용으로 완전히 분리
+// });
 import ClientProviders from "./ClientProviders"
 
 const inter = Inter({
