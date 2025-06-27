@@ -78,17 +78,13 @@ export default function TimersPage() {
                 <p className="text-sm text-gray-500 mt-1">게임 내 중요한 시간들을 놓치지 않고 효율적으로 관리하세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="timers-header" name="타이머 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <Input
                 type="text"
-                placeholder="타이머 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  console.debug(`Timer search query changed: ${e.target.value}`);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>

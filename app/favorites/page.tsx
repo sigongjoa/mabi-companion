@@ -232,16 +232,12 @@ export default function FavoritesPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <FavoriteToggle id="favorites-header" name="즐겨찾기 헤더" type="header" />
               <Input
                 type="text"
-                placeholder="즐겨찾기 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  console.debug(`Favorites search query changed: ${e.target.value}`);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>

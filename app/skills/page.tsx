@@ -106,8 +106,7 @@ export default function SkillsPage() {
                 <p className="text-sm text-gray-500 mt-1">다양한 생활 스킬의 레벨을 관리하고 필요한 정보를 확인하세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="skills-header" name="생활 스킬 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <div className="flex items-center space-x-2">
                 <Sparkles className="w-6 h-6 text-purple-600" />
                 <span className="text-gray-900 font-medium">
@@ -116,13 +115,10 @@ export default function SkillsPage() {
               </div>
               <Input
                 type="text"
-                placeholder="스킬 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  console.debug(`Skill search query changed: ${e.target.value}`);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>
@@ -135,10 +131,7 @@ export default function SkillsPage() {
             key={category}
             variant={selectedCategory === category ? "default" : "outline"}
             size="sm"
-            onClick={() => {
-                console.debug(`Category ${category} selected.`);
-                setSelectedCategory(category);
-            }}
+            onClick={() => setSelectedCategory(category)}
             className={
               selectedCategory === category
                 ? "bg-purple-600 hover:bg-purple-700"

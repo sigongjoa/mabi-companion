@@ -85,17 +85,13 @@ export default function StatsPage() {
                 <p className="text-sm text-gray-500 mt-1">나의 게임 데이터를 분석하여 성장 목표를 설정하고 효율적인 플레이를 계획하세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="stats-header" name="게임 통계 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <Input
                 type="text"
-                placeholder="통계 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  console.debug(`Stats search query changed: ${e.target.value}`);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>

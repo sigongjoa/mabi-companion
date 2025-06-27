@@ -27,6 +27,7 @@ import { CharacterSelector } from "@/components/character-selector"
 import { CurrencyTimer } from "@/components/currency-timer"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Input } from "@/components/ui/input"
+import { usePageMCP } from "@/hooks/use-page-mcp"
 
 const quickStats = [
   {
@@ -68,7 +69,7 @@ const recentActivities = [
   { action: "캐릭터 '기사단장 테오' 레벨업", time: "2시간 전", type: "level" },
   { action: "일일 퀘스트 8개 완료", time: "4시간 전", type: "quest" },
   { action: "최고급 가죽 5개 제작 완료", time: "6시간 전", type: "craft" },
-  { action: "석궁사수 스킬 강화", time: "1일 전", type: "skill" },
+  { action: "석궁사수 스킬 강화", time: "1일 전", "type": "skill" },
   { action: "주간 레이드 클리어", time: "2일 전", type: "raid" },
 ]
 
@@ -162,10 +163,28 @@ export default function DashboardPage() {
   const { characters, activeCharacter } = useCharacter()
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [loadingLLM, setLoadingLLM] = useState(false)
+  const [llmResponse, setLLMResponse] = useState<string | null>(null)
+
+  const mcp = usePageMCP();
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleLLMCall = async () => {
+    setLoadingLLM(true)
+    setLLMResponse(null);
+    try {
+      const response = await mcp(searchQuery);
+      setLLMResponse(response)
+    } catch (error: any) {
+      console.error("Error calling LLM", error)
+      setLLMResponse(`AI 응답 중 오류가 발생했습니다: ${error.message || "알 수 없는 오류"}`);
+    } finally {
+      setLoadingLLM(false)
+    }
+  }
 
   const filteredQuickStats = quickStats.filter((stat) => {
     return stat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -217,25 +236,36 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-500 mt-1">실시간 캐릭터 및 재화 관리 대시보드</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <FavoriteToggle id="dashboard-header" name="대시보드 헤더" type="header" />
+              <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
                 <Input
                   type="text"
-                  placeholder="대시보드 검색..."
+                  placeholder="검색..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
-                  className="max-w-xs"
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-sm"
                 />
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <Clock className="w-4 h-4" />
-                  <span>마지막 업데이트: 방금 전</span>
-                </div>
+                <Button
+                  onClick={handleLLMCall}
+                  disabled={loadingLLM}
+                  className="flex-shrink-0"
+                >
+                  {loadingLLM ? "AI 응답 받는 중..." : "AI에게 물어보기"}
+                </Button>
               </div>
             </div>
           </div>
         </div>
+
+        {llmResponse && (
+          <div className="modern-card fade-in slide-up animation-delay-200 mt-6">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">AI 응답</h2>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-800 whitespace-pre-wrap">
+                {typeof llmResponse === 'string' ? llmResponse : JSON.stringify(llmResponse, null, 2)}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Character Selection and Active Character Display */}
         <div className="modern-card fade-in slide-up animation-delay-100">

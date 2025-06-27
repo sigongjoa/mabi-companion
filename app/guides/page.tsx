@@ -230,16 +230,13 @@ export default function GuidesPage() {
                 <p className="text-sm text-gray-500 mt-1">게임 플레이에 필요한 모든 정보를 한 곳에서 찾아보세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="guides-header" name="가이드 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <Input
                 type="text"
-                placeholder="가이드 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>

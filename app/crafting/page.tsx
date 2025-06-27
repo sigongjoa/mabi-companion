@@ -249,19 +249,24 @@ export default function CraftingPage() {
                   <p className="text-sm text-gray-500 mt-1">캐릭터별 제작 큐 및 재료 관리</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <FavoriteToggle id="crafting-header" name="제작 관리 헤더" type="header" />
+              <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
                 <Input
                   type="text"
-                  placeholder="제작 검색..."
+                  placeholder="검색..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-xs"
+                  className="max-w-sm"
                 />
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <Clock className="w-4 h-4" />
-                  <span>마지막 업데이트: 방금 전</span>
-                </div>
+                <FavoriteToggle
+                  isFavorite={activeCharacter?.favoriteCraftingFacilities?.[selectedFacilityIds[0]] || false}
+                  onToggle={() => {
+                    if (selectedFacilityIds.length === 1) {
+                      toggleCraftingFacilityFavorite(selectedFacilityIds[0])
+                    }
+                  }}
+                  tooltipText="선택된 시설 즐겨찾기"
+                  showToggle={selectedFacilityIds.length === 1}
+                />
               </div>
             </div>
           </div>
@@ -270,26 +275,28 @@ export default function CraftingPage() {
         {/* Main Content Area */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Filters and Search */}
-          <div className="document-card p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <ToggleGroup type="multiple" value={selectedFacilityIds} onValueChange={handleFilterChange} className="flex-wrap">
-              {facilityTypes.map((type) => (
-                <ToggleGroupItem key={type.id} value={type.id} aria-label={`Toggle ${type.name}`}>
-                  {type.name}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={showFavoritesOnly ? "default" : "outline"}
-                onClick={() => {
-                  setShowFavoritesOnly(!showFavoritesOnly);
-                }}
-                className="flex items-center space-x-2"
+          <div className="modern-card section-spacing fade-in flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="w-full flex justify-center md:justify-start">
+              <ToggleGroup
+                type="multiple"
+                value={selectedFacilityIds}
+                onValueChange={handleFilterChange}
+                className="flex flex-wrap justify-center md:justify-start gap-2"
               >
-                <Star className="w-4 h-4" />
-                <span>즐겨찾기만 보기</span>
-              </Button>
+                {facilityTypes.map((type) => (
+                  <ToggleGroupItem key={type.id} value={type.id} aria-label={`Toggle ${type.name}`}>
+                    {type.name}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
             </div>
+            <Button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              variant={showFavoritesOnly ? "default" : "outline"}
+              className="flex-shrink-0"
+            >
+              <Star className="w-4 h-4 mr-2" /> 즐겨찾기만 보기
+            </Button>
           </div>
 
           {/* Crafting Facilities List */}

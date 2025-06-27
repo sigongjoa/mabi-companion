@@ -95,16 +95,13 @@ export default function EquipmentPage() {
                 <p className="text-sm text-gray-500 mt-1">내 캐릭터의 장비를 효율적으로 관리하고 최적의 세팅을 찾아보세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="equipment-header" name="장비 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <Input
                 type="text"
-                placeholder="장비 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>

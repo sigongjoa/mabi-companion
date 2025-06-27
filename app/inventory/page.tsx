@@ -194,16 +194,13 @@ export default function InventoryPage() {
                 <p className="text-sm text-gray-500 mt-1">내 캐릭터의 아이템을 효율적으로 관리하고 생산에 활용하세요.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="inventory-header" name="아이템 관리 헤더" type="header" />
+            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
               <Input
                 type="text"
-                placeholder="아이템 검색..."
+                placeholder="검색..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                }}
-                className="max-w-xs"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
               />
             </div>
           </div>
