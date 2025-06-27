@@ -44,4 +44,4 @@ export async function POST(req: NextRequest) {
     console.error("Error in LLM Context Chat API:", error); // logger.debug
     return NextResponse.json({ error: "LLM 호출 중 오류가 발생했습니다." }, { status: 500 });
   }
-} 
+}

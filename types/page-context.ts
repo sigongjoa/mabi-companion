@@ -115,4 +115,4 @@ export interface PageContext {
   favorites: FavoriteItem[]; // All favorite items
   domSnapshot?: Record<string, string>; // Optional: for DOM snapshots
   currentPage: string; // Current page path
-} 
+}

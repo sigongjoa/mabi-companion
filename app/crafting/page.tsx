@@ -562,4 +562,3 @@ function CraftingRecipeCard({ recipe, onCraft, inventory, itemNameMap }: Craftin
     </Card>
   )
 }
-
