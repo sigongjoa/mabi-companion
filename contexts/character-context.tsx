@@ -195,7 +195,7 @@ const createInitialCraftingQueues = (
     const facilityId = facility.id
     const defaultQueues: ProcessingQueue[] = Array(4)
       .fill(null)
-      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0 }))
+      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined }))
 
     // Merge with existing queues if provided
     craftingQueues[facilityId] = initialQueues[facilityId]

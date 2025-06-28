@@ -19,7 +19,7 @@
 
 ## 2. 데이터 모델링 (TypeScript 인터페이스 & JSON 스키마)
 
-```ts
+\`\`\`ts
 // PageContext
 interface PageContext {
   version: string;                    // ex. "1.0.0"
@@ -38,9 +38,9 @@ interface ParsedInventory {
   items: InventoryItem[];
   totalWeight?: number;               // ex. 245.26 / 420
 }
-```
+\`\`\`
 
-```ts
+\`\`\`ts
 // OpenAI Function-Call 스키마
 export const openAIFunctions = [
   {
@@ -93,11 +93,11 @@ export const openAIFunctions = [
     }
   }
 ];
-```
+\`\`\`
 
 ## 3. 상태 수집 & 이미지 캡처 (Gathering)
 
-```ts
+\`\`\`ts
 // hooks/useInventoryMCP.ts
 import { useCallback } from "react";
 import { createToolCall } from "@/lib/toolDefinitions";
@@ -173,11 +173,11 @@ export function useInventoryMCP(openai: OpenAIApi, userId: string) {
   logger.debug("Exiting useInventoryMCP");
   return { parseAndUpdate };
 }
-```
+\`\`\`
 
 ## 4. 직렬화 & 호출 흐름 (Serialization & Invocation)
 
-```tsx
+\`\`\`tsx
 // components/InventoryPage.tsx
 import { useInventoryMCP } from "@/hooks/useInventoryMCP";
 import { OpenAIApi } from "openai";
@@ -228,7 +228,7 @@ export function InventoryPage() {
     </div>
   );
 }
-```
+\`\`\`
 
 ## 5. 보안 · 성능 · 테스트
 
@@ -238,4 +238,4 @@ export function InventoryPage() {
     *   `gatherPageContext()` / `useInventoryMCP` 동작 검증
     *   Function-Call 응답 스텁 테스트
 *   **로깅**:
-    *   `console.debug(ctx)` 및 응답 결과 출력 
+    *   `console.debug(ctx)` 및 응답 결과 출력

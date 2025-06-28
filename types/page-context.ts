@@ -62,6 +62,7 @@ export interface ProcessingQueue {
   timeLeft: number;
   totalTime: number;
   itemName?: string;
+  quantity?: number; // Add quantity to the processing queue
 }
 
 export interface Character {

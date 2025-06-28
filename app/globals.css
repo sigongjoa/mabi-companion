@@ -498,3 +498,229 @@
 .page-subtitle {
   @apply text-gray-600 mt-1;
 }
+
+/* Crafting page specific layouts */
+.crafting-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .crafting-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .crafting-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Recipe cards grid */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .recipe-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Standardized card padding */
+.crafting-card {
+  @apply bg-white border border-gray-200 shadow-lg rounded-xl;
+  padding: 1rem; /* 16px */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.crafting-card:hover {
+  @apply shadow-xl border-gray-300;
+  transform: translateY(-2px);
+}
+
+.recipe-card {
+  @apply bg-white border border-gray-200 shadow-sm rounded-lg;
+  padding: 0.75rem; /* 12px */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.recipe-card:hover {
+  @apply shadow-md border-gray-300;
+  transform: translateY(-1px);
+}
+
+/* Consistent text alignment */
+.crafting-title {
+  @apply text-xl font-bold text-gray-900 text-left;
+}
+
+.recipe-title {
+  @apply text-lg font-bold text-gray-900 text-left;
+}
+
+.material-item {
+  @apply flex items-center justify-between p-2 bg-gray-50 rounded-lg;
+  gap: 0.75rem;
+}
+
+.material-name {
+  @apply flex-1 font-medium text-gray-700 text-left;
+}
+
+.material-progress {
+  @apply w-16 h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.material-count {
+  @apply text-sm font-bold min-w-[60px] text-right;
+}
+
+/* Standardized button sizes */
+.crafting-button {
+  @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.crafting-button-primary {
+  @apply crafting-button bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md;
+}
+
+.crafting-button-secondary {
+  @apply crafting-button bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm hover:shadow-md;
+}
+
+.crafting-button-success {
+  @apply crafting-button bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md;
+}
+
+.crafting-button-danger {
+  @apply crafting-button bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md;
+}
+
+/* Progress bar improvements */
+.progress-bar-modern {
+  @apply w-full h-2 bg-gray-200 rounded-full overflow-hidden;
+  transition: all 0.3s ease;
+}
+
+.progress-fill-success {
+  @apply h-full bg-green-500 rounded-full transition-all duration-500;
+}
+
+.progress-fill-danger {
+  @apply h-full bg-red-500 rounded-full transition-all duration-500;
+}
+
+/* Queue item styling */
+.queue-item {
+  @apply flex items-center justify-between bg-gray-50 p-3 rounded-lg;
+  gap: 1rem;
+}
+
+.queue-info {
+  @apply flex-1;
+}
+
+.queue-actions {
+  @apply flex gap-2;
+}
+
+/* Filter section improvements */
+.filter-section {
+  @apply bg-white border border-gray-200 shadow-sm rounded-lg p-4;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .filter-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.filter-toggles {
+  @apply flex flex-wrap gap-2;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .filter-toggles {
+    justify-content: flex-start;
+  }
+}
+
+/* Input standardization */
+.crafting-input {
+  @apply border border-gray-300 rounded-lg px-3 py-2 text-center font-bold;
+  min-height: 40px;
+  transition: all 0.2s ease;
+}
+
+.crafting-input:focus {
+  @apply outline-none ring-2 ring-blue-500 border-blue-500;
+}
+
+/* Badge improvements */
+.level-badge {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold;
+  min-width: 60px;
+  justify-content: center;
+}
+
+.info-section {
+  @apply flex items-center justify-between p-3 bg-blue-50 rounded-lg;
+  gap: 1rem;
+}
+
+.info-text {
+  @apply text-sm font-medium text-blue-700;
+}
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+  .crafting-card {
+    padding: 0.75rem; /* 12px on mobile */
+  }
+
+  .recipe-card {
+    padding: 0.75rem; /* 12px on mobile */
+  }
+
+  .crafting-button {
+    min-height: 44px; /* Better touch targets on mobile */
+    font-size: 0.875rem;
+  }
+
+  .material-item {
+    padding: 0.75rem;
+  }
+
+  .queue-item {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .queue-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
