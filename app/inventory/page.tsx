@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
-import { FavoriteToggle } from "@/components/ui/favorite-toggle"
+import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Plus, Minus, Package, Sparkles, LayoutGrid, Table2, Star, User } from "lucide-react"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
@@ -207,7 +207,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <CharacterScopedHeader title="내 아이템 목록" />
+      <CharacterScopedHeader title="내 아이템 목록" icon={Package} />
 
       <Tabs defaultValue={currentMainTab} onValueChange={setCurrentMainTab} className="space-y-6">
         <div className="document-card p-4">

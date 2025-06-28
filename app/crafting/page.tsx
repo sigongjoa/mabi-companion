@@ -144,7 +144,7 @@ export default function CraftingPage() {
 
     const newQueues = currentFacilityQueues.map((queue) => {
       if (queue.timeLeft === 0 && queue.isProcessing) {
-        return { ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0 }
+        return { ...queue, isProcessing: false, timeLeft: 0, totalTime: 0 }
       }
       return queue
     })

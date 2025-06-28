@@ -23,8 +23,6 @@ import {
   Download,
   Upload,
   RefreshCw,
-  BarChart3,
-  Calculator,
   Clock,
   Star,
 } from "lucide-react"
@@ -38,8 +36,6 @@ const ribbonTabs = [
         title: "탐색",
         items: [
           { icon: Home, label: "대시보드", href: "/", size: "large" },
-          { icon: BarChart3, label: "통계", href: "/stats", size: "small" },
-          { icon: RefreshCw, label: "새로고침", action: "refresh", size: "small" },
         ],
       },
       {
@@ -61,7 +57,6 @@ const ribbonTabs = [
       {
         title: "도구",
         items: [
-          { icon: Calculator, label: "계산기", href: "/calculator", size: "small" },
           { icon: Clock, label: "타이머", href: "/timers", size: "small" },
           { icon: Brain, label: "AI 도움", href: "/assistant", size: "small" },
         ],

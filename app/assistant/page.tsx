@@ -25,6 +25,8 @@ import {
 } from "lucide-react"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 
+import equipmentData from "@/data/equipment.json"
+
 interface Message {
   id: string
   role: "user" | "assistant" | "system"
