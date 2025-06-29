@@ -175,8 +175,8 @@ export default function HomePage() {
           <CurrencyTimersContainer characters={characters} handleCurrencyDataChange={handleCurrencyDataChange} dashboardMode={true} />
         </div>
 
-        {/* Completed Crafting Timers */}
-        <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
+        {/* Completed Crafting Timers 섹션 제거 */}
+        {/* <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {characters.map((char) => {
             const completedTimers = Object.values(char.craftingQueues || {}).flatMap(queues => 
@@ -202,7 +202,7 @@ export default function HomePage() {
               </Card>
             );
           })}
-        </div>
+        </div> */}
 
         {/* Character Specific Item Counts */}
         {/* <CharacterScopedHeader title="캐릭터별 재화" icon={Package} /> */}

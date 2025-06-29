@@ -3,33 +3,33 @@
 import { useState } from "react"
 import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useFavorites } from "@/contexts/favorites-context"
+import { useCharacter } from "@/contexts/character-context"
 import { cn } from "@/lib/utils"
 
 interface FavoriteToggleProps {
   itemId: string
-  itemType: "quest" | "recipe" | "equipment" | "skill" | "item"
+  itemType?: "quest" | "recipe" | "equipment" | "skill" | "item"
   className?: string
   size?: "sm" | "md" | "lg"
 }
 
-export function FavoriteToggle({ itemId, itemType, className, size = "md" }: FavoriteToggleProps) {
-  const { favorites, toggleFavorite } = useFavorites()
+export function FavoriteToggle({ itemId, className, size = "md" }: FavoriteToggleProps) {
+  const { activeCharacter, updateCharacter } = useCharacter()
   const [isAnimating, setIsAnimating] = useState(false)
 
-  const isFavorited = favorites.some((fav) => fav.id === itemId && fav.type === itemType)
+  const isFavorited = activeCharacter?.favoriteItems?.[itemId] || false
 
   const handleToggle = () => {
     setIsAnimating(true)
 
-    toggleFavorite({
-      id: itemId,
-      name: "",
-      type: itemType,
-      page: "",
-    })
+    if (activeCharacter) {
+      const newFavoriteItems = {
+        ...activeCharacter.favoriteItems,
+        [itemId]: !isFavorited,
+      };
+      updateCharacter(activeCharacter.id, { favoriteItems: newFavoriteItems });
+    }
 
-    // Reset animation after a short delay
     setTimeout(() => setIsAnimating(false), 200)
   }
 

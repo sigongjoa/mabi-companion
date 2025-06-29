@@ -43,6 +43,7 @@ export interface Character {
   equippedItems: Record<string, number | null>
   craftingQueues: Record<string, ProcessingQueue[]>
   favoriteCraftingFacilities: Record<string, boolean>
+  favoriteItems: Record<string, boolean>
   currencyTimers: Record<string, CurrencyTimerState>
   guildName?: string
   guildRank?: string
@@ -298,6 +299,7 @@ const defaultCharacters: Character[] = [
     },
     craftingQueues: {},
     favoriteCraftingFacilities: { 1: true },
+    favoriteItems: {},
     currencyTimers: {
       silver: {
         current: 0,
@@ -339,6 +341,7 @@ const defaultCharacters: Character[] = [
     equippedItems: {},
     craftingQueues: {},
     favoriteCraftingFacilities: { 1: true },
+    favoriteItems: {},
     currencyTimers: {
       silver: {
         current: 0,
@@ -401,7 +404,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
                 skills: createInitialSkills(allSkillsData, char.skills),
                 craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
                 favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
+                favoriteItems: char.favoriteItems,
                 currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
+                combatPower: char.combatPower || 0,
               };
             } else {
               // JSON 데이터가 아직 로드되지 않았다면, 파싱된 데이터만 사용
@@ -501,7 +506,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
               skills: createInitialSkills(allSkillsData, char.skills),
               craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
               favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
+              favoriteItems: char.favoriteItems,
               currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
+              combatPower: char.combatPower || 0,
             }
           })
           logger.debug("localStorage에서 캐릭터 로드 및 초기화 성공", { initialCharactersLength: initialCharacters.length });
@@ -519,7 +526,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
             skills: createInitialSkills(allSkillsData, char.skills), // Use default character's skills with allSkillsData
             craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues), // Use default character's crafting queues
             favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities), // Use default character's favorite facilities
+            favoriteItems: char.favoriteItems,
             currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
+            combatPower: char.combatPower || 0, // defaultCharacters에도 combatPower가 없을 수 있으므로 초기화
         }));
         logger.debug("defaultCharacters로 캐릭터 초기화 성공", { initialCharactersLength: initialCharacters.length });
       }
@@ -604,7 +613,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         skills: createInitialSkills(allSkillsData), // 초기 스킬 레벨로 시작
         craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData), // 시설 데이터를 전달
         favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData),
+        favoriteItems: {},
         currencyTimers: createInitialCurrencyTimers(),
+        combatPower: character.combatPower || 0,
       }
       setCharacters((prevCharacters) => [...prevCharacters, newCharacter])
       logger.debug("새 캐릭터 추가됨", { newCharacter });

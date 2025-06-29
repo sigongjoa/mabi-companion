@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CurrencyTimer } from "@/components/currency-timer"
 import { Zap } from "lucide-react"
 import { Character } from "@/contexts/character-context"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface CurrencyTimersContainerProps {
   characters: Character[];
@@ -22,37 +23,50 @@ export function CurrencyTimersContainer({ characters, handleCurrencyDataChange, 
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="space-y-8">
-          {characters.map((character) => (
-            <div key={character.id} className="space-y-4">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {character.name.charAt(0)}
-                </div>
-                <h3 className="font-semibold text-gray-900">
-                  {character.name} (Lv.{character.level})
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CurrencyTimer
-                  characterId={character.id}
-                  characterName={character.name}
-                  type="silver"
-                  onDataChange={handleCurrencyDataChange}
-                  initialTimerState={character?.currencyTimers?.silver}
-                  dashboardMode={dashboardMode}
-                />
-                <CurrencyTimer
-                  characterId={character.id}
-                  characterName={character.name}
-                  type="demon"
-                  onDataChange={handleCurrencyDataChange}
-                  initialTimerState={character?.currencyTimers?.demon}
-                  dashboardMode={dashboardMode}
-                />
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          {characters.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>캐릭터</TableHead>
+                  <TableHead>은화 타이머</TableHead>
+                  <TableHead>마력 타이머</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {characters.map((character) => (
+                  <TableRow key={character.id}>
+                    <TableCell className="font-medium">
+                      {character.name}
+                      <span className="text-gray-500 text-sm ml-2">(Lv.{character.level})</span>
+                    </TableCell>
+                    <TableCell>
+                      <CurrencyTimer
+                        characterId={character.id}
+                        characterName={character.name}
+                        type="silver"
+                        onDataChange={handleCurrencyDataChange}
+                        initialTimerState={character?.currencyTimers?.silver}
+                        dashboardMode={dashboardMode}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <CurrencyTimer
+                        characterId={character.id}
+                        characterName={character.name}
+                        type="demon"
+                        onDataChange={handleCurrencyDataChange}
+                        initialTimerState={character?.currencyTimers?.demon}
+                        dashboardMode={dashboardMode}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p>표시할 캐릭터가 없습니다.</p>
+          )}
         </div>
       </CardContent>
     </Card>

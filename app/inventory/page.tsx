@@ -240,7 +240,7 @@ export default function InventoryPage() {
       const categoryMatch = selectedCategory.includes("전체") || selectedCategory.includes(item.category);
 
       // Favorites filter
-      const favoritesMatch = !showFavoritesOnly || item.isFavorite
+      const favoritesMatch = !showFavoritesOnly || (activeCharacter?.favoriteItems?.[item.id] === true);
 
       // Search filter
       const searchMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -381,17 +381,17 @@ export default function InventoryPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[50px] text-center">즐겨찾기</TableHead>
+                          <TableHead className="w-[70px] text-center">즐겨찾기</TableHead>
                           <TableHead className="w-[80px] text-center">아이콘</TableHead>
                           <TableHead>이름</TableHead>
                           <TableHead>카테고리</TableHead>
-                          <TableHead className="text-right w-[250px]">수량</TableHead>
+                          <TableHead className="text-right w-[180px]">수량</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredItems.map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center align-middle">
                               <FavoriteToggle itemId={item.id.toString()} itemType="item" size="sm" />
                             </TableCell>
                             <TableCell className="text-2xl text-center">
