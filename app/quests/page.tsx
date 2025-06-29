@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckSquare, Clock, Calendar } from "lucide-react"
 import { useCharacter, Character } from "@/contexts/character-context"
 import { FavoriteToggle } from "@/components/favorite-toggle"
+import { logger } from "@/lib/logger"
 
 import questsData from "/public/data/quests.json"
 
@@ -23,12 +24,12 @@ const allDailyQuests: TaskCategory = (questsData as any).daily;
 const allWeeklyQuests: TaskCategory = (questsData as any).weekly;
 
 export default function QuestsPage() {
-  console.debug("QuestsPage rendered.");
+  logger.debug("QuestsPage rendered.");
   const { activeCharacter, updateCharacter } = useCharacter();
   const [timeLeft, setTimeLeft] = useState({ daily: "", weekly: "" });
 
   useEffect(() => {
-    console.debug("QuestsPage useEffect: setting up countdown.");
+    logger.debug("QuestsPage useEffect: setting up countdown.");
     const updateCountdown = () => {
       const now = new Date()
 
@@ -53,14 +54,14 @@ export default function QuestsPage() {
         daily: formatTime(dailyDiff),
         weekly: formatTime(weeklyDiff),
       })
-      console.debug("Countdown updated - Daily:", formatTime(dailyDiff), "Weekly:", formatTime(weeklyDiff));
+      logger.debug("Countdown updated - Daily:", formatTime(dailyDiff), "Weekly:", formatTime(weeklyDiff));
     }
 
     updateCountdown()
     const interval = setInterval(updateCountdown, 1000)
     return () => {
       clearInterval(interval);
-      console.debug("Countdown interval cleared.");
+      logger.debug("Countdown interval cleared.");
     };
   }, [])
 
@@ -81,31 +82,34 @@ export default function QuestsPage() {
   }
 
   const toggleTask = (taskId: string, type: "daily" | "weekly") => {
-    console.debug(`toggleTask called - taskId: ${taskId}, type: ${type}`);
+    logger.debug(`toggleTask called - taskId: ${taskId}, type: ${type}`);
     if (!activeCharacter) {
-      console.warn("No active character, cannot toggle task.");
+      logger.warn("No active character, cannot toggle task.");
       return;
     }
 
     const currentCompletedTasks = type === "daily" ? activeCharacter.completedDailyTasks : activeCharacter.completedWeeklyTasks;
+    logger.debug(`toggleTask: Current completed tasks for ${type}:`, currentCompletedTasks);
+
     const newCompletedTasks = { ...currentCompletedTasks, [taskId]: !currentCompletedTasks[taskId] };
+    logger.debug(`toggleTask: New completed tasks state for ${type}:`, newCompletedTasks);
 
     if (type === "daily") {
       updateCharacter(activeCharacter.id, { completedDailyTasks: newCompletedTasks });
-      console.debug(`Daily task ${taskId} toggled. New state: ${newCompletedTasks[taskId]}`);
+      logger.debug(`Daily task ${taskId} toggled. New state in character context: ${newCompletedTasks[taskId]}`);
     } else {
       updateCharacter(activeCharacter.id, { completedWeeklyTasks: newCompletedTasks });
-      console.debug(`Weekly task ${taskId} toggled. New state: ${newCompletedTasks[taskId]}`);
+      logger.debug(`Weekly task ${taskId} toggled. New state in character context: ${newCompletedTasks[taskId]}`);
     }
   };
 
   const getProgress = (tasks: TaskCategory, completedTasks: Record<string, boolean>) => {
-    console.debug("Entering getProgress.", { tasks, completedTasks });
+    logger.debug("Entering getProgress.", { tasks, completedTasks });
     const allTasks = Object.values(tasks).flat();
     const completed = allTasks.filter((task) => completedTasks[task.id]).length;
     const total = allTasks.length;
     const percentage = total > 0 ? (completed / total) * 100 : 0;
-    console.debug("Exiting getProgress.", { completed, total, percentage });
+    logger.debug("Exiting getProgress.", { completed, total, percentage });
     return { completed, total, percentage };
   };
 
@@ -122,13 +126,13 @@ export default function QuestsPage() {
                 <CheckSquare className="w-8 h-8 text-purple-600" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">퀘스트 관리</h1>
+                <h1 className="text-4xl font-bold text-gray-900">숙제 관리</h1>
                 <p className="text-lg text-gray-600 mt-1">일일/주간 숙제 체크리스트</p>
-                <p className="text-sm text-gray-500 mt-1">캐릭터별 퀘스트 진행 상황 및 초기화 정보</p>
+                <p className="text-sm text-gray-500 mt-1">캐릭터별 숙제 진행 상황 및 초기화 정보</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <FavoriteToggle id="quests-header" name="퀘스트 헤더" type="header" />
+              <FavoriteToggle id="quests-header" name="숙제 헤더" type="header" />
             </div>
           </div>
         </div>

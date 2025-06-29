@@ -114,40 +114,68 @@ const createInitialQuestProgress = (
   initialCompletedDaily: Record<string, boolean> = {},
   initialCompletedWeekly: Record<string, boolean> = {},
 ): { completedDailyTasks: Record<string, boolean>; completedWeeklyTasks: Record<string, boolean> } => {
-  logger.debug("Entering createInitialQuestProgress")
-  const dailyTasks: Record<string, boolean> = {}
-  const weeklyTasks: Record<string, boolean> = {}
+  logger.debug("Entering createInitialQuestProgress", { initialCompletedDaily, initialCompletedWeekly });
+  const dailyTasks: Record<string, boolean> = {};
+  const weeklyTasks: Record<string, boolean> = {};
 
-  Object.values(allQuests.daily)
-    .flat()
-    .forEach((task: any) => {
-      if (task && task.id) {
-        dailyTasks[task.id] = false
-      }
-    })
+  // Get a set of all valid current daily task IDs for quick lookup
+  const currentDailyTaskIds = new Set(Object.values(allQuests.daily || {}).flat().map((task: any) => task.id));
+
+  // Initialize dailyTasks with all current daily tasks set to false
+  if (allQuests?.daily) {
+    Object.values(allQuests.daily)
+      .flat()
+      .forEach((task: any) => {
+        if (task && task.id) {
+          dailyTasks[task.id] = false; 
+        }
+      });
+  }
+  logger.debug("createInitialQuestProgress: 초기 dailyTasks (allQuests 기반)", dailyTasks);
+
+  // Merge with initialCompletedDaily, only including tasks that are currently valid
   for (const taskId in initialCompletedDaily) {
-    if (Object.prototype.hasOwnProperty.call(initialCompletedDaily, taskId)) {
-      dailyTasks[taskId] = initialCompletedDaily[taskId]
+    if (Object.prototype.hasOwnProperty.call(initialCompletedDaily, taskId) && currentDailyTaskIds.has(taskId)) {
+      dailyTasks[taskId] = initialCompletedDaily[taskId];
+      logger.debug(`createInitialQuestProgress: dailyTasks 병합 - ID: ${taskId}, 값: ${initialCompletedDaily[taskId]}`);
+    } else if (Object.prototype.hasOwnProperty.call(initialCompletedDaily, taskId) && !currentDailyTaskIds.has(taskId)) {
+      logger.debug(`createInitialQuestProgress: 오래된 일일 숙제 ID 건너뛰기/제거 - ID: ${taskId}`);
+      // Explicitly set to false or remove if not in current tasks to prevent stale true values
+      delete dailyTasks[taskId]; 
     }
   }
-  logger.debug("Initial dailyTasks:", dailyTasks)
+  logger.debug("createInitialQuestProgress: 병합 후 dailyTasks", dailyTasks);
 
-  Object.values(allQuests.weekly)
-    .flat()
-    .forEach((task: any) => {
-      if (task && task.id) {
-        weeklyTasks[task.id] = false
-      }
-    })
+  // Get a set of all valid current weekly task IDs for quick lookup
+  const currentWeeklyTaskIds = new Set(Object.values(allQuests.weekly || {}).flat().map((task: any) => task.id));
+
+  // Initialize weeklyTasks with all current weekly tasks set to false
+  if (allQuests?.weekly) {
+    Object.values(allQuests.weekly)
+      .flat()
+      .forEach((task: any) => {
+        if (task && task.id) {
+          weeklyTasks[task.id] = false;
+        }
+      });
+  }
+  logger.debug("createInitialQuestProgress: 초기 weeklyTasks (allQuests 기반)", weeklyTasks);
+
+  // Merge with initialCompletedWeekly, only including tasks that are currently valid
   for (const taskId in initialCompletedWeekly) {
-    if (Object.prototype.hasOwnProperty.call(initialCompletedWeekly, taskId)) {
-      weeklyTasks[taskId] = initialCompletedWeekly[taskId]
+    if (Object.prototype.hasOwnProperty.call(initialCompletedWeekly, taskId) && currentWeeklyTaskIds.has(taskId)) {
+      weeklyTasks[taskId] = initialCompletedWeekly[taskId];
+      logger.debug(`createInitialQuestProgress: weeklyTasks 병합 - ID: ${taskId}, 값: ${initialCompletedWeekly[taskId]}`);
+    } else if (Object.prototype.hasOwnProperty.call(initialCompletedWeekly, taskId) && !currentWeeklyTaskIds.has(taskId)) {
+      logger.debug(`createInitialQuestProgress: 오래된 주간 숙제 ID 건너뛰기/제거 - ID: ${taskId}`);
+      // Explicitly set to false or remove if not in current tasks to prevent stale true values
+      delete weeklyTasks[taskId];
     }
   }
-  logger.debug("Initial weeklyTasks:", weeklyTasks)
+  logger.debug("createInitialQuestProgress: 병합 후 weeklyTasks", weeklyTasks);
 
-  return { completedDailyTasks: dailyTasks, completedWeeklyTasks: weeklyTasks }
-}
+  return { completedDailyTasks: dailyTasks, completedWeeklyTasks: weeklyTasks };
+};
 
 const createInitialEquipment = (initialEquipped: Record<string, number | null> = {}): Record<string, number | null> => {
   logger.debug("Entering createInitialEquipment with initialEquipped:", initialEquipped)
@@ -603,24 +631,41 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         logger.warn("JSON 데이터 로드 중이거나 오류 발생으로 인해 캐릭터 추가 불가")
         return;
       }
+      const initialInventory = createInitialInventory(allItems);
+      const initialEquipment = createInitialEquipment();
+      const initialSkills = createInitialSkills(allSkillsData);
+      const initialCraftingQueues = createInitialCraftingQueues(allCraftingFacilitiesData);
+      const initialFavoriteCraftingFacilities = createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData);
+      const initialCurrencyTimers = createInitialCurrencyTimers();
+
       const newCharacter: Character = {
         id: Date.now().toString(),
         lastActive: new Date().toISOString(),
+        silverCoins: 0,
+        demonTribute: 0,
+        favorite: false,
+        combatPower: 0,
+        guildName: "",
+        guildRank: "",
+        createdAt: new Date().toISOString(),
         ...character,
-        inventory: createInitialInventory(allItems), // 빈 재고로 시작
-        ...createInitialQuestProgress(allQuests), // 빈 퀘스트 진행 상황으로 시작
-        equippedItems: createInitialEquipment(), // 빈 장비로 시작
-        skills: createInitialSkills(allSkillsData), // 초기 스킬 레벨로 시작
-        craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData), // 시설 데이터를 전달
-        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData),
-        favoriteItems: {},
-        currencyTimers: createInitialCurrencyTimers(),
-        combatPower: character.combatPower || 0,
-      }
-      setCharacters((prevCharacters) => [...prevCharacters, newCharacter])
-      logger.debug("새 캐릭터 추가됨", { newCharacter });
+        ...createInitialQuestProgress(allQuests),
+        inventory: initialInventory,
+        equippedItems: initialEquipment,
+        skills: initialSkills,
+        craftingQueues: initialCraftingQueues,
+        favoriteCraftingFacilities: initialFavoriteCraftingFacilities,
+        currencyTimers: initialCurrencyTimers,
+      };
+      logger.debug("addCharacter: 생성된 새 캐릭터 객체 (initialQuestProgress 병합 후)", newCharacter);
+
+      setCharacters((prev) => {
+        const updatedCharacters = [...prev, newCharacter];
+        logger.debug("새 캐릭터 추가됨", { newCharacter });
+        return updatedCharacters;
+      });
     },
-    [allItems, allQuests, allSkillsData, allCraftingFacilitiesData, isLoadingData, dataLoadError], // 의존성 추가
+    [allItems, allQuests, allSkillsData, allCraftingFacilitiesData, isLoadingData, dataLoadError],
   )
 
   const deleteCharacter = useCallback((id: string) => {

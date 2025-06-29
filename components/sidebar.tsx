@@ -43,7 +43,7 @@ const ribbonTabs = [
         items: [
           { icon: Package, label: "아이템", href: "/inventory", size: "large" },
           { icon: Users, label: "캐릭터", href: "/characters", size: "large" },
-          { icon: CheckSquare, label: "퀘스트", href: "/quests", size: "large" },
+          { icon: CheckSquare, label: "숙제", href: "/quests", size: "large" },
         ],
       },
       {

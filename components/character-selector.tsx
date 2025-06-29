@@ -203,7 +203,7 @@ export function CharacterSelector() {
               <strong>{activeCharacter.name}</strong> (Lv.{activeCharacter.level})
             </div>
             <div className="text-xs text-blue-600">
-              전투력: {activeCharacter.combatPower.toLocaleString()} • 일일 퀘스트:{" "}
+              전투력: {activeCharacter.combatPower.toLocaleString()} • 일일 숙제:{" "}
               {activeCharacter.questProgress.daily.completed}/{activeCharacter.questProgress.daily.total}
             </div>
           </div>

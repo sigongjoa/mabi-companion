@@ -40,17 +40,43 @@ export default function HomePage() {
 
   // Helper functions to safely calculate quest counts
   const getDailyQuestCount = (character: any) => {
-    if (!character?.completedDailyTasks) return 0
-    return Object.keys(character.completedDailyTasks).length
-  }
+    logger.debug("getDailyQuestCount: 캐릭터 객체", character);
+    if (!character?.completedDailyTasks) {
+      logger.debug("getDailyQuestCount: completedDailyTasks 없음, 0 반환");
+      return 0;
+    }
+    logger.debug("getDailyQuestCount: completedDailyTasks 원본 객체", character.completedDailyTasks);
+    const completedTasksArray = Object.values(character.completedDailyTasks);
+    logger.debug("getDailyQuestCount: completedDailyTasks 배열 (모든 값)", completedTasksArray);
+    const trueCount = completedTasksArray.filter(Boolean).length;
+    logger.debug("getDailyQuestCount: true 값의 개수", trueCount);
+    return trueCount; // Only count true values
+  };
 
   const getWeeklyQuestCount = (character: any) => {
-    if (!character?.completedWeeklyTasks) return 0
-    return Object.keys(character.completedWeeklyTasks).length
-  }
+    logger.debug("getWeeklyQuestCount: 캐릭터 객체", character);
+    if (!character?.completedWeeklyTasks) {
+      logger.debug("getWeeklyQuestCount: completedWeeklyTasks 없음, 0 반환");
+      return 0;
+    }
+    const completedTasksArray = Object.values(character.completedWeeklyTasks);
+    logger.debug("getWeeklyQuestCount: completedWeeklyTasks 배열 (모든 값)", completedTasksArray);
+    const trueCount = completedTasksArray.filter(Boolean).length;
+    logger.debug("getWeeklyQuestCount: true 값의 개수", trueCount);
+    return trueCount; // Only count true values
+  };
 
-  const getTotalDailyQuests = () => 10 // Assuming 10 daily quests available
-  const getTotalWeeklyQuests = () => 5 // Assuming 5 weekly quests available
+  const getTotalDailyQuests = () => {
+    const totalDaily = Object.values(allQuests?.daily || {}).flat().length;
+    logger.debug("getTotalDailyQuests: 총 일일 숙제 수", totalDaily);
+    return totalDaily;
+  };
+
+  const getTotalWeeklyQuests = () => {
+    const totalWeekly = Object.values(allQuests?.weekly || {}).flat().length;
+    logger.debug("getTotalWeeklyQuests: 총 주간 숙제 수", totalWeekly);
+    return totalWeekly;
+  };
 
   const dailyProgress = activeCharacter ? (getDailyQuestCount(activeCharacter) / getTotalDailyQuests()) * 100 : 0;
   const weeklyProgress = activeCharacter ? (getWeeklyQuestCount(activeCharacter) / getTotalWeeklyQuests()) * 100 : 0;
@@ -89,7 +115,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="document-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">일일 퀘스트</CardTitle>
+              <CardTitle className="text-sm font-medium">일일 숙제</CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -103,7 +129,7 @@ export default function HomePage() {
 
           <Card className="document-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">주간 퀘스트</CardTitle>
+              <CardTitle className="text-sm font-medium">주간 숙제</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -159,7 +185,7 @@ export default function HomePage() {
               </Button>
               <Button variant="outline" className="h-20 flex-col bg-transparent">
                 <Star className="h-6 w-6 mb-2" />
-                <span className="text-sm">퀘스트</span>
+                <span className="text-sm">숙제</span>
               </Button>
               <Button variant="outline" className="h-20 flex-col bg-transparent">
                 <Heart className="h-6 w-6 mb-2" />
