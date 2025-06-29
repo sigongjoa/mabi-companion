@@ -12,6 +12,11 @@ import allItemsData from "@/data/items.json"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { logger } from "@/lib/logger"
 import { cn } from "@/lib/utils"
+import { CraftingQueueItem } from "@/components/crafting-queue-item"
+import { CraftingTimerPopup } from "@/components/crafting-timer-popup"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ItemDetailsPopup } from "@/components/item-details-popup"
+import Image from "next/image"
 
 interface Item {
   id: number
@@ -62,11 +67,26 @@ const allCraftingFacilitiesData: FacilityData[] = craftingFacilitiesData as Faci
 export default function CraftingPage() {
   const { activeCharacter, updateCharacter, toggleCraftingFacilityFavorite } = useCharacter()
   const [selectedFacilityIds, setSelectedFacilityIds] = useState<string[]>([])
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false) // New state for favorite filter
-  const [searchQuery, setSearchQuery] = useState("") // 검색 쿼리 상태 추가
+  const [selectedFacilityTab, setSelectedFacilityTab] = useState<string>("")
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isTimerPopupOpen, setIsTimerPopupOpen] = useState(false)
+  const [selectedQueueItem, setSelectedQueueItem] = useState<ProcessingQueue | null>(null)
+  const [selectedFacilityForPopup, setSelectedFacilityForPopup] = useState<string>("")
+  const [isItemDetailsPopupOpen, setIsItemDetailsPopupOpen] = useState(false)
+  const [selectedItemForPopup, setSelectedItemForPopup] = useState<Item | null>(null)
+  const [selectedRecipeForPopup, setSelectedRecipeForPopup] = useState<Recipe | null>(null)
 
-  // Get all unique facility IDs for filter buttons
   const facilityTypes = allCraftingFacilitiesData.map((f) => ({ id: f.id, name: f.name }))
+
+  useEffect(() => {
+    logger.debug(`Entering useEffect for facilityType initialization. All facilities: ${JSON.stringify(allCraftingFacilitiesData)}`);
+    if (facilityTypes.length > 0 && !selectedFacilityTab) {
+      setSelectedFacilityTab(facilityTypes[0].id);
+      logger.debug(`Setting default selected facility tab to: ${facilityTypes[0].id}`);
+    }
+    logger.debug(`Exiting useEffect for facilityType initialization.`);
+  }, [facilityTypes, selectedFacilityTab]);
 
   // Timer effect
   useEffect(() => {
@@ -248,28 +268,32 @@ export default function CraftingPage() {
             recipeForCancelledItem.materials.forEach(material => {
               const materialItemData = allItemsArray.find((item: Item) => item.name.toLowerCase().trim() === material.item.toLowerCase().trim());
               if (materialItemData) {
-                const currentQuantity = newInventory[materialItemData.id] || 0;
-                newInventory[materialItemData.id] = currentQuantity + (material.quantity * cancelledQuantity);
+                newInventory[materialItemData.id] = (newInventory[materialItemData.id] || 0) + material.quantity * cancelledQuantity;
+                updateCharacter(activeCharacter.id, { inventory: newInventory });
                 logger.debug(`cancelQueueItem: Returned ${material.quantity * cancelledQuantity} of ${material.item} to inventory.`);
+              } else {
+                logger.debug(`cancelQueueItem: Material ${material.item} not found for cancelled item.`);
               }
             });
-            updateCharacter(activeCharacter.id, { inventory: newInventory });
           }
         }
-        return { ...queue, isProcessing: false, itemName: undefined, timeLeft: 0, totalTime: 0, quantity: undefined }
+        return { ...queue, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined, quantity: undefined }; // Reset the queue item
       }
-      return queue
-    })
+      return queue;
+    });
 
     const updatedCraftingQueues = {
       ...activeCharacter.craftingQueues,
       [facilityId]: newQueues,
-    }
-    updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
-  }
+    };
+    updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues });
+    logger.debug(`cancelQueueItem: Updated character crafting queues. Exiting.`);
+  };
 
   const cancelAllQueues = (facilityId: string) => {
+    logger.debug(`Entering cancelAllQueues: facilityId=${facilityId}`);
     if (!activeCharacter) {
+      logger.debug(`cancelAllQueues: No active character.`);
       return
     }
 
@@ -278,54 +302,118 @@ export default function CraftingPage() {
       return
     }
 
-    const newQueues = currentFacilityQueues.map((queue: ProcessingQueue) => ({
-      ...queue,
-      isProcessing: false,
-      itemName: undefined,
-      timeLeft: 0,
-      totalTime: 0,
-    }))
+    const newQueues = currentFacilityQueues.map((queue: ProcessingQueue) => {
+      // If canceling, return materials to inventory (if it was processing)
+      if (queue.isProcessing && queue.itemName && queue.quantity !== undefined) {
+        const itemName = queue.itemName; // Assign to a new const to help type inference
+        const recipeForCancelledItem = allCraftingFacilitiesData
+          .flatMap(facility => facility.recipes)
+          .find(recipe => recipe.product.toLowerCase().trim() === itemName.toLowerCase().trim());
+
+        if (recipeForCancelledItem) {
+          const cancelledQuantity = queue.quantity; // Assign to a new const to help type inference
+          const newInventory = { ...activeCharacter.inventory };
+          recipeForCancelledItem.materials.forEach(material => {
+            const materialItemData = allItemsArray.find((item: Item) => item.name.toLowerCase().trim() === material.item.toLowerCase().trim());
+            if (materialItemData) {
+              newInventory[materialItemData.id] = (newInventory[materialItemData.id] || 0) + material.quantity * cancelledQuantity;
+              updateCharacter(activeCharacter.id, { inventory: newInventory });
+              logger.debug(`cancelAllQueues: Returned ${material.quantity * cancelledQuantity} of ${material.item} to inventory.`);
+            } else {
+              logger.debug(`cancelAllQueues: Material ${material.item} not found for cancelled item.`);
+            }
+          });
+        }
+      }
+      return { ...queue, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined, quantity: undefined }
+    })
 
     const updatedCraftingQueues = {
       ...activeCharacter.craftingQueues,
       [facilityId]: newQueues,
     }
     updateCharacter(activeCharacter.id, { craftingQueues: updatedCraftingQueues })
+    logger.debug(`cancelAllQueues: Updated character crafting queues. Exiting.`);
   }
 
   const handleFilterChange = (value: string[]) => {
+    logger.debug(`Entering handleFilterChange: value=${JSON.stringify(value)}`);
     setSelectedFacilityIds(value)
+    logger.debug(`Exiting handleFilterChange.`);
   }
-
-  const filteredFacilities = allCraftingFacilitiesData.filter((facility) => {
-    const isFavorite = activeCharacter?.favoriteCraftingFacilities?.[facility.id]
-
-    const matchesSearchQuery =
-      facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      facility.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      facility.recipes.some(
-        (recipe) =>
-          recipe.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          recipe.materials.some((material) => material.item.toLowerCase().includes(searchQuery.toLowerCase())),
-      )
-
-    if (showFavoritesOnly && !isFavorite) {
-      return false
-    }
-    if (selectedFacilityIds.length > 0 && !selectedFacilityIds.includes(facility.id)) {
-      return false
-    }
-    return matchesSearchQuery
-  })
 
   const sortFacilities = (a: FacilityData, b: FacilityData) => {
-    const aIsFavorite = activeCharacter?.favoriteCraftingFacilities?.[a.id]
-    const bIsFavorite = activeCharacter?.favoriteCraftingFacilities?.[b.id]
+    // Sort logic: favorited first, then by name
+    const aIsFavorite = activeCharacter?.favoriteCraftingFacilities[a.id] || false;
+    const bIsFavorite = activeCharacter?.favoriteCraftingFacilities[b.id] || false;
 
-    if (aIsFavorite && !bIsFavorite) return -1
-    if (!aIsFavorite && bIsFavorite) return 1
-    return a.name.localeCompare(b.name)
+    if (aIsFavorite && !bIsFavorite) return -1;
+    if (!aIsFavorite && bIsFavorite) return 1;
+
+    return a.name.localeCompare(b.name);
+  };
+
+  const handleOpenTimerPopup = (queue: ProcessingQueue, facilityId: string) => {
+    setSelectedQueueItem(queue);
+    setSelectedFacilityForPopup(facilityId);
+    setIsTimerPopupOpen(true);
+    logger.debug(`handleOpenTimerPopup: Opened popup for queue ID ${queue.id} in facility ${facilityId}.`);
+  };
+
+  const handleCloseTimerPopup = () => {
+    setIsTimerPopupOpen(false);
+    setSelectedQueueItem(null);
+    setSelectedFacilityForPopup("");
+    logger.debug(`handleCloseTimerPopup: Closed timer popup.`);
+  };
+
+  const handleTabChange = (value: string) => {
+    logger.debug(`Entering handleTabChange: value=${value}`);
+    setSelectedFacilityTab(value);
+    logger.debug(`Exiting handleTabChange.`);
   }
+
+  const handleCraftFromPopup = (recipe: Recipe, quantity: number) => {
+    logger.debug(`Entering handleCraftFromPopup: recipeProduct=${recipe.product}, quantity=${quantity}`);
+    if (!selectedFacilityTab) {
+      logger.debug(`handleCraftFromPopup: No facility selected.`);
+      return;
+    }
+    startProcessing(selectedFacilityTab, recipe, quantity);
+    setIsItemDetailsPopupOpen(false);
+    logger.debug(`Exiting handleCraftFromPopup.`);
+  };
+
+  const handleViewItemDetails = (item: Item, recipe: Recipe) => {
+    logger.debug(`Entering handleViewItemDetails: itemName=${item.name}, recipeProduct=${recipe.product}`);
+    setSelectedItemForPopup(item);
+    setSelectedRecipeForPopup(recipe);
+    setIsItemDetailsPopupOpen(true);
+    logger.debug(`Exiting handleViewItemDetails.`);
+  };
+
+  const handleCloseItemDetailsPopup = () => {
+    logger.debug(`Entering handleCloseItemDetailsPopup.`);
+    setIsItemDetailsPopupOpen(false);
+    setSelectedItemForPopup(null);
+    setSelectedRecipeForPopup(null);
+    logger.debug(`Exiting handleCloseItemDetailsPopup.`);
+  };
+
+  const filteredFacilities = allCraftingFacilitiesData
+    .filter((facility) => {
+      const matchesFilter = selectedFacilityIds.length === 0 || selectedFacilityIds.includes(facility.id);
+      const matchesFavorite = !showFavoritesOnly || (activeCharacter && activeCharacter.favoriteCraftingFacilities[facility.id]);
+      return matchesFilter && matchesFavorite;
+    })
+    .filter((facility) => {
+      // 필터링된 시설의 레시피에 검색어가 포함되는지 확인
+      if (searchQuery === "") return true;
+      return facility.recipes.some((recipe) =>
+        recipe.product.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    })
+    .sort(sortFacilities);
 
   return (
     <div className="min-h-screen bg-white">
@@ -396,7 +484,7 @@ export default function CraftingPage() {
 
           {/* Crafting Facilities Grid */}
           <div className="crafting-grid">
-            {filteredFacilities.sort(sortFacilities).map((facility) => {
+            {filteredFacilities.map((facility) => {
               const currentQueues = activeCharacter?.craftingQueues?.[facility.id] || []
               const activeQueuesCount = currentQueues.filter((q) => q.isProcessing).length
               const completedQueuesCount = currentQueues.filter((q) => q.timeLeft === 0 && q.isProcessing).length
@@ -439,6 +527,7 @@ export default function CraftingPage() {
                           onCraft={(recipeArg, quantityArg) =>
                             startProcessing(facility.id, recipeArg, quantityArg)
                           }
+                          onViewDetails={handleViewItemDetails}
                         />
                       ))}
                   </div>
@@ -451,72 +540,44 @@ export default function CraftingPage() {
                       </span>
                     </h3>
 
-                    {currentQueues.length > 0 ? (
-                      <div className="space-y-3">
-                        {currentQueues.map((queue) => (
-                          <div key={queue.id} className="queue-item">
-                            <div className="queue-info">
-                              <p className="font-medium text-left">
-                                {queue.isProcessing ? queue.itemName || "알 수 없는 아이템" : "비어있음"}
-                              </p>
-                              {queue.isProcessing && queue.timeLeft > 0 && (
-                                <p className="text-sm text-gray-600 text-left">
-                                  남은 시간: {Math.floor(queue.timeLeft / 60)}분 {queue.timeLeft % 60}초
-                                </p>
-                              )}
-                              {queue.timeLeft === 0 && queue.isProcessing && (
-                                <Badge variant="default" className="status-success mt-1">
-                                  제작 완료!
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="queue-actions">
-                              {queue.timeLeft === 0 && queue.isProcessing && (
-                                <Button
-                                  className="crafting-button-success"
-                                  size="sm"
-                                  onClick={() => claimCompletedItems(facility.id)}
-                                >
-                                  <Package className="w-4 h-4" />
-                                  수령
-                                </Button>
-                              )}
-                              {queue.isProcessing && (
-                                <Button
-                                  className="crafting-button-danger"
-                                  size="sm"
-                                  onClick={() => cancelQueueItem(facility.id, queue.id)}
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                  취소
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                    {/* Always render 4 crafting queue items */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {Array(4).fill(null).map((_, index) => {
+                        const queue = currentQueues[index] || { id: index, isProcessing: false, timeLeft: 0, totalTime: 0 };
+                        return (
+                          <CraftingQueueItem
+                            key={queue.id}
+                            queue={queue}
+                            onOpenTimerPopup={handleOpenTimerPopup}
+                            facilityId={facility.id}
+                            allItems={allItemsArray}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* Claim/Cancel All Buttons */}
+                    {(activeQueuesCount > 0 || completedQueuesCount > 0) && (
+                      <div className="space-y-2 mt-4">
+                        {completedQueuesCount > 0 && (
+                          <Button
+                            className="crafting-button-secondary w-full"
+                            onClick={() => claimCompletedItems(facility.id)}
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            완료된 아이템 모두 수령
+                          </Button>
+                        )}
+                        {activeQueuesCount > 0 && (
+                          <Button
+                            className="crafting-button-secondary w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                            onClick={() => cancelAllQueues(facility.id)}
+                          >
+                            <XCircle className="w-4 h-4 mr-2" />
+                            모든 제작 취소
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-left">진행 중인 제작이 없습니다.</p>
-                    )}
-
-                    {completedQueuesCount > 0 && (
-                      <Button
-                        className="crafting-button-secondary w-full"
-                        onClick={() => claimCompletedItems(facility.id)}
-                      >
-                        <Package className="w-4 h-4 mr-2" />
-                        완료된 아이템 모두 수령
-                      </Button>
-                    )}
-
-                    {activeQueuesCount > 0 && (
-                      <Button
-                        className="crafting-button-secondary w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => cancelAllQueues(facility.id)}
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        모든 제작 취소
-                      </Button>
                     )}
                   </div>
                 </div>
@@ -525,6 +586,27 @@ export default function CraftingPage() {
           </div>
         </div>
       </div>
+
+      {selectedQueueItem && ( // Only render popup if an item is selected
+        <CraftingTimerPopup
+          isOpen={isTimerPopupOpen}
+          onClose={handleCloseTimerPopup}
+          queue={selectedQueueItem}
+          onClaim={claimCompletedItems}
+          onCancel={cancelQueueItem}
+          facilityId={selectedFacilityForPopup}
+        />
+      )}
+
+      <ItemDetailsPopup
+        isOpen={isItemDetailsPopupOpen}
+        onClose={handleCloseItemDetailsPopup}
+        item={selectedItemForPopup}
+        recipe={selectedRecipeForPopup}
+        onCraftFromPopup={handleCraftFromPopup}
+        inventory={activeCharacter?.inventory || {}}
+        itemNameMap={itemNameMap}
+      />
     </div>
   )
 }
@@ -534,11 +616,14 @@ interface CraftingRecipeCardProps {
   inventory: Record<number, number>
   itemNameMap: Record<string, number>
   onCraft: (recipe: Recipe, quantity: number) => void
+  onViewDetails: (item: Item, recipe: Recipe) => void
 }
 
-function CraftingRecipeCard({ recipe, onCraft, inventory, itemNameMap }: CraftingRecipeCardProps) {
+function CraftingRecipeCard({ recipe, onCraft, inventory, itemNameMap, onViewDetails }: CraftingRecipeCardProps) {
+  logger.debug(`Entering CraftingRecipeCard: recipeProduct=${recipe.product}`);
   const [quantity, setQuantity] = useState(1)
-
+  const productItemData = allItemsData.find((item: Item) => item.name.toLowerCase().trim() === recipe.product.toLowerCase().trim());
+  
   const calculateCraftableQuantity = () => {
     logger.debug(`Entering calculateCraftableQuantity for recipe: ${recipe.product}`);
     let maxCrafts = Number.POSITIVE_INFINITY
@@ -561,101 +646,77 @@ function CraftingRecipeCard({ recipe, onCraft, inventory, itemNameMap }: Craftin
     return maxCrafts
   }
 
-  const craftableQuantity = calculateCraftableQuantity()
-  const canCraft = craftableQuantity > 0
+  const craftableQuantity = calculateCraftableQuantity();
+  const canCraft = craftableQuantity > 0;
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = Number(e.target.value)
-    setQuantity(Math.max(1, Math.min(newQuantity, craftableQuantity)))
+    logger.debug(`CraftingRecipeCard: handleQuantityChange: value=${e.target.value}`);
+    setQuantity(Number(e.target.value))
+    logger.debug(`CraftingRecipeCard: Quantity updated to ${Number(e.target.value)}`);
   }
 
   const handleCraft = () => {
-    if (quantity > 0 && canCraft) {
-      onCraft(recipe, quantity);
+    logger.debug(`CraftingRecipeCard: handleCraft initiated for recipeProduct=${recipe.product}, quantity=${quantity}`);
+    if (canCraft) {
+      onCraft(recipe, quantity)
+      logger.debug(`CraftingRecipeCard: onCraft called. Exiting.`);
     }
-  };
+  }
 
   return (
-    <div className={`recipe-card ${canCraft ? "hover:shadow-md" : "opacity-75"}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="recipe-title">{recipe.product}</h4>
-        <Badge className={`level-badge ${canCraft ? "status-success" : "status-error"}`}>
-          Lv.{recipe.level_condition}
-        </Badge>
+    <div className="relative border rounded-lg p-4 flex flex-col items-start gap-3 bg-white shadow-sm hover:shadow-md transition-shadow">
+      <div className="absolute top-2 right-2">
+        <FavoriteToggle
+          itemId={productItemData?.id || 0} // Use productItemData.id
+          isFavorite={productItemData?.isFavorite || false} // Use productItemData.isFavorite
+          onToggle={() => { /* Implement if needed */ }}
+        />
       </div>
-
-      {/* Material Requirements */}
-      <div className="mb-4">
-        <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <Package className="w-4 h-4 mr-2" />
-          필요 재료
-        </h5>
-        <div className="space-y-2">
-          {recipe.materials.map((material, matIndex) => {
-            const materialId = itemNameMap[material.item]
-            const ownedQuantity = inventory[materialId] || 0
-            const isEnough = ownedQuantity >= material.quantity
-            const percentage = Math.min(100, (ownedQuantity / material.quantity) * 100)
-
+      {productItemData && productItemData.icon && (
+        <Image
+          src={productItemData.icon}
+          alt={recipe.product}
+          width={48}
+          height={48}
+          className="object-contain cursor-pointer"
+          onClick={() => onViewDetails(productItemData, recipe)} // Pass item and recipe to handler
+        />
+      )}
+      <h3 className="text-lg font-semibold text-gray-800">{recipe.product}</h3>
+      <Badge variant="secondary">Lv.{recipe.level_condition}</Badge>
+      <div className="text-sm text-gray-600 w-full">
+        <p className="font-medium mb-1">필요 재료:</p>
+        <ul className="list-disc list-inside space-y-1">
+          {recipe.materials.map((material, index) => {
+            const materialId = itemNameMap[material.item];
+            const currentQuantity = inventory[materialId] || 0;
+            const hasEnough = currentQuantity >= material.quantity;
             return (
-              <div key={matIndex} className="material-item">
-                <span className="material-name">{material.item}</span>
-                <div className="flex items-center space-x-3">
-                  <div className="material-progress">
-                    <div
-                      className={`h-full transition-all duration-500 rounded-full ${
-                        isEnough ? "progress-fill-success" : "progress-fill-danger"
-                      }`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                  <span className={`material-count ${isEnough ? "text-green-600" : "text-red-600"}`}>
-                    {ownedQuantity}/{material.quantity}
-                  </span>
-                </div>
-              </div>
+              <li key={index} className={cn(!hasEnough && "text-red-500")}>
+                {material.item}: {currentQuantity}/{material.quantity}
+              </li>
             )
           })}
-        </div>
+        </ul>
       </div>
-
-      {/* Crafting Info */}
-      <div className="info-section mb-4">
-        <div className="flex items-center space-x-2">
-          <Clock className="w-4 h-4 text-blue-600" />
-          <span className="info-text">제작 시간: {recipe.time}초</span>
-        </div>
-        {canCraft ? (
-          <Badge className="status-success">
-            <Target className="w-3 h-3 mr-1" />
-            {craftableQuantity}개 제작 가능
-          </Badge>
-        ) : (
-          <Badge className="status-error">재료 부족</Badge>
-        )}
+      <div className="flex items-center text-sm text-gray-600">
+        <Clock className="h-4 w-4 mr-1" />
+        <span>제작 시간: {recipe.time}초</span>
       </div>
-
-      {/* Crafting Controls */}
-      <div className="flex items-center space-x-3">
-        <div className="flex-1">
-          <Input
-            type="number"
-            value={quantity}
-            onChange={handleQuantityChange}
-            min={1}
-            max={craftableQuantity > 0 ? craftableQuantity : 1}
-            disabled={!canCraft}
-            className="crafting-input"
-            placeholder="수량"
-          />
-        </div>
+      <div className="w-full flex items-center gap-2 mt-auto">
+        <Input
+          type="number"
+          min="1"
+          value={quantity}
+          onChange={handleQuantityChange}
+          className="w-24"
+        />
         <Button
           onClick={handleCraft}
-          disabled={!canCraft || quantity === 0}
-          className={`flex-2 ${canCraft ? "crafting-button-primary" : "crafting-button-secondary"}`}
+          disabled={!canCraft}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
         >
-          <Hammer className="w-4 h-4 mr-2" />
-          제작 시작
+          {canCraft ? "제작 시작" : "재료 부족"}
         </Button>
       </div>
     </div>

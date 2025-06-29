@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useCallback, useMemo, memo } from "react"
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +20,14 @@ interface TimerState {
   isRunning: boolean
   nextChargeTime: Date | null
   fullChargeTime: Date | null
+}
+
+// Add CurrencyTimerState for parsing from localStorage (ISO strings)
+interface CurrencyTimerStateFromStorage {
+  current: number;
+  isRunning: boolean;
+  nextChargeTime: string | null;
+  fullChargeTime: string | null;
 }
 
 const currencyConfigs: Record<string, CurrencyConfig> = {
@@ -47,6 +54,7 @@ interface CurrencyTimerProps {
   characterName: string
   type?: "silver" | "demon"
   onDataChange?: (data: any) => void
+  initialTimerState?: CurrencyTimerStateFromStorage; // Add this prop
 }
 
 export const CurrencyTimer = memo(function CurrencyTimer({
@@ -54,18 +62,36 @@ export const CurrencyTimer = memo(function CurrencyTimer({
   characterName,
   type,
   onDataChange,
+  initialTimerState, // Destructure the new prop
 }: CurrencyTimerProps) {
-  // If an invalid or missing type is passed, gracefully fall back to “silver”
+  // If an invalid or missing type is passed, gracefully fall back to "silver"
   const config = useMemo<CurrencyConfig>(() => {
-    return currencyConfigs[type] ?? currencyConfigs.silver
+    if (type && currencyConfigs[type]) {
+      return currencyConfigs[type];
+    }
+    return currencyConfigs.silver;
   }, [type])
   const [inputValue, setInputValue] = useState("")
-  const [timerState, setTimerState] = useState<TimerState>({
-    current: 0,
-    isRunning: false,
-    nextChargeTime: null,
-    fullChargeTime: null,
-  })
+
+  // Initialize timerState from initialTimerState prop or default
+  const [timerState, setTimerState] = useState<TimerState>(() => {
+    if (initialTimerState) {
+      return {
+        current: initialTimerState.current,
+        isRunning: initialTimerState.isRunning,
+        nextChargeTime: initialTimerState.nextChargeTime ? new Date(initialTimerState.nextChargeTime) : null,
+        fullChargeTime: initialTimerState.fullChargeTime ? new Date(initialTimerState.fullChargeTime) : null,
+      };
+    } else {
+      return {
+        current: 0,
+        isRunning: false,
+        nextChargeTime: null,
+        fullChargeTime: null,
+      };
+    }
+  });
+  
   const [timeDisplay, setTimeDisplay] = useState({
     nextCharge: "00:00:00",
     fullCharge: "00:00:00",
@@ -130,7 +156,7 @@ export const CurrencyTimer = memo(function CurrencyTimer({
   }, [inputValue, config, calculateTimes, characterId, type, onDataChange])
 
   const stopTimer = useCallback(() => {
-    setTimerState((prev) => ({ ...prev, isRunning: false }))
+    setTimerState((prev: TimerState) => ({ ...prev, isRunning: false }))
   }, [])
 
   // Optimized timer with requestAnimationFrame for better performance
@@ -147,7 +173,7 @@ export const CurrencyTimer = memo(function CurrencyTimer({
         const newCurrent = Math.min(timerState.current + 1, config.max)
         const { nextChargeTime, fullChargeTime } = calculateTimes(newCurrent)
 
-        setTimerState((prev) => ({
+        setTimerState((prev: TimerState) => ({
           ...prev,
           current: newCurrent,
           nextChargeTime,
@@ -165,10 +191,11 @@ export const CurrencyTimer = memo(function CurrencyTimer({
       }
 
       // Update display times
-      setTimeDisplay({
+      setTimeDisplay((prev: { nextCharge: string; fullCharge: string }) => ({
+        ...prev,
         nextCharge: formatTime(timerState.nextChargeTime),
         fullCharge: formatTime(timerState.fullChargeTime),
-      })
+      }))
 
       animationFrame = requestAnimationFrame(updateTimer)
     }
@@ -200,54 +227,43 @@ export const CurrencyTimer = memo(function CurrencyTimer({
           {timerState.current}/{config.max}
         </Badge>
       </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">현재 보유량</label>
-        <div className="flex space-x-2">
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
           <Input
             type="number"
+            placeholder="현재 재화량"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={`0-${config.max}`}
-            min="0"
-            max={config.max}
-            className="form-input flex-1 text-sm"
+            className="flex-grow"
           />
-          <Button onClick={startTimer} className="form-button-primary text-sm px-3" size="sm">
-            시작
+          <Button onClick={startTimer} disabled={timerState.isRunning || inputValue === ""}>
+            {timerState.isRunning ? "재시작" : "타이머 시작"}
           </Button>
-          {timerState.isRunning && (
-            <Button onClick={stopTimer} className="form-button-secondary text-sm px-3" size="sm">
-              정지
-            </Button>
-          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button onClick={stopTimer} disabled={!timerState.isRunning}>
+            타이머 중지
+          </Button>
+          <Button onClick={() => setInputValue(String(timerState.current))}>
+            현재량으로 설정
+          </Button>
+        </div>
+        <div className="bg-gray-100 p-4 rounded-lg space-y-2 text-sm text-gray-700">
+          <div className="flex justify-between items-center">
+            <span className="font-medium">다음 충전까지:</span>
+            <span className="font-semibold text-gray-800">{timeDisplay.nextCharge}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="font-medium">완전 충전까지:</span>
+            <span className="font-semibold text-gray-800">{timeDisplay.fullCharge}</span>
+          </div>
         </div>
       </div>
-
-      <div className="progress-bar">
-        <div className="progress-fill transition-all duration-300" style={{ width: `${progressPercentage}%` }} />
+      <div className="mt-4">
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+        </div>
       </div>
-
-      {timerState.isRunning && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">다음 충전까지</div>
-            <div className="timer-display text-sm font-mono">{timeDisplay.nextCharge}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-gray-500 mb-1">최대 충전까지</div>
-            <div className="timer-display text-sm font-mono">{timeDisplay.fullCharge}</div>
-          </div>
-        </div>
-      )}
-
-      {timerState.fullChargeTime && (
-        <div className="text-center p-2 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="text-xs text-blue-600 font-medium">
-            완전 충전 예정: {timerState.fullChargeTime.toLocaleString("ko-KR")}
-          </div>
-        </div>
-      )}
     </div>
   )
 })

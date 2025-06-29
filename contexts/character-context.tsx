@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 import allItemsData from "@/data/items.json"
 import questsData from "@/data/quests.json"
@@ -15,6 +14,15 @@ interface ProcessingQueue {
   timeLeft: number
   totalTime: number
   itemName?: string
+  quantity?: number
+}
+
+// Add this interface for currency timer state
+interface CurrencyTimerState {
+  current: number
+  isRunning: boolean
+  nextChargeTime: string | null // Stored as ISO string
+  fullChargeTime: string | null // Stored as ISO string
 }
 
 export interface Character {
@@ -40,6 +48,7 @@ export interface Character {
   equippedItems: Record<string, number | null>
   craftingQueues: Record<string, ProcessingQueue[]>
   favoriteCraftingFacilities: Record<string, boolean>
+  currencyTimers: Record<string, CurrencyTimerState>
   guildName?: string
   guildRank?: string
   createdAt: string
@@ -195,17 +204,13 @@ const createInitialCraftingQueues = (
     const facilityId = facility.id
     const defaultQueues: ProcessingQueue[] = Array(4)
       .fill(null)
-      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined }))
+      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined, quantity: undefined }))
 
     // Merge with existing queues if provided
     craftingQueues[facilityId] = initialQueues[facilityId]
-      ? initialQueues[facilityId].map((q: ProcessingQueue, index: number) => ({
-          ...defaultQueues[index], // Ensure all default properties are present
-          ...q,
-        }))
+      ? initialQueues[facilityId].map((q, i) => ({ ...defaultQueues[i], ...q }))
       : defaultQueues
   })
-
   console.debug("Exiting createInitialCraftingQueues, merged craftingQueues:", craftingQueues)
   return craftingQueues
 }
@@ -214,17 +219,19 @@ const createInitialFavoriteCraftingFacilities = (
   initialFavorites: Record<string, boolean> = {},
 ): Record<string, boolean> => {
   console.debug("Entering createInitialFavoriteCraftingFacilities with initialFavorites:", initialFavorites)
-  const favorites: Record<string, boolean> = {}
+  const favoriteFacilities: Record<string, boolean> = {}
+
   allCraftingFacilitiesData.forEach((facility: any) => {
-    favorites[facility.id] = false
+    favoriteFacilities[facility.id] = false
   })
+
   for (const facilityId in initialFavorites) {
     if (Object.prototype.hasOwnProperty.call(initialFavorites, facilityId)) {
-      favorites[facilityId] = initialFavorites[facilityId]
+      favoriteFacilities[facilityId] = initialFavorites[facilityId]
     }
   }
-  console.debug("Exiting createInitialFavoriteCraftingFacilities, merged favorites:", favorites)
-  return favorites
+  console.debug("Exiting createInitialFavoriteCraftingFacilities, merged favoriteFacilities:", favoriteFacilities)
+  return favoriteFacilities
 }
 
 const defaultCharacters: Character[] = [
@@ -250,375 +257,373 @@ const defaultCharacters: Character[] = [
     completedWeeklyTasks: {},
     equippedItems: createInitialEquipment({
       weapon: 1,
-      armor: 2,
-      gloves: 3,
-      shield: 4,
-      ring1: 5,
-      ring2: 6,
-      pants: 7,
-      boots: 8,
+      shield: 2,
+      armor: 3,
+      gloves: 4,
+      pants: 5,
+      boots: 6,
+      ring1: 7,
+      ring2: 8,
+      belt: 9,
     }),
     craftingQueues: createInitialCraftingQueues(),
-    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities({ metal: true }), // Example: metal facility is favorite
-    guildName: "Demo Guild",
-    guildRank: "Member",
+    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
+    currencyTimers: {
+      silver: {
+        current: 0,
+        isRunning: false,
+        nextChargeTime: null,
+        fullChargeTime: null,
+      },
+      demon: {
+        current: 0,
+        isRunning: false,
+        nextChargeTime: null,
+        fullChargeTime: null,
+      },
+    },
+    guildName: "데모 길드",
+    guildRank: "단장",
     createdAt: new Date().toISOString(),
   },
   {
     id: "2",
-    name: "마법사 에리나",
-    server: "만돌린",
-    level: 95,
-    profession: "화염술사",
-    silverCoins: 45,
-    demonTribute: 7,
-    favorite: false,
-    lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    combatPower: 41850,
-    questProgress: {
-      daily: { completed: 6, total: 12 },
-      weekly: { completed: 2, total: 6 },
-    },
-    inventory: createInitialInventory({ 1: 5, 2: 30, 3: 15, 4: 8 }),
-    equipment: {},
-    skills: createInitialSkills({ 1: 1, 2: 1, 8: 1, 14: 1 }),
-    completedDailyTasks: { d2: true, w2: true },
-    completedWeeklyTasks: {},
-    equippedItems: createInitialEquipment(),
-    craftingQueues: createInitialCraftingQueues(),
-    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
-    guildName: "Demo Guild",
-    guildRank: "Member",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "3",
     name: "음유시인 리안",
-    server: "하프",
+    server: "만돌린",
     level: 88,
-    profession: "바드",
-    silverCoins: 92,
+    profession: "음유시인",
+    silverCoins: 300,
     demonTribute: 2,
     favorite: false,
-    lastActive: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    combatPower: 41500,
+    lastActive: new Date().toISOString(),
+    combatPower: 35120,
     questProgress: {
-      daily: { completed: 4, total: 12 },
+      daily: { completed: 5, total: 12 },
       weekly: { completed: 1, total: 6 },
     },
-    inventory: createInitialInventory({ 1: 8, 2: 25, 3: 20 }),
+    inventory: createInitialInventory({ 10: 5, 11: 15, 12: 25 }),
     equipment: {},
-    skills: createInitialSkills({ 1: 1, 2: 1, 17: 1, 18: 1 }),
-    completedDailyTasks: { d3: true, w3: true },
+    skills: createInitialSkills({ 5: 1, 6: 3, 7: 5 }),
+    completedDailyTasks: { d2: true, d5: true },
     completedWeeklyTasks: {},
     equippedItems: createInitialEquipment(),
     craftingQueues: createInitialCraftingQueues(),
     favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
-    guildName: "Demo Guild",
-    guildRank: "Member",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    name: "쌀숭이",
-    server: "류트",
-    level: 65,
-    profession: "모험가",
-    silverCoins: 30,
-    demonTribute: 5,
-    favorite: false,
-    lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    combatPower: 28500,
-    questProgress: {
-      daily: { completed: 3, total: 12 },
-      weekly: { completed: 1, total: 6 },
+    currencyTimers: {
+      silver: {
+        current: 0,
+        isRunning: false,
+        nextChargeTime: null,
+        fullChargeTime: null,
+      },
+      demon: {
+        current: 0,
+        isRunning: false,
+        nextChargeTime: null,
+        fullChargeTime: null,
+      },
     },
-    inventory: createInitialInventory({ 1: 15, 2: 40, 3: 10 }),
-    equipment: {},
-    skills: createInitialSkills({ 1: 1, 2: 1, 3: 1 }),
-    completedDailyTasks: { d10: true },
-    completedWeeklyTasks: {},
-    equippedItems: createInitialEquipment(),
-    craftingQueues: createInitialCraftingQueues(),
-    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
-    guildName: "Demo Guild",
-    guildRank: "Member",
+    guildName: "뮤직 홀릭",
+    guildRank: "멤버",
     createdAt: new Date().toISOString(),
   },
 ]
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
-  console.debug("CharacterProvider rendered.")
   const [characters, setCharacters] = useState<Character[]>([])
-  const [activeCharacterState, setActiveCharacterState] = useState<Character | null>(null)
-  const [viewMode, _setViewModeState] = useState<"single" | "all">("single")
+  const [activeCharacter, setActiveCharacterState] = useState<Character | null>(null)
+  const [viewMode, setViewMode] = useState<"single" | "all">("single")
+  const [isLoaded, setIsLoaded] = useState(false); // New state to track if data is loaded
 
-  // Load characters from localStorage on mount
   useEffect(() => {
-    console.debug("CharacterProvider useEffect: Initial load from localStorage.")
+    console.debug("CharacterProvider: useEffect - Initializing characters from localStorage.");
     try {
-      const savedCharacters = localStorage.getItem("mabi-characters")
-      const savedActiveCharacterId = localStorage.getItem("mabi-active-character")
+      const storedCharacters = localStorage.getItem("characters");
+      if (storedCharacters) {
+        const parsedCharacters: Character[] = JSON.parse(storedCharacters);
+        // Apply initial structures to loaded characters to ensure new fields are present
+        const initializedCharacters = parsedCharacters.map((char: Character) => {
+          const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
+            char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
+            char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
+          );
+          return {
+            ...char,
+            inventory: createInitialInventory(char.inventory),
+            // Ensure questProgress is initialized if missing from parsed data (it holds numbers)
+            questProgress: char.questProgress || {
+              daily: { completed: 0, total: Object.keys(allQuests.daily).length },
+              weekly: { completed: 0, total: Object.keys(allQuests.weekly).length },
+            },
+            completedDailyTasks, // Use the initialized boolean maps
+            completedWeeklyTasks, // Use the initialized boolean maps
+            equipment: createInitialEquipment(char.equipment),
+            skills: createInitialSkills(char.skills),
+            craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
+            currencyTimers: char.currencyTimers ? Object.entries(char.currencyTimers).reduce((acc: Record<string, CurrencyTimerState>, [key, value]: [string, any]) => {
+              acc[key] = {
+                current: value.current,
+                isRunning: value.isRunning,
+                nextChargeTime: value.nextChargeTime ? value.nextChargeTime : null,
+                fullChargeTime: value.fullChargeTime ? value.fullChargeTime : null,
+              };
+              return acc;
+            }, {}) : {
+              silver: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
+              demon: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
+            },
+          };
+        });
+        setCharacters(initializedCharacters);
+        console.debug("CharacterProvider: Loaded characters from localStorage.", initializedCharacters);
 
-      let loadedChars: Character[] = []
-      if (savedCharacters) {
-        console.debug("Found saved characters in localStorage.")
-        const parsedCharacters: Character[] = JSON.parse(savedCharacters).map((char: any) => ({
-          // Explicitly type char
-          ...char,
-          lastActive: char.lastActive ? char.lastActive : new Date().toISOString(), // Ensure Date objects
-          inventory: createInitialInventory(char.inventory), // Re-initialize inventory with all items
-          completedDailyTasks: char.completedDailyTasks || {},
-          completedWeeklyTasks: char.completedWeeklyTasks || {},
-          equippedItems: createInitialEquipment(char.equippedItems),
-          skills: createInitialSkills(char.skills),
-          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-        }))
-        loadedChars = parsedCharacters
-        console.debug("Parsed characters from localStorage:", loadedChars)
-      } else {
-        console.debug("No saved characters found, using default characters.")
-        loadedChars = defaultCharacters.map((char) => ({
-          ...char, // Ensure default characters also go through initializers
-          inventory: createInitialInventory(char.inventory),
-          completedDailyTasks: char.completedDailyTasks || {},
-          completedWeeklyTasks: char.completedWeeklyTasks || {},
-          equippedItems: createInitialEquipment(char.equippedItems),
-          skills: createInitialSkills(char.skills),
-          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-        }))
-      }
-
-      setCharacters(loadedChars)
-      console.debug("Characters state set to:", loadedChars)
-
-      let initialActiveChar: Character | null = null
-      if (savedActiveCharacterId) {
-        initialActiveChar = loadedChars.find((char) => char.id === savedActiveCharacterId) || null
-        if (initialActiveChar) {
-          console.debug(`Found active character from saved ID: ${initialActiveChar.name}`)
-        } else {
-          console.warn(`Saved active character ID ${savedActiveCharacterId} not found in loaded characters.`)
+        const storedActiveCharacterId = localStorage.getItem("activeCharacterId");
+        if (storedActiveCharacterId) {
+          const foundActive = initializedCharacters.find(char => char.id === storedActiveCharacterId);
+          setActiveCharacterState(foundActive || null);
+          console.debug("CharacterProvider: Set active character from localStorage.", foundActive);
         }
-      }
 
-      if (!initialActiveChar && loadedChars.length > 0) {
-        // If no saved active character or not found, select the most recently active or the first one
-        initialActiveChar = loadedChars.sort(
-          (a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime(),
-        )[0]
-        console.debug(`No saved active character or not found, defaulting to: ${initialActiveChar.name}`)
-      }
+        const storedViewMode = localStorage.getItem("viewMode") as "single" | "all";
+        if (storedViewMode) {
+          setViewMode(storedViewMode);
+          console.debug("CharacterProvider: Set view mode from localStorage.", storedViewMode);
+        }
 
-      setActiveCharacterState(initialActiveChar)
-      console.debug("Active character state set to:", initialActiveChar?.name || "null")
-
-      // Set view mode from localStorage, default to 'single'
-      const savedViewMode = localStorage.getItem("mabi-view-mode")
-      if (savedViewMode === "all") {
-        _setViewModeState("all")
-        console.debug("View mode set to 'all' from localStorage.")
       } else {
-        _setViewModeState("single")
-        console.debug("View mode defaulted to 'single'.")
+        console.debug("CharacterProvider: No characters found in localStorage. Initializing with default characters.");
+        // If no characters in localStorage, initialize with default characters
+        const initializedDefaults = defaultCharacters.map(char => {
+          const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
+            char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
+            char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
+          );
+          return {
+            ...char,
+            inventory: createInitialInventory(char.inventory),
+            questProgress: char.questProgress, // defaultCharacters already has this correctly defined (it holds numbers)
+            completedDailyTasks, // Use the initialized boolean maps
+            completedWeeklyTasks, // Use the initialized boolean maps
+            equipment: createInitialEquipment(char.equipment),
+            skills: createInitialSkills(char.skills),
+            craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
+            currencyTimers: {
+              silver: {
+                current: 0,
+                isRunning: false,
+                nextChargeTime: null,
+                fullChargeTime: null,
+              },
+              demon: {
+                current: 0,
+                isRunning: false,
+                nextChargeTime: null,
+                fullChargeTime: null,
+              },
+            },
+          };
+        });
+        setCharacters(initializedDefaults);
+        setActiveCharacterState(initializedDefaults.length > 0 ? initializedDefaults[0] : null); // Set first default character as active
+        console.debug("CharacterProvider: Initialized with default characters and set active.", initializedDefaults);
       }
     } catch (error) {
-      console.error("Failed to load characters from localStorage", error)
-      // Fallback to default if localStorage fails
-      const defaultLoadedChars = defaultCharacters.map((char) => ({
-        ...char, // Ensure default characters also go through initializers
-        inventory: createInitialInventory(char.inventory),
-        completedDailyTasks: char.completedDailyTasks || {},
-        completedWeeklyTasks: char.completedWeeklyTasks || {},
-        equippedItems: createInitialEquipment(char.equippedItems),
-        skills: createInitialSkills(char.skills),
-        craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-      }))
-      setCharacters(defaultLoadedChars)
-      setActiveCharacterState(defaultLoadedChars.length > 0 ? defaultLoadedChars[0] : null)
-      _setViewModeState("single")
-      console.debug("Falling back to default characters due to localStorage error.")
+      console.error("CharacterProvider: Error loading from localStorage:", error);
+      // Fallback to default characters on error as well
+      const initializedDefaults = defaultCharacters.map(char => {
+        const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
+          char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
+          char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
+        );
+        return {
+          ...char,
+          inventory: createInitialInventory(char.inventory),
+          questProgress: char.questProgress, // defaultCharacters already has this correctly defined (it holds numbers)
+          completedDailyTasks, // Use the initialized boolean maps
+          completedWeeklyTasks, // Use the initialized boolean maps
+          equipment: createInitialEquipment(char.equipment),
+          skills: createInitialSkills(char.skills),
+          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
+          currencyTimers: {
+            silver: {
+              current: 0,
+              isRunning: false,
+              nextChargeTime: null,
+              fullChargeTime: null,
+            },
+            demon: {
+              current: 0,
+              isRunning: false,
+              nextChargeTime: null,
+              fullChargeTime: null,
+            },
+          },
+        };
+      });
+      setCharacters(initializedDefaults);
+      setActiveCharacterState(initializedDefaults.length > 0 ? initializedDefaults[0] : null);
+      console.debug("CharacterProvider: Fallback to default characters due to localStorage error.", initializedDefaults);
+    } finally {
+      setIsLoaded(true); // Mark as loaded whether successful or not
     }
-  }, [])
+  }, []);
 
-  // Save characters and active character to localStorage whenever they change
   useEffect(() => {
-    console.debug("CharacterProvider useEffect: Saving characters and active character to localStorage.")
-    if (characters.length > 0) {
-      localStorage.setItem("mabi-characters", JSON.stringify(characters))
-      console.debug("Characters saved to localStorage.", characters)
+    if (isLoaded) { // Only save to localStorage after initial load
+      console.debug("CharacterProvider: useEffect - Saving characters to localStorage.", characters);
+      localStorage.setItem("characters", JSON.stringify(characters));
     }
-    if (activeCharacterState) {
-      localStorage.setItem("mabi-active-character", activeCharacterState.id)
-      console.debug(`Active character ID ${activeCharacterState.id} saved to localStorage.`)
-    } else {
-      localStorage.removeItem("mabi-active-character")
-      console.debug("Active character ID removed from localStorage (no active character).")
+  }, [characters, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded && activeCharacter) { // Only save to localStorage after initial load
+      console.debug("CharacterProvider: useEffect - Saving activeCharacterId to localStorage.", activeCharacter.id);
+      localStorage.setItem("activeCharacterId", activeCharacter.id);
+    } else if (isLoaded && !activeCharacter) {
+      localStorage.removeItem("activeCharacterId");
     }
-    localStorage.setItem("mabi-view-mode", viewMode)
-    console.debug(`View mode ${viewMode} saved to localStorage.`)
-  }, [characters, activeCharacterState, viewMode])
+  }, [activeCharacter, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) { // Only save to localStorage after initial load
+      console.debug("CharacterProvider: useEffect - Saving viewMode to localStorage.", viewMode);
+      localStorage.setItem("viewMode", viewMode);
+    }
+  }, [viewMode, isLoaded]);
+
+  const updateCharacter = useCallback((id: string, updates: Partial<Character>) => {
+    console.debug(`updateCharacter: Updating character with ID ${id}.`, updates);
+    setCharacters((prevCharacters: Character[]) => {
+      const updated = prevCharacters.map((char: Character) =>
+        char.id === id ? { ...char, ...updates, lastActive: new Date().toISOString() } : char,
+      )
+      // Ensure activeCharacter is updated if it's the one being modified
+      if (activeCharacter?.id === id) {
+        setActiveCharacterState((prevActive: Character | null) => prevActive ? { ...prevActive, ...updates, lastActive: new Date().toISOString() } : null);
+      }
+      return updated
+    })
+  }, [activeCharacter]); // Depend on activeCharacter
 
   const setActiveCharacter = useCallback((character: Character | null) => {
-    console.debug(`setActiveCharacter called. Character: ${character?.name || "null"}`)
-    setActiveCharacterState(character)
-    // The useEffect above will handle saving to localStorage
-  }, [])
-
-  const setViewMode = useCallback((mode: "single" | "all") => {
-    console.debug(`setViewMode called. Mode: ${mode}`)
-    _setViewModeState(mode)
-  }, [])
-
-  const updateCharacter = useCallback(
-    (id: string, updates: Partial<Character>) => {
-      console.debug(`updateCharacter called. ID: ${id}, Updates:`, updates)
-      setCharacters((prevCharacters: Character[]) => {
-        const updatedChars = prevCharacters.map((char: Character) =>
-          char.id === id ? { ...char, ...updates, lastActive: new Date().toISOString() } : char,
-        )
-        // If the updated character is the active one, update activeCharacterState
-        if (activeCharacterState && activeCharacterState.id === id) {
-          console.debug("Updated character is active, updating activeCharacterState.")
-          setActiveCharacterState((prevActiveChar: Character | null) => {
-            const newActiveChar = updatedChars.find((c: Character) => c.id === id) || null // c has type Character
-            console.debug("New active character state after update:", newActiveChar?.name || "null")
-            return newActiveChar
-          })
-        }
-        console.debug("Characters state after update:", updatedChars)
-        return updatedChars
-      })
-    },
-    [activeCharacterState],
-  )
+    console.debug("setActiveCharacter: Setting active character to:", character);
+    setActiveCharacterState(character);
+  }, []);
 
   const addCharacter = useCallback(
-    (
-      newChar: Omit<
-        Character,
-        | "id"
-        | "lastActive"
-        | "completedDailyTasks"
-        | "completedWeeklyTasks"
-        | "equippedItems"
-        | "skills"
-        | "craftingQueues"
-        | "favoriteCraftingFacilities"
-      >,
-    ) => {
-      console.debug("addCharacter called. New character data:", newChar)
-      const characterId = `char-${Date.now()}` // Generate a unique string ID
-      const fullCharacter: Character = {
-        // Ensure newChar properties are applied first, then default values for missing ones
-        ...newChar,
-        id: characterId,
-        lastActive: new Date().toISOString(),
-        silverCoins: 0,
-        demonTribute: 0,
-        favorite: false,
-        combatPower: 0,
+    (character: Omit<
+      Character,
+      | "id"
+      | "lastActive"
+      | "completedDailyTasks"
+      | "completedWeeklyTasks"
+      | "equippedItems"
+      | "skills"
+      | "craftingQueues"
+      | "favoriteCraftingFacilities"
+    >) => {
+      console.debug("addCharacter: Adding new character:", character);
+      const newId = `char-${Date.now()}`
+      const now = new Date().toISOString()
+      
+      // Initialize values for properties that are omitted from the input 'character'
+      const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress();
+      const initialEquipment = createInitialEquipment(); // Pass no argument, use default
+      const initialSkills = createInitialSkills();       // Pass no argument, use default
+      const initialCraftingQueues = createInitialCraftingQueues(); // Pass no argument, use default
+      const initialFavoriteCraftingFacilities = createInitialFavoriteCraftingFacilities(); // Pass no argument, use default
+
+      const newCharacter: Character = {
+        ...character, // Spread incoming 'character' properties first
+        id: newId,
+        lastActive: now,
+        inventory: createInitialInventory(character.inventory),
         questProgress: {
-          daily: { completed: 0, total: Object.values(allQuests.daily).flat().length },
-          weekly: { completed: 0, total: Object.values(allQuests.weekly).flat().length },
+          daily: character.questProgress?.daily || { completed: 0, total: Object.keys(allQuests.daily).length },
+          weekly: character.questProgress?.weekly || { completed: 0, total: Object.keys(allQuests.weekly).length },
         },
-        inventory: createInitialInventory(),
-        equipment: {},
-        skills: createInitialSkills(),
-        completedDailyTasks: {},
-        completedWeeklyTasks: {},
-        equippedItems: createInitialEquipment(),
-        craftingQueues: createInitialCraftingQueues(),
-        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
-        guildName: "Demo Guild",
-        guildRank: "Member",
-        createdAt: new Date().toISOString(),
+        completedDailyTasks: completedDailyTasks,
+        completedWeeklyTasks: completedWeeklyTasks,
+        equipment: initialEquipment,
+        skills: initialSkills,
+        equippedItems: initialEquipment, // Initialize equipped items as well, reusing initialEquipment
+        craftingQueues: initialCraftingQueues,
+        favoriteCraftingFacilities: initialFavoriteCraftingFacilities,
+        currencyTimers: {
+          silver: {
+            current: 0,
+            isRunning: false,
+            nextChargeTime: null,
+            fullChargeTime: null,
+          },
+          demon: {
+            current: 0,
+            isRunning: false,
+            nextChargeTime: null,
+            fullChargeTime: null,
+          },
+        },
       }
-      console.debug("Full character to add:", fullCharacter)
-      setCharacters((prev: Character[]) => {
-        const updatedChars = [...prev, fullCharacter]
-        console.debug("Characters state after add:", updatedChars)
-        return updatedChars
-      })
-      // Automatically set the newly added character as active if it's the first one or if needed
-      // This logic might need refinement based on UX preference
-      setActiveCharacterState(fullCharacter)
-      console.debug("Newly added character set as active:", fullCharacter.name)
+      setCharacters((prev: Character[]) => [...prev, newCharacter])
+      setActiveCharacterState(newCharacter) // Set newly added character as active
+      console.debug("addCharacter: New character added and set as active:", newCharacter);
     },
     [],
   )
 
-  const deleteCharacter = useCallback(
-    (id: string) => {
-      console.debug(`deleteCharacter called. ID: ${id}`)
-      setCharacters((prev: Character[]) => {
-        const filteredChars = prev.filter((char) => char.id !== id)
-        console.debug("Characters state after delete:", filteredChars)
-
-        // If the deleted character was active, clear active character or set a new one
-        if (activeCharacterState && activeCharacterState.id === id) {
-          console.debug("Deleted character was active.")
-          const newActiveChar = filteredChars.length > 0 ? filteredChars[0] : null
-          setActiveCharacterState(newActiveChar)
-          console.debug("New active character after delete:", newActiveChar?.name || "null")
-        }
-        return filteredChars
-      })
-    },
-    [activeCharacterState],
-  )
-
-  const toggleCharacterFavorite = useCallback((id: string) => {
-    console.debug(`toggleCharacterFavorite called. ID: ${id}`)
-    setCharacters((prev: Character[]) => {
-      const updatedChars = prev.map((char: Character) =>
-        char.id === id ? { ...char, favorite: !char.favorite } : char,
-      )
-      console.debug("Characters state after favorite toggle:", updatedChars)
-      return updatedChars
-    })
+  const deleteCharacter = useCallback((id: string) => {
+    console.debug(`deleteCharacter: Deleting character with ID ${id}.`);
+    setCharacters((prev: Character[]) => prev.filter((char: Character) => char.id !== id))
+    setActiveCharacterState(null) // Clear active character if deleted
   }, [])
 
-  const toggleCraftingFacilityFavorite = useCallback(
-    (facilityId: string) => {
-      console.debug(`toggleCraftingFacilityFavorite called for facility ID: ${facilityId}`)
-      if (!activeCharacterState) {
-        console.warn("No active character to toggle favorite crafting facility.")
-        return
-      }
+  const toggleCharacterFavorite = useCallback((id: string) => {
+    console.debug(`toggleCharacterFavorite: Toggling favorite for character ID ${id}.`);
+    setCharacters((prev: Character[]) =>
+      prev.map((char: Character) =>
+        char.id === id ? { ...char, favorite: !char.favorite } : char,
+      ),
+    )
+  }, [])
 
-      updateCharacter(activeCharacterState.id, {
-        favoriteCraftingFacilities: {
-          ...activeCharacterState.favoriteCraftingFacilities,
-          [facilityId]: !activeCharacterState.favoriteCraftingFacilities[facilityId],
-        },
-      })
-    },
-    [activeCharacterState, updateCharacter],
+  const toggleCraftingFacilityFavorite = useCallback((facilityId: string) => {
+    console.debug(`toggleCraftingFacilityFavorite: Toggling favorite for crafting facility ID ${facilityId}.`);
+    if (!activeCharacter) {
+      console.warn("toggleCraftingFacilityFavorite: No active character to toggle favorite facility.");
+      return;
+    }
+
+    const currentFavorites = activeCharacter.favoriteCraftingFacilities || {};
+    const newFavorites = {
+      ...currentFavorites,
+      [facilityId]: !currentFavorites[facilityId],
+    };
+    updateCharacter(activeCharacter.id, { favoriteCraftingFacilities: newFavorites });
+  }, [activeCharacter, updateCharacter]);
+
+  const contextValue = React.useMemo(
+    () => ({
+      characters,
+      activeCharacter,
+      viewMode,
+      setActiveCharacter,
+      setViewMode,
+      updateCharacter,
+      addCharacter,
+      deleteCharacter,
+      toggleCharacterFavorite,
+      toggleCraftingFacilityFavorite,
+    }),
+    [characters, activeCharacter, viewMode, setActiveCharacter, setViewMode, updateCharacter, addCharacter, deleteCharacter, toggleCharacterFavorite, toggleCraftingFacilityFavorite],
   )
 
-  const contextValue = {
-    characters,
-    activeCharacter: activeCharacterState,
-    viewMode,
-    setActiveCharacter,
-    setViewMode,
-    updateCharacter,
-    addCharacter,
-    deleteCharacter,
-    toggleCharacterFavorite,
-    toggleCraftingFacilityFavorite,
-  }
-
-  console.debug("CharacterProvider returning context value.", contextValue)
-  return <CharacterContext.Provider value={contextValue}>{children}</CharacterContext.Provider>
+  return <CharacterContext.Provider value={contextValue}>{isLoaded ? children : null}</CharacterContext.Provider>;
 }
 
 export function useCharacter() {
-  console.debug("useCharacter hook called.")
   const context = useContext(CharacterContext)
   if (context === undefined) {
     throw new Error("useCharacter must be used within a CharacterProvider")
