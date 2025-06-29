@@ -12,6 +12,8 @@ import { useCharacter } from "@/contexts/character-context";
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useNotification } from "@/contexts/notification-context";
+import { logger } from "@/lib/logger";
 
 interface Character {
   id: string;
@@ -39,6 +41,7 @@ const professions = [
 export default function CharactersPage() {
   console.debug("Entering CharactersPage component");
   const { characters, addCharacter: contextAddCharacter, deleteCharacter: contextDeleteCharacter, toggleCharacterFavorite, setActiveCharacter, updateCharacter: contextUpdateCharacter } = useCharacter();
+  const notify = useNotification();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [newCharacter, setNewCharacter] = useState({
@@ -116,6 +119,16 @@ export default function CharactersPage() {
     setIsFormModalOpen(false);
   };
 
+  const handleSelectCharacter = (character: Character) => {
+    logger.debug("setActiveCharacter 호출됨", { characterName: character.name, characterId: character.id });
+    setActiveCharacter(character);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeCharacterId', character.id);
+      logger.debug("localStorage에 activeCharacterId 저장됨:", character.id);
+    }
+    notify(`${character.name}이(가) 활성화되었습니다!`);
+  };
+
   console.debug("Rendering CharactersPage component");
 
   const filteredCharacters = characters.filter((character) =>
@@ -123,8 +136,7 @@ export default function CharactersPage() {
     character.server.toLowerCase().includes(searchQuery.toLowerCase()) ||
     character.profession.toLowerCase().includes(searchQuery.toLowerCase()) ||
     character.level.toString().includes(searchQuery.toLowerCase()) ||
-    character.combatPower.toString().includes(searchQuery.toLowerCase())) &&
-    !character.guildName
+    character.combatPower.toString().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -385,13 +397,10 @@ export default function CharactersPage() {
                 </div>
                 <div className="col-span-2 mt-2">
                   <Button
-                    onClick={() => {
-                      console.debug(`'활성화' button clicked for character: ${character.name}`);
-                      setActiveCharacter(character);
-                    }}
+                    onClick={() => handleSelectCharacter(character)}
                     className="form-button-primary w-full"
                   >
-                    활성화
+                    선택
                   </Button>
                 </div>
               </CardContent>

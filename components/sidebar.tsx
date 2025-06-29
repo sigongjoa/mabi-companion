@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { useCharacter } from "@/contexts/character-context"
 import {
   Home,
   Package,
@@ -108,6 +109,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [activeTab, setActiveTab] = useState("home")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const pathname = usePathname()
+  const { activeCharacter } = useCharacter()
 
   const handleAction = useCallback((action: string) => {
     switch (action) {
@@ -143,8 +145,11 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">마비노기</h2>
-                <p className="text-xs text-gray-500">통합 관리 시스템</p>
+                <h2 className="text-lg font-bold text-gray-900">
+                  마비노기
+                  {activeCharacter && <span className="ml-2">- {activeCharacter.name}</span>}
+                </h2>
+                {!activeCharacter && <p className="text-xs text-gray-500">통합 관리 시스템</p>}
               </div>
             </div>
           </div>

@@ -293,102 +293,159 @@ const createInitialCurrencyTimers = (initialTimers: Record<string, CurrencyTimer
   return currencyTimers;
 };
 
-const defaultCharacters: Character[] = [
-  {
-    id: "1",
-    name: "기사단장 테오",
-    server: "류트",
-    level: 120,
-    profession: "석궁사수",
-    silverCoins: 75,
-    demonTribute: 3,
-    favorite: true,
-    lastActive: new Date().toISOString(),
-    combatPower: 52340,
-    questProgress: {
-      daily: { completed: 8, total: 12 },
-      weekly: { completed: 3, total: 6 },
-    },
-    inventory: { 1: 10, 2: 59, 3: 30, 4: 21, 5: 45, 13: 10 }, // 13번 아이템 10개 추가
-    equipment: {},
-    skills: { 1: 1, 2: 1, 3: 2, 4: 6 },
-    completedDailyTasks: { d1: true, d4: true, w1: true },
-    completedWeeklyTasks: {},
-    equippedItems: {
-      weapon: 1,
-      shield: 2,
-      armor: 3,
-      gloves: 4,
-      pants: 5,
-      boots: 6,
-      ring1: 7,
-      ring2: 8,
-      belt: 9,
-    },
-    craftingQueues: {},
-    favoriteCraftingFacilities: { 1: true },
-    favoriteItems: {},
-    currencyTimers: {
-      silver: {
-        current: 0,
-        isRunning: false,
-        nextChargeTime: null,
-        fullChargeTime: null,
-      },
-      demon: {
-        current: 0,
-        isRunning: false,
-        nextChargeTime: null,
-        fullChargeTime: null,
-      },
-    },
-    guildName: "데모 길드",
-    guildRank: "단장",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "음유시인 리안",
-    server: "만돌린",
-    level: 88,
-    profession: "음유시인",
-    silverCoins: 300,
-    demonTribute: 2,
-    favorite: false,
-    lastActive: new Date().toISOString(),
-    combatPower: 35120,
-    questProgress: {
-      daily: { completed: 5, total: 12 },
-      weekly: { completed: 1, total: 6 },
-    },
-    inventory: { 10: 5, 11: 15, 12: 25 },
-    equipment: {},
-    skills: { 5: 1, 6: 3, 7: 5 },
-    completedDailyTasks: { d2: true, d5: true },
-    completedWeeklyTasks: {},
-    equippedItems: {},
-    craftingQueues: {},
-    favoriteCraftingFacilities: { 1: true },
-    favoriteItems: {},
-    currencyTimers: {
-      silver: {
-        current: 0,
-        isRunning: false,
-        nextChargeTime: null,
-        fullChargeTime: null,
-      },
-      demon: {
-        current: 0,
-        isRunning: false,
-        nextChargeTime: null,
-        fullChargeTime: null,
-      },
-    },
-    guildName: "뮤직 홀릭",
-    guildRank: "멤버",
-    createdAt: new Date().toISOString(),
-  },
-]
+// const defaultCharacters: Character[] = [
+//   {
+//     id: "1",
+//     name: "기사단장 테오",
+//     server: "류트",
+//     level: 120,
+//     profession: "석궁사수",
+//     silverCoins: 75,
+//     demonTribute: 3,
+//     favorite: true,
+//     lastActive: new Date().toISOString(),
+//     combatPower: 52340,
+//     questProgress: {
+//       daily: { completed: 8, total: 12 },
+//       weekly: { completed: 3, total: 6 },
+//     },
+//     inventory: { 1: 10, 2: 59, 3: 30, 4: 21, 5: 45 },
+//     equipment: {},
+//     skills: { 1: 1, 2: 1, 3: 2, 4: 6 },
+//     completedDailyTasks: { d1: true, d4: true },
+//     completedWeeklyTasks: {},
+//     equippedItems: { weapon: 1, shield: 2, armor: 3, gloves: 4, pants: 5, boots: 6, ring1: 7, ring2: 8, belt: 9 },
+//     craftingQueues: {
+//       metal: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       wood: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       leather: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       fabric: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       potion: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       color: [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       "weapon-craft": [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       "armor-craft": [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       "potion-craft": [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       "food-craft": [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//       "multi-craft": [
+//         { id: 0, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 1, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 2, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//         { id: 3, isProcessing: false, timeLeft: 0, totalTime: 0 },
+//       ],
+//     },
+//     favoriteCraftingFacilities: {},
+//     favoriteItems: {},
+//     currencyTimers: {
+//       silver: {
+//         current: 0,
+//         isRunning: false,
+//         nextChargeTime: null,
+//         fullChargeTime: null,
+//       },
+//       demon: {
+//         current: 0,
+//         isRunning: false,
+//         nextChargeTime: null,
+//         fullChargeTime: null,
+//       },
+//     },
+//     guildName: "데모 길드",
+//     guildRank: "단장",
+//     createdAt: new Date().toISOString(),
+//   },
+//   {
+//     id: "2",
+//     name: "음유시인 리안",
+//     server: "만돌린",
+//     level: 88,
+//     profession: "음유시인",
+//     silverCoins: 300,
+//     demonTribute: 2,
+//     favorite: false,
+//     lastActive: new Date().toISOString(),
+//     combatPower: 35120,
+//     questProgress: {
+//       daily: { completed: 5, total: 12 },
+//       weekly: { completed: 1, total: 6 },
+//     },
+//     inventory: { 10: 5, 11: 15, 12: 25 },
+//     equipment: {},
+//     skills: { 5: 1, 6: 3, 7: 5 },
+//     completedDailyTasks: { d2: true, d5: true },
+//     completedWeeklyTasks: {},
+//     equippedItems: {},
+//     craftingQueues: {},
+//     favoriteCraftingFacilities: { 1: true },
+//     favoriteItems: {},
+//     currencyTimers: {
+//       silver: {
+//         current: 0,
+//         isRunning: false,
+//         nextChargeTime: null,
+//         fullChargeTime: null,
+//       },
+//       demon: {
+//         current: 0,
+//         isRunning: false,
+//         nextChargeTime: null,
+//         fullChargeTime: null,
+//       },
+//     },
+//     guildName: "뮤직 홀릭",
+//     guildRank: "멤버",
+//     createdAt: new Date().toISOString(),
+//   },
+// ]
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   logger.debug("CharacterProvider 렌더링 시작")
@@ -545,20 +602,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           initialCharacters = []; // Fallback to empty if parsing fails
         }
       } else {
-        logger.debug("localStorage에 저장된 캐릭터 없음. defaultCharacters로 초기화.", { defaultCharactersLength: defaultCharacters.length });
-        initialCharacters = defaultCharacters.map(char => ({
-            ...char,
-            inventory: createInitialInventory(allItems, char.inventory), // Use default character's initial inventory with allItems
-            ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks), // Use default character's quest progress with allQuests
-            equippedItems: createInitialEquipment(char.equippedItems), // Use default character's equipped items
-            skills: createInitialSkills(allSkillsData, char.skills), // Use default character's skills with allSkillsData
-            craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues), // Use default character's crafting queues
-            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities), // Use default character's favorite facilities
-            favoriteItems: char.favoriteItems,
-            currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
-            combatPower: char.combatPower || 0, // defaultCharacters에도 combatPower가 없을 수 있으므로 초기화
-        }));
-        logger.debug("defaultCharacters로 캐릭터 초기화 성공", { initialCharactersLength: initialCharacters.length });
+        logger.debug("localStorage에 저장된 캐릭터 없음. 빈 배열로 초기화.");
+        initialCharacters = [];
       }
 
       setCharacters(initialCharacters);
@@ -566,9 +611,30 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
       // If no active character is set, set the first character from the loaded list
       // This is important for the initial load if localStorage was empty or had no active character
-      if (initialCharacters.length > 0 && !activeCharacter) {
-          setActiveCharacterState(initialCharacters[0]);
-          logger.debug("활성 캐릭터 설정됨 (첫 번째 캐릭터)", { characterName: initialCharacters[0].name });
+      if (initialCharacters.length > 0) {
+        const storedActiveCharacterId = localStorage.getItem("activeCharacterId");
+        let foundActiveCharacter: Character | null = null;
+
+        if (storedActiveCharacterId) {
+          foundActiveCharacter = initialCharacters.find(char => char.id === storedActiveCharacterId) || null;
+          if (foundActiveCharacter) {
+            logger.debug(`localStorage에서 활성 캐릭터 ID 발견 및 설정: ${foundActiveCharacter.name}`);
+          } else {
+            logger.warn(`localStorage에 있는 활성 캐릭터 ID (${storedActiveCharacterId})와 일치하는 캐릭터를 찾을 수 없습니다. 첫 번째 캐릭터로 설정합니다.`);
+            foundActiveCharacter = initialCharacters[0];
+          }
+        } else {
+          logger.debug("localStorage에 활성 캐릭터 ID 없음. 첫 번째 캐릭터로 설정합니다.");
+          foundActiveCharacter = initialCharacters[0];
+        }
+
+        if (foundActiveCharacter) {
+          setActiveCharacterState(foundActiveCharacter);
+          logger.debug("활성 캐릭터 설정 완료", { characterName: foundActiveCharacter.name });
+        }
+      } else {
+        setActiveCharacterState(null);
+        logger.debug("로드된 캐릭터가 없으므로 활성 캐릭터를 null로 설정합니다.");
       }
       setIsInitialized(true); // Data has been loaded and characters set, mark as initialized
     } else if (dataLoadError) {
@@ -589,9 +655,16 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   }, [characters, isInitialized, activeCharacter]);
 
   const setActiveCharacter = useCallback((character: Character | null) => {
-    logger.debug("setActiveCharacter 호출", { character });
-    setActiveCharacterState(character)
-  }, [])
+    logger.debug("setActiveCharacter 호출됨", { characterName: character?.name, characterId: character?.id });
+    setActiveCharacterState(character);
+    if (character) {
+      localStorage.setItem("activeCharacterId", character.id);
+      logger.debug(`localStorage에 activeCharacterId 저장됨: ${character.id}`);
+    } else {
+      localStorage.removeItem("activeCharacterId");
+      logger.debug("localStorage에서 activeCharacterId 제거됨");
+    }
+  }, []);
 
   const updateCharacter = useCallback(
     (id: string, updates: Partial<Character>) => {

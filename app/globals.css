@@ -245,10 +245,6 @@
   @apply status-indicator bg-yellow-100 text-yellow-800 border border-yellow-200;
 }
 
-.status-error {
-  @apply status-indicator bg-red-100 text-red-800 border border-red-200;
-}
-
 .status-info {
   @apply status-indicator bg-blue-100 text-blue-800 border border-blue-200;
 }
@@ -582,17 +578,13 @@
 }
 
 .material-count {
-  @apply text-sm font-bold min-w-[60px] text-right;
+  @apply font-semibold text-gray-800;
 }
 
 /* Standardized button sizes */
 .crafting-button {
-  @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  @apply h-9 px-4 py-2;
 }
 
 .crafting-button-primary {
@@ -723,4 +715,110 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* Add basic toast styling to ensure visibility */
+.ToastViewport {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent black background */
+  display: flex !important;
+  justify-content: center !important; /* Center horizontally */
+  align-items: center !important; /* Center vertically */
+  padding: 1rem !important;
+  gap: 0.5rem !important;
+  pointer-events: none !important; /* Allows clicks to pass through viewport */
+  z-index: 99999 !important; /* Ensure toast is on top of other elements, even higher */
+  flex-direction: column !important; /* Ensure vertical stacking */
+}
+
+.Toast {
+  background-color: red !important; /* Bright red background */
+  color: white !important; /* White text */
+  padding: 2rem !important; /* Large padding */
+  font-size: 2em !important; /* Large font size */
+  text-align: center !important; /* Center text */
+  width: 80% !important; /* Make it wide */
+  max-width: 600px !important; /* Max width */
+  border: 5px solid yellow !important; /* Yellow border */
+  box-shadow: 0 0 20px rgba(255, 255, 0, 0.8) !important; /* Glowing effect */
+
+  /* Existing properties to maintain structure, also with !important */
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  space-x: 4 !important;
+  overflow: hidden !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; /* shadow-lg */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  pointer-events: auto !important;
+}
+
+.Toast[data-state="open"] {
+  animation: slideInFromRight 0.3s ease-out forwards !important;
+}
+
+.Toast[data-state="closed"] {
+  animation: fadeOut 0.2s ease-in forwards !important;
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.ToastClose {
+  @apply absolute right-2 top-2 rounded-md p-1 text-gray-500 opacity-0 transition-opacity hover:text-gray-900 focus:opacity-100 focus:ring-1 group-hover:opacity-100;
+  z-index: 999999 !important; /* Even higher for the close button */
+}
+
+.ToastTitle {
+  font-weight: bold !important;
+  font-size: 1.5em !important; /* Make title larger */
+}
+
+.ToastDescription {
+  opacity: 1 !important;
+  font-size: 1.2em !important; /* Make description larger */
+}
+
+/* Remove specific shadcn/ui variant styling to avoid conflicts with !important */
+.Toast[data-variant="default"] {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: transparent !important;
+}
+
+.Toast[data-variant="destructive"] {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: transparent !important;
+}
+
+.Toast[data-variant="success"] {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: transparent !important;
+}
+
+.Toast[data-variant="warning"] {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: transparent !important;
+}
+
+.Toast[data-variant="info"] {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: transparent !important;
 }

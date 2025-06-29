@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckSquare, Clock, Calendar } from "lucide-react"
 import { useCharacter, Character } from "@/contexts/character-context"
 import { FavoriteToggle } from "@/components/favorite-toggle"
+import { CharacterScopedHeader } from "@/components/character-scoped-header"
 import { logger } from "@/lib/logger"
 
 import questsData from "/public/data/quests.json"
@@ -118,25 +119,11 @@ export default function QuestsPage() {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="modern-card fade-in">
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
-                <CheckSquare className="w-8 h-8 text-purple-600" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">숙제 관리</h1>
-                <p className="text-lg text-gray-600 mt-1">일일/주간 숙제 체크리스트</p>
-                <p className="text-sm text-gray-500 mt-1">캐릭터별 숙제 진행 상황 및 초기화 정보</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="quests-header" name="숙제 헤더" type="header" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <CharacterScopedHeader
+        title="숙제 관리"
+        description="일일/주간 숙제 체크리스트, 캐릭터별 숙제 진행 상황 및 초기화 정보"
+        icon={CheckSquare}
+      />
 
       <Tabs defaultValue="daily" className="space-y-6">
         <div className="document-card p-4">

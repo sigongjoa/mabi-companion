@@ -30,7 +30,7 @@ export function CharacterScopedHeader({ title, description, icon: Icon }: Charac
           </div>
 
           <div className="flex items-center space-x-4">
-            {viewMode === "single" && activeCharacter ? (
+            {activeCharacter ? (
               <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <Avatar className="w-8 h-8">
                   <AvatarFallback className="text-sm bg-blue-600 text-white">
