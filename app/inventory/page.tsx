@@ -382,11 +382,10 @@ export default function InventoryPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[50px] text-center">즐겨찾기</TableHead>
-                          <TableHead className="w-[80px]">아이콘</TableHead>
+                          <TableHead className="w-[80px] text-center">아이콘</TableHead>
                           <TableHead>이름</TableHead>
                           <TableHead>카테고리</TableHead>
-                          <TableHead className="text-right w-[150px]">수량</TableHead>
-                          <TableHead className="text-right w-[150px]">관리</TableHead>
+                          <TableHead className="text-right w-[250px]">수량</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -395,7 +394,7 @@ export default function InventoryPage() {
                             <TableCell className="text-center">
                               <FavoriteToggle itemId={item.id.toString()} itemType="item" size="sm" />
                             </TableCell>
-                            <TableCell className="text-2xl">
+                            <TableCell className="text-2xl text-center">
                               {/* 아이콘 이미지 경로 대신 이모지를 직접 렌더링합니다. */}
                               {item.icon}
                             </TableCell>

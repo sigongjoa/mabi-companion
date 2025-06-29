@@ -11,11 +11,32 @@ import { useRouter } from 'next/navigation';
 import { Item } from "@/types/page-context";
 import { logger } from "@/lib/logger";
 import itemsData from "/public/data/items.json";
+import { CurrencyTimersContainer } from "@/components/currency-timers-container";
 
 export default function HomePage() {
   logger.debug("HomePage 렌더링 시작");
   const router = useRouter();
-  const { activeCharacter, allItems, allQuests, isLoadingData, dataLoadError, characters } = useCharacter();
+  const { activeCharacter, allItems, allQuests, isLoadingData, dataLoadError, characters, updateCharacter } = useCharacter();
+
+  const handleCurrencyDataChange = (data: any) => {
+    logger.debug("handleCurrencyDataChange 호출됨", { data });
+    if (!activeCharacter) {
+      logger.debug("handleCurrencyDataChange: 활성 캐릭터 없음. 종료.");
+      return;
+    }
+
+    const updatedCurrencyTimers = {
+      ...activeCharacter.currencyTimers,
+      [data.type]: {
+        current: data.current,
+        isRunning: data.isRunning,
+        nextChargeTime: data.nextChargeTime,
+        fullChargeTime: data.fullChargeTime,
+      },
+    };
+    logger.debug("handleCurrencyDataChange: 새 currencyTimers로 캐릭터 업데이트:", updatedCurrencyTimers);
+    updateCharacter(activeCharacter.id, { currencyTimers: updatedCurrencyTimers });
+  };
 
   // Helper functions to safely calculate quest counts
   const getDailyQuestCount = (character: any) => {
@@ -148,6 +169,12 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
+        {/* 재화 충전 타이머 */}
+        <CharacterScopedHeader title="재화 충전 타이머" icon={Clock} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CurrencyTimersContainer characters={characters} handleCurrencyDataChange={handleCurrencyDataChange} dashboardMode={true} />
+        </div>
+
         {/* Completed Crafting Timers */}
         <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,38 +205,37 @@ export default function HomePage() {
         </div>
 
         {/* Character Specific Item Counts */}
-        <CharacterScopedHeader title="캐릭터별 재화" icon={Package} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {characters.map((char) => (
-            <Card key={char.id} className="document-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{char.name}</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between space-x-2 text-sm">
-                  <p className="text-muted-foreground">골드</p>
-                  <span className="font-bold">{char.gold?.toLocaleString() || 0}</span>
-                </div>
-                <div className="flex items-center justify-between space-x-2 text-sm">
-                  <p className="text-muted-foreground">두카트</p>
-                  <span className="font-bold">{char.ducats?.toLocaleString() || 0}</span>
-                </div>
-                {/* Dynamically display other key items */}
-                {Object.entries(char.inventory || {}).map(([itemId, quantity]) => {
-                  const item = itemsData[itemId];
-                  if (!item || !['골드', '두카트'].includes(item.name)) return null; // Filter out gold and ducats if already displayed
-                  return (
-                    <div key={itemId} className="flex items-center justify-between space-x-2 text-sm">
-                      <p className="text-muted-foreground">{item.name}</p>
-                      <span className="font-bold">{quantity.toLocaleString()}</span>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* <CharacterScopedHeader title="캐릭터별 재화" icon={Package} /> */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> */}
+          {/* {characters.map((char) => ( */}
+            {/* <Card key={char.id} className="document-card"> */}
+              {/* <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> */}
+                {/* <CardTitle className="text-sm font-medium">{char.name}</CardTitle> */}
+                {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
+              {/* </CardHeader> */}
+              {/* <CardContent> */}
+                {/* <div className="flex items-center justify-between space-x-2 text-sm"> */}
+                  {/* <p className="text-muted-foreground">골드</p> */}
+                  {/* <span className="font-bold">{char.gold?.toLocaleString() || 0}</span> */}
+                {/* </div> */}
+                {/* <div className="flex items-center justify-between space-x-2 text-sm"> */}
+                  {/* <p className="text-muted-foreground">두카트</p> */}
+                  {/* <span className="font-bold">{char.ducats?.toLocaleString() || 0}</span> */}
+                {/* </div> */}
+                {/* Dynamically display other key items */} */}
+                {/* {Object.entries(char.inventory || {}).map(([itemId, quantity]) => { */}
+                  {/* const item = itemsData[itemId]; */} */}
+                {/* if (!item || !['골드', '두카트'].includes(item.name)) return null; // Filter out gold and ducats if already displayed */}
+                {/* return ( */}
+                  {/* <div key={itemId} className="flex items-center justify-between space-x-2 text-sm"> */}
+                    {/* <p className="text-muted-foreground">{item.name}</p> */}
+                    {/* <span className="font-bold">{quantity.toLocaleString()}</span> */}
+                  {/* </div> */}
+                {/* ); */}
+              {/* </CardContent> */}
+            {/* </Card> */}
+          {/* ))} */}
+        {/* </div> */}
       </>
     </div>
   )

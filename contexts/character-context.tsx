@@ -364,6 +364,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [characters, setCharacters] = useState<Character[]>([])
   const [activeCharacter, setActiveCharacterState] = useState<Character | null>(null)
   const [viewMode, setViewMode] = useState<"single" | "all">("all")
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    logger.debug("CharacterProvider: 컴포넌트 마운트됨");
+    return () => {
+      logger.debug("CharacterProvider: 컴포넌트 언마운트됨");
+    };
+  }, []);
 
   // JSON 데이터들을 위한 상태
   const [allItems, setAllItems] = useState<Record<string, any>>({})
@@ -374,6 +382,47 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [allGems, setAllGems] = useState<any[]>([])
   const [allAvatarSets, setAllAvatarSets] = useState<any>({})
+
+  // 다른 탭에서 localStorage 변경 시 동기화
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "characters" && event.newValue) {
+        logger.debug("CharacterProvider: storage 이벤트 감지 - 캐릭터 데이터 업데이트");
+        try {
+          const parsedCharacters: Character[] = JSON.parse(event.newValue);
+          setCharacters(parsedCharacters.map(char => {
+            // JSON 데이터가 로드된 후에만 초기화 함수 사용
+            if (Object.keys(allItems).length > 0 && Object.keys(allQuests).length > 0 && allSkillsData.length > 0 && allCraftingFacilitiesData.length > 0) {
+              return {
+                ...char,
+                inventory: createInitialInventory(allItems, char.inventory),
+                ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks),
+                equippedItems: createInitialEquipment(char.equippedItems),
+                skills: createInitialSkills(allSkillsData, char.skills),
+                craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
+                favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
+                currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
+              };
+            } else {
+              // JSON 데이터가 아직 로드되지 않았다면, 파싱된 데이터만 사용
+              return char;
+            }
+          }));
+          logger.debug("CharacterProvider: storage 이벤트로 캐릭터 상태 업데이트 성공");
+        } catch (e) {
+          logger.error("CharacterProvider: storage 이벤트 데이터 파싱 실패", { error: e });
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    logger.debug("CharacterProvider: storage 이벤트 리스너 등록됨");
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      logger.debug("CharacterProvider: storage 이벤트 리스너 해제됨");
+    };
+  }, [allItems, allQuests, allSkillsData, allCraftingFacilitiesData]);
 
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [dataLoadError, setDataLoadError] = useState<string | null>(null)
@@ -438,8 +487,10 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       let initialCharacters: Character[];
 
       if (storedCharacters) {
+        logger.debug("localStorage에서 storedCharacters 발견", { storedCharactersLength: storedCharacters.length });
         try {
           const parsedCharacters: Character[] = JSON.parse(storedCharacters)
+          logger.debug("localStorage 캐릭터 데이터 파싱 성공", { parsedCharactersLength: parsedCharacters.length });
           initialCharacters = parsedCharacters.map(char => {
             // 모든 초기화 함수에 로드된 JSON 데이터 전달
             return {
@@ -455,11 +506,11 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           })
           logger.debug("localStorage에서 캐릭터 로드 및 초기화 성공", { initialCharactersLength: initialCharacters.length });
         } catch (e) {
-          logger.error("localStorage 캐릭터 데이터 파싱 실패", { error: e })
+          logger.error("localStorage 캐릭터 데이터 파싱 실패. 빈 배열로 대체합니다.", { error: e })
           initialCharacters = []; // Fallback to empty if parsing fails
         }
       } else {
-        logger.debug("localStorage에 저장된 캐릭터 없음. defaultCharacters로 초기화.")
+        logger.debug("localStorage에 저장된 캐릭터 없음. defaultCharacters로 초기화.", { defaultCharactersLength: defaultCharacters.length });
         initialCharacters = defaultCharacters.map(char => ({
             ...char,
             inventory: createInitialInventory(allItems, char.inventory), // Use default character's initial inventory with allItems
@@ -474,6 +525,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       }
 
       setCharacters(initialCharacters);
+      logger.debug("CharacterProvider: characters 상태 업데이트 완료", { finalCharactersLength: initialCharacters.length });
 
       // If no active character is set, set the first character from the loaded list
       // This is important for the initial load if localStorage was empty or had no active character
@@ -481,6 +533,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           setActiveCharacterState(initialCharacters[0]);
           logger.debug("활성 캐릭터 설정됨 (첫 번째 캐릭터)", { characterName: initialCharacters[0].name });
       }
+      setIsInitialized(true); // Data has been loaded and characters set, mark as initialized
     } else if (dataLoadError) {
       logger.error("데이터 로드 오류로 인해 캐릭터 초기화 건너뜜", { dataLoadError })
     } else {
@@ -490,11 +543,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
   // 캐릭터 변경 시 localStorage에 저장
   useEffect(() => {
-    if (!isLoadingData && !dataLoadError) {
-      logger.debug("useEffect: 캐릭터 데이터 변경 감지, localStorage에 저장", { characters });
-      localStorage.setItem("characters", JSON.stringify(characters))
+    // isInitialized가 true이고 characters 배열이 비어있지 않으며 activeCharacter가 설정되어 있을 때만 저장
+    if (isInitialized && characters.length > 0 && activeCharacter) {
+      const charactersToSave = JSON.stringify(characters);
+      logger.debug("useEffect: localStorage에 저장할 캐릭터 데이터", { charactersToSaveLength: charactersToSave.length, charactersToSave });
+      localStorage.setItem("characters", charactersToSave);
     }
-  }, [characters, isLoadingData, dataLoadError])
+  }, [characters, isInitialized, activeCharacter]);
 
   const setActiveCharacter = useCallback((character: Character | null) => {
     logger.debug("setActiveCharacter 호출", { character });
@@ -503,15 +558,22 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
   const updateCharacter = useCallback(
     (id: string, updates: Partial<Character>) => {
-      logger.debug("updateCharacter 호출", { id, updates });
-      setCharacters((prevCharacters) =>
-        prevCharacters.map((char) =>
-          char.id === id ? { ...char, ...updates } : char,
-        ),
-      )
+      logger.debug(`updateCharacter 호출됨: ${id}`, { updates });
+      setCharacters(prev =>
+        prev.map(char =>
+          char.id === id
+            ? { ...char, ...updates }
+            : char
+        )
+      );
+      setActiveCharacterState(prev =>
+        prev?.id === id
+          ? { ...prev, ...updates }
+          : prev
+      );
     },
-    [],
-  )
+    []
+  );
 
   const addCharacter = useCallback(
     (

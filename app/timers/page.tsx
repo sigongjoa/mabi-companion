@@ -13,7 +13,13 @@ export default function TimersPage() {
   console.debug("TimersPage rendered.")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const { characters, activeCharacter, updateCharacter } = useCharacter()
+  const { characters, activeCharacter, updateCharacter, isLoadingData, dataLoadError } = useCharacter()
+
+  // Debugging logs
+  console.debug("TimersPage: characters", characters);
+  console.debug("TimersPage: activeCharacter", activeCharacter);
+  console.debug("TimersPage: isLoadingData", isLoadingData);
+  console.debug("TimersPage: dataLoadError", dataLoadError);
 
   const handleCurrencyDataChange = (data: any) => {
     console.debug("handleCurrencyDataChange called with data:", data)
@@ -27,8 +33,8 @@ export default function TimersPage() {
       [data.type]: {
         current: data.current,
         isRunning: data.isRunning,
-        nextChargeTime: data.nextChargeTime ? data.nextChargeTime.toISOString() : null, // Store as ISO string
-        fullChargeTime: data.fullChargeTime ? data.fullChargeTime.toISOString() : null, // Store as ISO string
+        nextChargeTime: data.nextChargeTime,
+        fullChargeTime: data.fullChargeTime,
       },
     }
     console.debug("handleCurrencyDataChange: Updating character with new currencyTimers:", updatedCurrencyTimers)

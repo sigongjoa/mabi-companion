@@ -9,9 +9,10 @@ import { Character } from "@/contexts/character-context"
 interface CurrencyTimersContainerProps {
   characters: Character[];
   handleCurrencyDataChange: (data: any) => void;
+  dashboardMode?: boolean;
 }
 
-export function CurrencyTimersContainer({ characters, handleCurrencyDataChange }: CurrencyTimersContainerProps) {
+export function CurrencyTimersContainer({ characters, handleCurrencyDataChange, dashboardMode }: CurrencyTimersContainerProps) {
   return (
     <Card className="document-card">
       <CardHeader className="excel-header">
@@ -39,6 +40,7 @@ export function CurrencyTimersContainer({ characters, handleCurrencyDataChange }
                   type="silver"
                   onDataChange={handleCurrencyDataChange}
                   initialTimerState={character?.currencyTimers?.silver}
+                  dashboardMode={dashboardMode}
                 />
                 <CurrencyTimer
                   characterId={character.id}
@@ -46,6 +48,7 @@ export function CurrencyTimersContainer({ characters, handleCurrencyDataChange }
                   type="demon"
                   onDataChange={handleCurrencyDataChange}
                   initialTimerState={character?.currencyTimers?.demon}
+                  dashboardMode={dashboardMode}
                 />
               </div>
             </div>
