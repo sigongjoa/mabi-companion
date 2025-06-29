@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 // import dynamic from "next/dynamic";
+import { headers } from "next/headers";
 
 // const ClientProviders = dynamic(() => import("./ClientProviders"), {
 //   ssr: false, // 클라이언트 전용으로 완전히 분리
@@ -35,17 +36,21 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const h = await headers();
+  const csp = h.get("Content-Security-Policy") || "";
+
   return (
     <html lang="ko">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <meta name="format-detection" content="telephone=no" />
+        <meta httpEquiv="Content-Security-Policy" content={csp} />
       </head>
       <body className={inter.className}>
         <ClientProviders>{children}</ClientProviders>

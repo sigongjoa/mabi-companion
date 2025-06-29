@@ -36,7 +36,7 @@ export function CurrencyTimersContainer({ characters, handleCurrencyDataChange, 
               <TableBody>
                 {characters.map((character) => (
                   <TableRow key={character.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-lg">
                       {character.name}
                       <span className="text-gray-500 text-sm ml-2">(Lv.{character.level})</span>
                     </TableCell>

@@ -8,6 +8,7 @@ import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Input } from "@/components/ui/input"
 import { useCharacter } from "@/contexts/character-context"
 import { CurrencyTimersContainer } from "@/components/currency-timers-container"
+import { logger } from "@/lib/logger"
 
 export default function TimersPage() {
   console.debug("TimersPage rendered.")
@@ -16,30 +17,35 @@ export default function TimersPage() {
   const { characters, activeCharacter, updateCharacter, isLoadingData, dataLoadError } = useCharacter()
 
   // Debugging logs
-  console.debug("TimersPage: characters", characters);
-  console.debug("TimersPage: activeCharacter", activeCharacter);
-  console.debug("TimersPage: isLoadingData", isLoadingData);
-  console.debug("TimersPage: dataLoadError", dataLoadError);
+  logger.debug("TimersPage: characters", characters);
+  logger.debug("TimersPage: activeCharacter", activeCharacter);
+  logger.debug("TimersPage: isLoadingData", isLoadingData);
+  logger.debug("TimersPage: dataLoadError", dataLoadError);
 
   const handleCurrencyDataChange = (data: any) => {
-    console.debug("handleCurrencyDataChange called with data:", data)
-    if (!activeCharacter) {
-      console.debug("handleCurrencyDataChange: No active character. Exiting.")
-      return
+    logger.debug("handleCurrencyDataChange called with data:", data);
+    const { characterId, type, current, isRunning, nextChargeTime, fullChargeTime } = data;
+
+    // Find the character to update
+    const targetCharacter = characters.find(char => char.id === characterId);
+
+    if (!targetCharacter) {
+      logger.debug("handleCurrencyDataChange: Target character not found. Exiting.", { characterId });
+      return;
     }
 
     const updatedCurrencyTimers = {
-      ...activeCharacter.currencyTimers,
-      [data.type]: {
-        current: data.current,
-        isRunning: data.isRunning,
-        nextChargeTime: data.nextChargeTime,
-        fullChargeTime: data.fullChargeTime,
+      ...targetCharacter.currencyTimers, // Use the target character's timers as base
+      [type]: {
+        current,
+        isRunning,
+        nextChargeTime,
+        fullChargeTime,
       },
-    }
-    console.debug("handleCurrencyDataChange: Updating character with new currencyTimers:", updatedCurrencyTimers)
-    updateCharacter(activeCharacter.id, { currencyTimers: updatedCurrencyTimers })
-  }
+    };
+    logger.debug("handleCurrencyDataChange: Updating character with new currencyTimers:", { characterId, updatedCurrencyTimers });
+    updateCharacter(characterId, { currencyTimers: updatedCurrencyTimers }); // Use data.characterId here
+  };
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Coins, Zap } from "lucide-react"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
 import { logger } from "@/lib/logger";
 
 interface CurrencyConfig {
@@ -77,15 +77,42 @@ export const CurrencyTimer = memo(function CurrencyTimer({
   }, [type])
   const [inputValue, setInputValue] = useState("")
 
+  // Define a pure helper function that doesn't use hooks itself
+  const calculateTimesPure = (current: number, currentConfig: CurrencyConfig) => {
+    if (current >= currentConfig.max) {
+      return { nextChargeTime: null, fullChargeTime: null };
+    }
+
+    const now = new Date();
+    let nextChargeTime = new Date(now.getTime() + currentConfig.intervalMinutes * 60 * 1000);
+    while (nextChargeTime <= now) {
+      nextChargeTime = new Date(nextChargeTime.getTime() + currentConfig.intervalMinutes * 60 * 1000);
+    }
+
+    const remainingCharges = currentConfig.max - current;
+    const fullChargeTime = new Date(now.getTime() + remainingCharges * currentConfig.intervalMinutes * 60 * 1000);
+
+    return { nextChargeTime, fullChargeTime };
+  };
+
+  // Now, wrap it in useCallback for memoization when used in other effects/callbacks
+  const calculateTimes = useCallback(
+    (current: number) => calculateTimesPure(current, config),
+    [config] // Dependency on memoized config
+  );
+
   // Initialize timerState from initialTimerState prop or default
   const [timerState, setTimerState] = useState<TimerState>(() => {
     logger.debug("CurrencyTimer: useState initializer 호출", { initialTimerState });
     if (initialTimerState) {
+      // Use the pure function directly here, passing config explicitly
+      const { nextChargeTime: calculatedNextChargeTime, fullChargeTime: calculatedFullChargeTime } = calculateTimesPure(initialTimerState.current, config);
+
       return {
         current: initialTimerState.current,
         isRunning: initialTimerState.isRunning,
-        nextChargeTime: initialTimerState.nextChargeTime ? new Date(initialTimerState.nextChargeTime) : null,
-        fullChargeTime: initialTimerState.fullChargeTime ? new Date(initialTimerState.fullChargeTime) : null,
+        nextChargeTime: calculatedNextChargeTime,
+        fullChargeTime: calculatedFullChargeTime,
       };
     } else {
       return {
@@ -99,16 +126,49 @@ export const CurrencyTimer = memo(function CurrencyTimer({
 
   // initialTimerState prop이 변경될 때 timerState를 업데이트
   useEffect(() => {
-    logger.debug("CurrencyTimer: useEffect - initialTimerState 변경 감지", { initialTimerState });
-    if (initialTimerState) {
-      setTimerState({
-        current: initialTimerState.current,
-        isRunning: initialTimerState.isRunning,
-        nextChargeTime: initialTimerState.nextChargeTime ? new Date(initialTimerState.nextChargeTime) : null,
-        fullChargeTime: initialTimerState.fullChargeTime ? new Date(initialTimerState.fullChargeTime) : null,
-      });
+    logger.debug("[CurrencyTimer] useEffect triggered", { initialTimerState });
+    // initialTimerState이 없으면 아무것도 하지 않습니다.
+    if (!initialTimerState) {
+      logger.debug("[CurrencyTimer] initialTimerState is null or undefined, returning.");
+      return;
     }
-  }, [initialTimerState]);
+
+    // 부모에서 내려준 값이 실제로 바뀌었을 때만 업데이트
+    const newCurrent = initialTimerState.current;
+    const newIsRunning = initialTimerState.isRunning;
+    logger.debug("[CurrencyTimer] Checking for changes in current/isRunning", { newCurrent, newIsRunning, timerStateCurrent: timerState.current, timerStateIsRunning: timerState.isRunning });
+    if (
+      newCurrent === timerState.current &&
+      newIsRunning === timerState.isRunning
+    ) {
+      logger.debug("[CurrencyTimer] current and isRunning are unchanged, early returning to prevent loop.");
+      return; // 값이 같으면 루프를 방지하기 위해 종료
+    }
+
+    logger.debug("[CurrencyTimer] Updating timerState due to change in initialTimerState", { newCurrent, newIsRunning });
+    const { nextChargeTime, fullChargeTime } = calculateTimes(newCurrent);
+    const newState: TimerState = {
+      current: newCurrent,
+      isRunning: newIsRunning,
+      nextChargeTime,
+      fullChargeTime,
+    };
+
+    setTimerState(newState);
+    logger.debug("[CurrencyTimer] Calling onDataChange", { characterId, type, current: newCurrent, isRunning: newIsRunning });
+    onDataChange?.({
+      characterId,
+      type,
+      current: newCurrent,
+      isRunning: newIsRunning,
+      nextChargeTime: nextChargeTime?.toISOString() ?? null,
+      fullChargeTime: fullChargeTime?.toISOString() ?? null,
+    });
+  // 의존성은 initialTimerState.current, initialTimerState.isRunning만
+  }, [
+    initialTimerState?.current,
+    initialTimerState?.isRunning,
+  ]);
   
   const [timeDisplay, setTimeDisplay] = useState({
     nextCharge: "00:00:00",
@@ -133,22 +193,6 @@ export const CurrencyTimer = memo(function CurrencyTimer({
     }
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
   }, [])
-
-  const calculateTimes = useCallback(
-    (current: number) => {
-      if (current >= config.max) {
-        return { nextChargeTime: null, fullChargeTime: null }
-      }
-
-      const now = new Date()
-      const nextChargeTime = new Date(now.getTime() + config.intervalMinutes * 60 * 1000)
-      const remainingCharges = config.max - current
-      const fullChargeTime = new Date(now.getTime() + remainingCharges * config.intervalMinutes * 60 * 1000)
-
-      return { nextChargeTime, fullChargeTime }
-    },
-    [config],
-  )
 
   const startTimer = useCallback(() => {
     const current = Number.parseInt(inputValue) || 0
@@ -251,80 +295,93 @@ export const CurrencyTimer = memo(function CurrencyTimer({
         cancelAnimationFrame(animationFrame)
       }
     }
-  }, [timerState, config, calculateTimes, formatTime, characterId, type, onDataChange])
+  }, [timerState.isRunning, timerState.nextChargeTime, timerState.current, config, calculateTimes, formatTime, onDataChange, characterId, type])
+
+  // Set initial time display based on initialTimerState (if provided) or default
+  useEffect(() => {
+    logger.debug("CurrencyTimer: useEffect - 초기 시간 디스플레이 설정", { initialTimerState: timerState });
+    setTimeDisplay({
+      nextCharge: formatTime(timerState.nextChargeTime),
+      fullCharge: formatTime(timerState.fullChargeTime),
+    });
+    setInputValue(timerState.current.toString()); // 현재 재화량으로 input value 초기화
+  }, [timerState, formatTime]);
+
+  const handleSetCurrentAmount = useCallback(() => {
+    logger.debug("CurrencyTimer: handleSetCurrentAmount 호출", { inputValue });
+    const newCurrent = Number.parseInt(inputValue) || 0;
+    if (newCurrent < 0 || newCurrent > config.max) return;
+  
+    const { nextChargeTime, fullChargeTime } = calculateTimes(newCurrent);
+  
+    const newTimerState = {
+      current: newCurrent,
+      isRunning: newCurrent < config.max, // 현재량이 최대보다 작으면 실행, 아니면 중지
+      nextChargeTime: newCurrent < config.max ? nextChargeTime : null,
+      fullChargeTime: newCurrent < config.max ? fullChargeTime : null,
+    };
+  
+    setTimerState(newTimerState);
+  
+    onDataChange?.({
+      characterId,
+      type,
+      current: newCurrent,
+      isRunning: newTimerState.isRunning,
+      nextChargeTime: newTimerState.nextChargeTime ? newTimerState.nextChargeTime.toISOString() : null,
+      fullChargeTime: newTimerState.fullChargeTime ? newTimerState.fullChargeTime.toISOString() : null,
+    });
+  }, [inputValue, config, calculateTimes, characterId, type, onDataChange]);
 
   const progressPercentage = useMemo(() => (timerState.current / config.max) * 100, [timerState.current, config.max])
 
   return (
-    <div className="timer-widget">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2 min-w-0">
-          <div className={`p-2 rounded-lg flex-shrink-0 ${config.bgColor}`}>
-            <config.icon className={`w-5 h-5 ${config.color}`} />
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm truncate">{config.name}</h3>
-            <p className="text-xs text-gray-500 truncate">{characterName}</p>
-          </div>
-        </div>
-        <Badge variant="secondary">
+    <Card className="currency-timer-card relative">
+      {/* {dashboardMode && (
+        <Badge
+          className="absolute top-3 right-3 text-xs"
+          variant={timerState.isRunning ? "default" : "secondary"}
+        >
+          {characterName}
+        </Badge>
+      )} */}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium flex items-center space-x-2">
+          <config.icon className="w-4 h-4" />
+          <span>{config.name}</span>
+        </CardTitle>
+        <Badge variant="outline" className="text-sm">
           {timerState.current}/{config.max}
         </Badge>
-      </div>
-      <div className="space-y-4">
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{timeDisplay.fullCharge === "00:00:00" ? "완료" : timeDisplay.fullCharge}</div>
+        <p className="text-xs text-muted-foreground">
+          다음 충전까지: {timeDisplay.nextCharge === "00:00:00" ? "완료" : timeDisplay.nextCharge}
+        </p>
         {!dashboardMode && (
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2 mt-4">
             <Input
               type="number"
-              placeholder="현재 재화량"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              min={0}
-              max={config.max}
+              className="w-24"
+              placeholder="수량"
             />
-            <Button onClick={startTimer} disabled={timerState.isRunning || !inputValue}>
+            <Button onClick={startTimer} className="flex-1">
               타이머 시작
+            </Button>
+            <Button onClick={stopTimer} className="flex-1" variant="outline">
+              타이머 중지
             </Button>
           </div>
         )}
-
-        <div className="grid grid-cols-2 gap-2">
-          {!dashboardMode && (
-            <Button onClick={stopTimer} variant="outline" disabled={!timerState.isRunning}>
-              타이머 중지
-            </Button>
-          )}
-          {!dashboardMode && (
-            <Button
-              onClick={() => setInputValue(String(timerState.current))}
-              variant="outline"
-              disabled={!inputValue || timerState.isRunning}
-            >
+        {!dashboardMode && (
+          <Button onClick={handleSetCurrentAmount} className="w-full mt-2" variant="secondary">
               현재량으로 설정
-            </Button>
-          )}
-        </div>
-
-        <div className="space-y-2 text-sm text-gray-700">
-          <div className="flex justify-between">
-            <span>다음 충전까지:</span>
-            <span className="font-medium">{timeDisplay.nextCharge}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>완전 충전까지:</span>
-            <span className="font-medium">{timeDisplay.fullCharge}</span>
-          </div>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="h-2.5 rounded-full"
-            style={{
-              width: `${(timerState.current / config.max) * 100}%`,
-              backgroundColor: config.color.replace("text-", "").replace("-600", "-500"),
-            }}
-          ></div>
-        </div>
-      </div>
-    </div>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   )
 })
