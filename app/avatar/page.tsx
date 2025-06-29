@@ -1,185 +1,145 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import avatarSetsData from '@/data/avatarSets.json';
-import { logger } from '@/lib/logger';
-
-interface AvatarItem {
-  name: string;
-  imageUrl: string;
-}
+import { useState, useMemo } from "react"
+import { useCharacter } from "@/contexts/character-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { CharacterScopedHeader } from "@/components/character-scoped-header"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { logger } from "@/lib/logger"
 
 interface AvatarSet {
-  name: string;
-  items: AvatarItem[];
+  id: string
+  name: string
+  category: string
+  icon: string
+  description: string
+  items: { slot: string; item_name: string; image: string }[]
 }
-
-// To store owned status in localStorage
-interface OwnedAvatarItems {
-  [setName: string]: { [itemName: string]: boolean };
-}
-
-const LOCAL_STORAGE_KEY = 'mabinogi-avatar-collection';
 
 export default function AvatarPage() {
-  const [ownedItems, setOwnedItems] = useState<OwnedAvatarItems>({});
-  const [isCollectionMode, setIsCollectionMode] = useState(false);
+  logger.debug("AvatarPage 렌더링 시작");
+  const { allAvatarSets, isLoadingData, dataLoadError } = useCharacter();
+  const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    logger.debug('Entering useEffect for initial localStorage load.');
-    // Load owned status from localStorage on component mount
-    const storedOwnedItems = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (storedOwnedItems) {
-      try {
-        const parsedItems: OwnedAvatarItems = JSON.parse(storedOwnedItems);
-        setOwnedItems(parsedItems);
-        logger.debug('Successfully loaded owned items from localStorage.');
-      } catch (error) {
-        console.error('Failed to parse owned items from localStorage:', error);
-        logger.debug(`Error parsing localStorage for ${LOCAL_STORAGE_KEY}: ${error}`);
-      }
-    } else {
-      logger.debug('No owned items found in localStorage. Initializing empty.');
+  const avatarSets: AvatarSet[] = useMemo(() => {
+    if (!allAvatarSets) {
+      logger.warn("allAvatarSets 데이터가 없습니다.");
+      return [];
     }
-    logger.debug('Exiting useEffect for initial localStorage load.');
-  }, []);
+    logger.debug("allAvatarSets 데이터 사용", { count: Object.keys(allAvatarSets).length });
+    return Object.values(allAvatarSets) as AvatarSet[];
+  }, [allAvatarSets]);
 
-  useEffect(() => {
-    logger.debug('Entering useEffect for localStorage update.');
-    // Save owned status to localStorage whenever it changes
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(ownedItems));
-      logger.debug('Successfully saved owned items to localStorage.');
-    } catch (error) {
-      console.error('Failed to save owned items to localStorage:', error);
-      logger.debug(`Error saving localStorage for ${LOCAL_STORAGE_KEY}: ${error}`);
+  const categories = useMemo(() => {
+    logger.debug("categories 계산 시작");
+    const uniqueCategories = ["전체", ...new Set(avatarSets.map(set => set.category))].sort();
+    logger.debug("categories 계산 완료", { uniqueCategories });
+    return uniqueCategories;
+  }, [avatarSets]);
+
+  const filteredAvatarSets = useMemo(() => {
+    logger.debug("filteredAvatarSets 계산 시작", { selectedCategory, searchQuery });
+    let filtered = avatarSets;
+
+    if (selectedCategory !== "전체") {
+      filtered = filtered.filter(set => {
+        const match = set.category === selectedCategory;
+        logger.debug("카테고리 필터링", { setName: set.name, setCategory: set.category, selectedCategory, match });
+        return match;
+      });
     }
-    logger.debug('Exiting useEffect for localStorage update.');
-  }, [ownedItems]);
 
-  const handleItemClick = (setName: string, itemName: string) => {
-    logger.debug(`Item clicked: Set=${setName}, Item=${itemName}`);
-    setOwnedItems(prevOwnedItems => {
-      const newOwnedItems = { ...prevOwnedItems };
-      if (!newOwnedItems[setName]) {
-        newOwnedItems[setName] = {};
-      }
-      newOwnedItems[setName][itemName] = !newOwnedItems[setName][itemName];
-      logger.debug(`Updated owned status for ${itemName}: ${newOwnedItems[setName][itemName]}`);
-      return newOwnedItems;
-    });
-  };
+    if (searchQuery) {
+      const lowerCaseSearchQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(set => {
+        const match = set.name.toLowerCase().includes(lowerCaseSearchQuery) ||
+                      set.description.toLowerCase().includes(lowerCaseSearchQuery) ||
+                      set.items.some(item => item.item_name.toLowerCase().includes(lowerCaseSearchQuery));
+        logger.debug("검색 필터링", { setName: set.name, searchQuery, match });
+        return match;
+      });
+    }
+    logger.debug("filteredAvatarSets 계산 완료", { count: filtered.length });
+    return filtered;
+  }, [avatarSets, selectedCategory, searchQuery]);
 
-  const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    logger.debug(`Collection mode toggle changed to: ${e.target.checked}`);
-    setIsCollectionMode(e.target.checked);
-  };
+  if (isLoadingData) {
+    logger.debug("AvatarPage 로딩 중...");
+    return (
+      <div className="p-4 text-center text-gray-500">
+        데이터 로딩 중...
+      </div>
+    );
+  }
 
-  const totalSets = avatarSetsData.length;
-  const ownedSetsCount = avatarSetsData.filter(set => 
-    set.items.every(item => ownedItems[set.name]?.[item.name])
-  ).length;
+  if (dataLoadError) {
+    logger.error("AvatarPage 데이터 로드 오류", { error: dataLoadError });
+    return (
+      <div className="p-4 text-center text-red-500">
+        데이터 로드 중 오류 발생: {dataLoadError}
+      </div>
+    );
+  }
 
-  // Inline styles to mimic the HTML provided, mixed with Tailwind for clarity
-  const customStyles: { [key: string]: React.CSSProperties } = {
-    // Base font and dark mode settings handled by global.css and tailwind.config.ts
-    // .item-card:not(.owned) img
-    itemCardNotOwnedImg: {
-      filter: 'brightness(0.3) grayscale(1)',
-      opacity: 0.6,
-    },
-    // .item-card.owned .item-image-wrapper
-    itemCardOwnedImageWrapper: {
-      borderColor: '#a38b4b',
-      boxShadow: '0 0 15px rgba(163, 139, 75, 0.5)',
-    },
-    // .toggle-checkbox:checked + .toggle-label
-    toggleCheckboxCheckedLabel: {
-      backgroundColor: '#a38b4b',
-    },
-    // .toggle-checkbox:checked + .toggle-label .toggle-ball
-    toggleCheckboxCheckedLabelToggleBall: {
-      transform: 'translateX(24px)',
-    },
-    // .collection-mode .item-card:not(.owned)
-    collectionModeItemCardNotOwned: {
-      display: 'none',
-    },
-  };
-
+  logger.debug("AvatarPage 렌더링 완료");
   return (
-    <div className={`p-4 sm:p-6 md:p-8 ${isCollectionMode ? 'collection-mode' : ''}`}>
-      <div className="max-w-7xl mx-auto">
-        {/* 페이지 헤더 */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">아바타 세트</h1>
-            <p className="text-lg text-gray-400 mt-1">세트 {ownedSetsCount} / {totalSets}</p>
-          </div>
-          <div className="flex items-center gap-4 mt-4 sm:mt-0">
-            <span className="text-lg font-medium text-white">수집</span>
-            <label htmlFor="collectionToggle" className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                id="collectionToggle" 
-                className="sr-only toggle-checkbox" 
-                checked={isCollectionMode}
-                onChange={handleToggleChange}
-              />
-              <div className="toggle-label w-12 h-6 bg-gray-600 rounded-full transition-colors duration-300 ease-in-out"
-                   style={isCollectionMode ? customStyles.toggleCheckboxCheckedLabel : {}}>
-                <div className="toggle-ball absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out"
-                     style={isCollectionMode ? customStyles.toggleCheckboxCheckedLabelToggleBall : {}}></div>
+    <div className="container mx-auto p-4">
+      <CharacterScopedHeader title="아바타" />
+
+      <div className="mb-6 flex flex-col md:flex-row items-center gap-4">
+        <Input
+          placeholder="아바타 세트 검색..."
+          value={searchQuery}
+          onChange={(e) => {
+            logger.debug("검색어 변경", { query: e.target.value });
+            setSearchQuery(e.target.value);
+          }}
+          className="max-w-sm"
+        />
+        <Tabs value={selectedCategory} onValueChange={(value) => {
+          logger.debug("카테고리 탭 변경", { value });
+          setSelectedCategory(value);
+        }}>
+          <TabsList>
+            {categories.map((category) => (
+              <TabsTrigger key={category} value={category}>
+                {category}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {filteredAvatarSets.map((set) => (
+          <Card key={set.id} className="modern-card">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={set.icon} alt={set.name} />
+                  <AvatarFallback>{set.name.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                <span>{set.name}</span>
+                <Badge variant="secondary" className="ml-auto">{set.category}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-2">{set.description}</p>
+              <div className="text-xs text-gray-500">
+                <span className="font-semibold">포함 아이템:</span>
+                <ul className="list-disc list-inside ml-2">
+                  {set.items.map((item, index) => (
+                    <li key={index}>{item.item_name} ({item.slot})</li>
+                  ))}
+                </ul>
               </div>
-            </label>
-          </div>
-        </header>
-
-        {/* 아바타 세트 목록 */}
-        <main id="avatar-sets-container" className="space-y-12">
-          {avatarSetsData.map((set: AvatarSet) => {
-            const ownedCount = set.items.filter(item => ownedItems[set.name]?.[item.name]).length;
-            const totalCount = set.items.length;
-
-            return (
-              <section key={set.name}>
-                <div className="pb-4 mb-6 border-b border-gray-700">
-                  <h2 className="text-2xl font-bold text-white">{set.name}</h2>
-                  <p className="text-md text-gray-400 font-medium">{ownedCount}세트 / {totalCount}</p>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {set.items.map(item => {
-                    const isOwned = ownedItems[set.name]?.[item.name] || false;
-                    return (
-                      <div 
-                        key={item.name} 
-                        className={`item-card group flex flex-col items-center text-center p-3 rounded-lg bg-gray-800/50 transition-all duration-300 ${isOwned ? 'owned' : ''}`}
-                        onClick={() => handleItemClick(set.name, item.name)}
-                        style={isCollectionMode && !isOwned ? customStyles.collectionModeItemCardNotOwned : {}}
-                      >
-                        <div 
-                          className="item-image-wrapper w-full aspect-square bg-black/30 rounded-lg flex items-center justify-center p-2 border-2 border-transparent transition-all duration-300"
-                          style={isOwned ? customStyles.itemCardOwnedImageWrapper : {}}
-                        >
-                          <Image 
-                            src={item.imageUrl} 
-                            alt={item.name} 
-                            width={200} 
-                            height={200} 
-                            className="max-w-full max-h-full object-contain rounded-md transition-transform duration-300 group-hover:scale-105"
-                            style={!isOwned ? customStyles.itemCardNotOwnedImg : {}}
-                          />
-                        </div>
-                        <p className="mt-3 text-sm font-medium text-gray-300 h-10 flex items-center justify-center">{item.name}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </main>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

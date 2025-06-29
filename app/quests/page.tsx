@@ -8,7 +8,7 @@ import { CheckSquare, Clock, Calendar } from "lucide-react"
 import { useCharacter, Character } from "@/contexts/character-context"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 
-import questsData from "@/data/quests.json"
+import questsData from "/public/data/quests.json"
 
 interface Task {
   id: string

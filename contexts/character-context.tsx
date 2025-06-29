@@ -79,6 +79,9 @@ interface CharacterContextType {
   allEquipment: any[];
   allSkillsData: any[];
   allCraftingFacilitiesData: any[];
+  recipes: Recipe[];
+  allGems: any[];
+  allAvatarSets: any;
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined)
@@ -191,21 +194,29 @@ const createInitialSkills = (
 }
 
 const createInitialCraftingQueues = (
+  allCraftingFacilitiesData: any[],
   initialQueues: Record<string, ProcessingQueue[]> = {},
 ): Record<string, ProcessingQueue[]> => {
   logger.debug("Entering createInitialCraftingQueues with initialQueues:", initialQueues)
   const craftingQueues: Record<string, ProcessingQueue[]> = {}
 
-  for (const facilityId in initialQueues) {
-    const defaultQueues: ProcessingQueue[] = Array(4)
-      .fill(null)
-      .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined, quantity: undefined }))
+  allCraftingFacilitiesData.forEach((facility: any) => {
+    craftingQueues[facility.id] = initialQueues[facility.id] || [];
+    while (craftingQueues[facility.id].length < 4) {
+      craftingQueues[facility.id].push({ id: craftingQueues[facility.id].length, isProcessing: false, timeLeft: 0, totalTime: 0 });
+    }
+  });
 
-    // Merge with existing queues if provided
-    craftingQueues[facilityId] = initialQueues[facilityId]
-      ? initialQueues[facilityId].map((q, i) => ({ ...defaultQueues[i], ...q }))
-      : defaultQueues
+  for (const facilityId in initialQueues) {
+    if (Object.prototype.hasOwnProperty.call(initialQueues, facilityId)) {
+      initialQueues[facilityId].forEach((queueItem, index) => {
+        if (craftingQueues[facilityId] && craftingQueues[facilityId][index]) {
+          craftingQueues[facilityId][index] = { ...craftingQueues[facilityId][index], ...queueItem };
+        }
+      });
+    }
   }
+
   logger.debug("Exiting createInitialCraftingQueues, merged craftingQueues:", craftingQueues)
   return craftingQueues
 }
@@ -231,6 +242,27 @@ const createInitialFavoriteCraftingFacilities = (
   logger.debug("Exiting createInitialFavoriteCraftingFacilities, merged facilities:", facilities)
   return facilities
 }
+
+const createInitialCurrencyTimers = (initialTimers: Record<string, CurrencyTimerState> = {}): Record<string, CurrencyTimerState> => {
+  logger.debug("Entering createInitialCurrencyTimers with initialTimers:", initialTimers);
+  const currencyTimers: Record<string, CurrencyTimerState> = {
+    dailyLoginReward: {
+      current: 0,
+      isRunning: false,
+      nextChargeTime: null,
+      fullChargeTime: null,
+    },
+    // Add other default timers if any
+  };
+
+  for (const timerId in initialTimers) {
+    if (Object.prototype.hasOwnProperty.call(initialTimers, timerId)) {
+      currencyTimers[timerId] = { ...currencyTimers[timerId], ...initialTimers[timerId] };
+    }
+  }
+  logger.debug("Exiting createInitialCurrencyTimers, merged currencyTimers:", currencyTimers);
+  return currencyTimers;
+};
 
 const defaultCharacters: Character[] = [
   {
@@ -339,6 +371,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [allEquipment, setAllEquipment] = useState<any[]>([])
   const [allSkillsData, setAllSkillsData] = useState<any[]>([])
   const [allCraftingFacilitiesData, setAllCraftingFacilitiesData] = useState<any[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [allGems, setAllGems] = useState<any[]>([])
+  const [allAvatarSets, setAllAvatarSets] = useState<any>({})
 
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [dataLoadError, setDataLoadError] = useState<string | null>(null)
@@ -349,32 +384,36 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     setIsLoadingData(true)
     setDataLoadError(null)
     try {
-      const [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes] = await Promise.all([
+      const [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes, gemsRes, avatarSetsRes] = await Promise.all([
         fetch("/data/items.json"),
         fetch("/data/quests.json"),
         fetch("/data/equipment.json"),
         fetch("/data/skills.json"),
         fetch("/data/craftingFacilities.json"),
+        fetch("/data/recipes.json"),
+        fetch("/data/gems.json"),
+        fetch("/data/avatarSets.json"),
       ])
 
       // 모든 응답이 OK인지 확인
-      for (const res of [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes]) {
+      for (const res of [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes, gemsRes, avatarSetsRes]) {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status} for ${res.url}`);
         }
       }
 
-      const [items, quests, equipment, skills, facilities] = await Promise.all(
-        [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes].map(res => res.json())
+      const [items, quests, equipment, skills, facilities, recipes] = await Promise.all(
+        [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes].map(res => res.json())
       );
       
-      logger.debug("JSON 데이터 로드 성공", { items, quests, equipment, skills, facilities })
+      logger.debug("JSON 데이터 로드 성공", { items, quests, equipment, skills, facilities, recipes })
 
       setAllItems(items)
       setAllQuests(quests)
       setAllEquipment(equipment)
       setAllSkillsData(skills)
       setAllCraftingFacilitiesData(facilities)
+      setRecipes(recipes)
     } catch (error) {
       logger.error("JSON 데이터 로드 실패", { error })
       setDataLoadError(`데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
@@ -409,8 +448,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
               ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks),
               equippedItems: createInitialEquipment(char.equippedItems),
               skills: createInitialSkills(allSkillsData, char.skills),
-              craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+              craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
               favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
+              currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
             }
           })
           logger.debug("localStorage에서 캐릭터 로드 및 초기화 성공", { initialCharactersLength: initialCharacters.length });
@@ -426,8 +466,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
             ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks), // Use default character's quest progress with allQuests
             equippedItems: createInitialEquipment(char.equippedItems), // Use default character's equipped items
             skills: createInitialSkills(allSkillsData, char.skills), // Use default character's skills with allSkillsData
-            craftingQueues: createInitialCraftingQueues(char.craftingQueues), // Use default character's crafting queues
+            craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues), // Use default character's crafting queues
             favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities), // Use default character's favorite facilities
+            currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
         }));
         logger.debug("defaultCharacters로 캐릭터 초기화 성공", { initialCharactersLength: initialCharacters.length });
       }
@@ -499,12 +540,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         ...createInitialQuestProgress(allQuests), // 빈 퀘스트 진행 상황으로 시작
         equippedItems: createInitialEquipment(), // 빈 장비로 시작
         skills: createInitialSkills(allSkillsData), // 초기 스킬 레벨로 시작
-        craftingQueues: createInitialCraftingQueues(), // 빈 제작 대기열로 시작
-        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData), // 빈 즐겨찾기 시설로 시작
-        currencyTimers: {
-          eventCoin: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
-          // ... 기타 통화 타이머 (필요 시 추가)
-        }
+        craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData), // 시설 데이터를 전달
+        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData),
+        currencyTimers: createInitialCurrencyTimers(),
       }
       setCharacters((prevCharacters) => [...prevCharacters, newCharacter])
       logger.debug("새 캐릭터 추가됨", { newCharacter });
@@ -562,6 +600,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       allEquipment,
       allSkillsData,
       allCraftingFacilitiesData,
+      recipes,
     }),
     [
       characters,
@@ -581,6 +620,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       allEquipment,
       allSkillsData,
       allCraftingFacilitiesData,
+      recipes,
     ],
   )
 

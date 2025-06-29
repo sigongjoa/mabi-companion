@@ -41,12 +41,23 @@ export interface Material {
   quantity: number;
 }
 
+export interface Item {
+  id: number;
+  name: string;
+  category: string;
+  icon: string;
+  description: string;
+  weight: number;
+  price: number;
+  tradeable: boolean;
+  sellable: boolean;
+  isFavorite: boolean;
+}
+
 export interface Recipe {
-  product?: string; // For craftingFacilities.json, product name
-  resultId?: number; // For recipes.json, result item ID
-  materials: Material[];
-  time?: number; // In seconds, for craftingFacilities.json
-  level_condition?: number; // For craftingFacilities.json
+  resultId: number;
+  materials: { itemId: number; quantity: number }[];
+  outputItem?: string; // Add this if recipes.json has output_item as string
 }
 
 export interface CraftingFacility {

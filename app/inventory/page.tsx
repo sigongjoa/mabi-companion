@@ -15,39 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { logger } from "@/lib/logger"
-
-import allItemsData from "@/data/items.json"
-import recipesData from "@/data/recipes.json"
-
-interface Item {
-  id: number
-  name: string
-  category: string
-  icon: string
-  description: string
-  weight: number
-  price: number
-  tradeable: boolean
-  sellable: boolean
-  isFavorite: boolean
-}
-
-interface Recipe {
-  outputItem: string
-  materials: { itemName: string; quantity: number }[]
-}
-
-const allItems: Record<string, Item> = allItemsData as Record<string, Item>
-
-const recipes: Recipe[] = recipesData as any[]
-
-// Helper function to find item by name
-const getItemByName = (name: string): Item | undefined => {
-  logger.debug("getItemByName 호출", { name });
-  const foundItem = Object.values(allItems).find(item => item.name === name);
-  logger.debug("getItemByName 결과", { foundItem });
-  return foundItem;
-}
+import { type Item, type Recipe } from "@/types/page-context"
 
 // Update categories to include individual material categories
 const categories = [
@@ -71,7 +39,7 @@ const categories = [
 
 export default function InventoryPage() {
   logger.debug("InventoryPage 렌더링 시작");
-  const { activeCharacter, viewMode, characters, updateCharacter } = useCharacter()
+  const { activeCharacter, viewMode, characters, updateCharacter, allItems, recipes } = useCharacter()
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   // Change state for main tabs
@@ -129,16 +97,16 @@ export default function InventoryPage() {
   }
 
   const canCraft = (recipe: Recipe) => {
-    logger.debug("canCraft 호출", { recipeOutputItem: recipe.outputItem });
+    logger.debug("canCraft 호출", { recipeResultId: recipe.resultId });
     const result = recipe.materials.every((material) => {
-      const materialItem = getItemByName(material.itemName);
+      const materialItem = allItems[material.itemId.toString()];
       if (!materialItem) {
-        logger.warn("재료 아이템을 allItems에서 찾을 수 없음", { itemName: material.itemName });
+        logger.warn("재료 아이템을 allItems에서 찾을 수 없음", { itemId: material.itemId });
         return false;
       }
       const currentInventory = inventory.get(materialItem.id) || 0;
       const requiredQuantity = material.quantity;
-      logger.debug("재료 확인", { materialName: material.itemName, currentInventory, requiredQuantity });
+      logger.debug("재료 확인", { materialId: material.itemId, currentInventory, requiredQuantity });
       return currentInventory >= requiredQuantity;
     });
     logger.debug("canCraft 결과", { result });
@@ -146,7 +114,7 @@ export default function InventoryPage() {
   };
 
   const craftItem = (recipe: Recipe) => {
-    logger.debug("craftItem 호출", { recipeOutputItem: recipe.outputItem });
+    logger.debug("craftItem 호출", { recipeResultId: recipe.resultId });
     if (!canCraft(recipe) || viewMode !== "single" || !activeCharacter) {
       logger.warn("제작 불가 조건", { canCraft: canCraft(recipe), viewMode, activeCharacter: !!activeCharacter });
       return;
@@ -157,9 +125,9 @@ export default function InventoryPage() {
 
     // 재료 소모
     recipe.materials.forEach((material) => {
-      const materialItem = getItemByName(material.itemName);
+      const materialItem = allItems[material.itemId.toString()];
       if (!materialItem) {
-        logger.error("재료 아이템을 찾을 수 없음", { itemName: material.itemName });
+        logger.error("재료 아이템을 찾을 수 없음", { itemId: material.itemId });
         return;
       }
       const current = newInventory[materialItem.id] || 0;
@@ -168,9 +136,9 @@ export default function InventoryPage() {
     });
 
     // 결과물 추가
-    const resultItem = getItemByName(recipe.outputItem);
+    const resultItem = allItems[recipe.resultId.toString()];
     if (!resultItem) {
-      logger.error("결과 아이템을 찾을 수 없음", { outputItem: recipe.outputItem });
+      logger.error("결과 아이템을 찾을 수 없음", { resultId: recipe.resultId });
       return;
     }
     const currentResult = newInventory[resultItem.id] || 0;
@@ -215,19 +183,20 @@ export default function InventoryPage() {
   logger.debug("craftableRecipes 결과", { craftableRecipesLength: craftableRecipes.length });
 
   const filteredRecipes = recipes.filter((recipe) => {
-    logger.debug("filteredRecipes 필터링 중", { recipeOutputItem: recipe.outputItem });
-    const resultItem = getItemByName(recipe.outputItem);
+    logger.debug("filteredRecipes 필터링 중", { recipeResultId: recipe.resultId });
+    const resultItem = allItems[recipe.resultId.toString()];
     if (!resultItem) {
-      logger.warn("제작 결과 아이템을 allItems에서 찾을 수 없음", { outputItem: recipe.outputItem });
+      logger.warn("제작 결과 아이템을 allItems에서 찾을 수 없음", { resultId: recipe.resultId });
       return false;
     }
 
+    // Search query filter
     const searchMatch = resultItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         recipe.materials.some(material => {
-                            const materialItem = getItemByName(material.itemName);
+                            const materialItem = allItems[material.itemId.toString()];
                             return materialItem && materialItem.name.toLowerCase().includes(searchQuery.toLowerCase());
                         });
-    logger.debug("레시피 검색 일치 여부", { recipeOutputItem: recipe.outputItem, searchMatch });
+    logger.debug("레시피 검색 일치 여부", { recipeResultId: recipe.resultId, searchMatch });
     return searchMatch;
   })
   logger.debug("filteredRecipes 결과", { filteredRecipesLength: filteredRecipes.length });
@@ -501,23 +470,23 @@ export default function InventoryPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredRecipes.map((recipe) => (
                       <Card
-                        key={recipe.outputItem}
+                        key={recipe.resultId}
                         className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <div className="text-2xl">{getItemByName(recipe.outputItem)?.icon}</div>
+                              <div className="text-2xl">{allItems[recipe.resultId.toString()]?.icon}</div>
                               <div className="flex-1">
-                                <CardTitle className="text-gray-900 text-sm">{getItemByName(recipe.outputItem)?.name}</CardTitle>
+                                <CardTitle className="text-gray-900 text-sm">{allItems[recipe.resultId.toString()]?.name}</CardTitle>
                                 <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                                   제작 가능
                                 </Badge>
                               </div>
                             </div>
                             <FavoriteToggle
-                              id={`recipe-${recipe.outputItem}`}
-                              name={getItemByName(recipe.outputItem)?.name || ""}
+                              id={`recipe-${recipe.resultId}`}
+                              name={allItems[recipe.resultId.toString()]?.name || ""}
                               type="recipe"
                             />
                           </div>
@@ -525,21 +494,25 @@ export default function InventoryPage() {
                         <CardContent className="pt-0 p-3">
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             {recipe.materials.map((material, index) => {
-                              const materialItem = getItemByName(material.itemName);
+                              const materialItem = allItems[material.itemId.toString()];
                               return (
                                 <div key={index} className="flex items-center justify-between text-xs text-gray-700">
-                                  <span>{materialItem?.name}:</span>
-                                  <span
-                                    className={
-                                      (inventory.get(materialItem?.id || -1) || 0) < material.quantity
-                                        ? "text-red-500 font-medium"
-                                        : "font-medium"
-                                    }
-                                  >
-                                    {(inventory.get(materialItem?.id || -1) || 0)} / {material.quantity}
+                                  <span>
+                                    {material.quantity}x {materialItem?.name}
                                   </span>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-xs",
+                                      (inventory.get(material.itemId) || 0) < material.quantity
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-green-100 text-green-700",
+                                    )}
+                                  >
+                                    {inventory.get(material.itemId) || 0}
+                                  </Badge>
                                 </div>
-                              );
+                              )
                             })}
                           </div>
                           <Button
@@ -569,26 +542,19 @@ export default function InventoryPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredRecipes.map((recipe) => (
-                        <TableRow key={recipe.outputItem}>
-                          <TableCell className="text-2xl">{getItemByName(recipe.outputItem)?.icon}</TableCell>
-                          <TableCell className="font-medium">{getItemByName(recipe.outputItem)?.name}</TableCell>
+                        <TableRow key={recipe.resultId}>
+                          <TableCell className="text-2xl">{allItems[recipe.resultId.toString()]?.icon}</TableCell>
+                          <TableCell className="font-medium">{allItems[recipe.resultId.toString()]?.name}</TableCell>
                           <TableCell>
                             {recipe.materials.map((material, index) => {
-                              const materialItem = getItemByName(material.itemName);
+                              const materialItem = allItems[material.itemId.toString()];
                               return (
                                 <div key={index} className="flex items-center space-x-1 text-xs text-gray-700">
-                                  <span>{materialItem?.name}:</span>
-                                  <span
-                                    className={
-                                      (inventory.get(materialItem?.id || -1) || 0) < material.quantity
-                                        ? "text-red-500 font-medium"
-                                        : "font-medium"
-                                    }
-                                  >
-                                    {(inventory.get(materialItem?.id || -1) || 0)} / {material.quantity}
+                                  <span>
+                                    {material.quantity}x {materialItem?.name}
                                   </span>
                                 </div>
-                              );
+                              )
                             })}
                           </TableCell>
                           <TableCell className="text-right">

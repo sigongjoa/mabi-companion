@@ -15,19 +15,19 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 import { useCharacter } from "@/contexts/character-context"
-import craftingFacilitiesData from "@/data/craftingFacilities.json"
+import craftingFacilitiesData from "/public/data/craftingFacilities.json"
 import { cn } from "@/lib/utils"
 import { Popover as UIPopover } from "@/components/ui/popover"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { ItemDetailsPopup } from "@/components/item-details-popup"
 
 // Import data files
-import allItemsData from "@/data/items.json"
-import equipmentData from "@/data/equipment.json"
-import gemsData from "@/data/gems.json"
-import questsData from "@/data/quests.json"
-import skillsData from "@/data/skills.json"
-import recipesData from "@/data/recipes.json"
+import allItemsData from "/public/data/items.json"
+import equipmentData from "/public/data/equipment.json"
+import gemsData from "/public/data/gems.json"
+import questsData from "/public/data/quests.json"
+import skillsData from "/public/data/skills.json"
+import recipesData from "/public/data/recipes.json"
 
 const typeColors: Record<string, string> = {
   inventory: "bg-blue-100 text-blue-800",
