@@ -170,13 +170,13 @@ export default function HomePage() {
         </Card>
 
         {/* 재화 충전 타이머 */}
-        <CharacterScopedHeader title="재화 충전 타이머" icon={Clock} />
+        {/* <CharacterScopedHeader title="재화 충전 타이머" icon={Clock} /> */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CurrencyTimersContainer characters={characters} handleCurrencyDataChange={handleCurrencyDataChange} dashboardMode={true} />
         </div>
 
         {/* Completed Crafting Timers 섹션 제거 */}
-        {/* <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
+        <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {characters.map((char) => {
             const completedTimers = Object.values(char.craftingQueues || {}).flatMap(queues => 
@@ -202,7 +202,7 @@ export default function HomePage() {
               </Card>
             );
           })}
-        </div> */}
+        </div>
 
         {/* Character Specific Item Counts */}
         {/* <CharacterScopedHeader title="캐릭터별 재화" icon={Package} /> */}
@@ -222,9 +222,9 @@ export default function HomePage() {
                   {/* <p className="text-muted-foreground">두카트</p> */}
                   {/* <span className="font-bold">{char.ducats?.toLocaleString() || 0}</span> */}
                 {/* </div> */}
-                {/* Dynamically display other key items */} */}
-                {/* {Object.entries(char.inventory || {}).map(([itemId, quantity]) => { */}
-                  {/* const item = itemsData[itemId]; */} */}
+                {/* Dynamically display other key items */}
+                {/* {Object.entries(char.inventory || {}).map(([itemId, quantity]) => { } */}
+                  {/* const item = itemsData[itemId]; */}
                 {/* if (!item || !['골드', '두카트'].includes(item.name)) return null; // Filter out gold and ducats if already displayed */}
                 {/* return ( */}
                   {/* <div key={itemId} className="flex items-center justify-between space-x-2 text-sm"> */}
