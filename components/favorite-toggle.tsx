@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils"
 
 interface FavoriteToggleProps {
   itemId: string
-  itemType: "quest" | "recipe" | "equipment" | "skill"
+  itemType: "quest" | "recipe" | "equipment" | "skill" | "item"
   className?: string
   size?: "sm" | "md" | "lg"
 }
 
 export function FavoriteToggle({ itemId, itemType, className, size = "md" }: FavoriteToggleProps) {
-  const { favorites, addFavorite, removeFavorite } = useFavorites()
+  const { favorites, toggleFavorite } = useFavorites()
   const [isAnimating, setIsAnimating] = useState(false)
 
   const isFavorited = favorites.some((fav) => fav.id === itemId && fav.type === itemType)
@@ -22,11 +22,12 @@ export function FavoriteToggle({ itemId, itemType, className, size = "md" }: Fav
   const handleToggle = () => {
     setIsAnimating(true)
 
-    if (isFavorited) {
-      removeFavorite(itemId, itemType)
-    } else {
-      addFavorite(itemId, itemType)
-    }
+    toggleFavorite({
+      id: itemId,
+      name: "",
+      type: itemType,
+      page: "",
+    })
 
     // Reset animation after a short delay
     setTimeout(() => setIsAnimating(false), 200)

@@ -40,10 +40,10 @@ const categories = [
 export default function InventoryPage() {
   logger.debug("InventoryPage 렌더링 시작");
   const { activeCharacter, viewMode, characters, updateCharacter, allItems, recipes } = useCharacter()
-  const [selectedCategory, setSelectedCategory] = useState("전체")
+  const [selectedCategory, setSelectedCategory] = useState<string[]>(["전체"])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   // Change state for main tabs
-  const [currentMainTab, setCurrentMainTab] = useState("inventory-card")
+  const [currentMainTab, setCurrentMainTab] = useState("inventory-table")
   const [currentCraftingViewMode, setCurrentCraftingViewMode] = useState("card")
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -78,23 +78,97 @@ export default function InventoryPage() {
   logger.debug("인벤토리 데이터 로드됨", { inventory });
 
   const updateQuantity = (itemId: number, change: number) => {
-    logger.debug("updateQuantity 호출", { itemId, change });
+    logger.debug("updateQuantity 호출", { itemId, change, viewMode, activeCharacterId: activeCharacter?.id });
+    let targetCharacter = null;
     if (viewMode === "single" && activeCharacter) {
-      const currentQuantity = activeCharacter.inventory[itemId] || 0
-      const newQuantity = Math.max(0, currentQuantity + change)
+      targetCharacter = activeCharacter;
+    } else if (viewMode === "all" && characters.length > 0) {
+      targetCharacter = characters[0];
+    }
 
-      const newInventory = { ...activeCharacter.inventory }
+    if (targetCharacter) {
+      logger.debug("updateQuantity: 캐릭터 인벤토리 업데이트 진행", { itemId, change, targetCharacterId: targetCharacter.id });
+      const currentQuantity = targetCharacter.inventory[itemId] || 0;
+      const newQuantity = Math.max(0, currentQuantity + change);
+
+      const newInventory = { ...targetCharacter.inventory };
       if (newQuantity === 0) {
-        delete newInventory[itemId]
-        logger.debug("아이템 수량 0이 되어 인벤토리에서 삭제", { itemId });
+        delete newInventory[itemId];
+        logger.debug("updateQuantity: 아이템 수량 0이 되어 인벤토리에서 삭제", { itemId });
       } else {
-        newInventory[itemId] = newQuantity
-        logger.debug("아이템 수량 업데이트", { itemId, newQuantity });
+        newInventory[itemId] = newQuantity;
+        logger.debug("updateQuantity: 아이템 수량 업데이트", { itemId, newQuantity });
       }
 
-      updateCharacter(activeCharacter.id, { inventory: newInventory })
+      updateCharacter(targetCharacter.id, { inventory: newInventory });
+      logger.debug("updateQuantity: 캐릭터 인벤토리 업데이트 완료", { targetCharacterId: targetCharacter.id, newInventory });
+    } else {
+      logger.debug("updateQuantity: 활성 캐릭터 또는 타겟 캐릭터 없음, 업데이트 건너뜀", { viewMode, activeCharacter: !!activeCharacter, charactersCount: characters.length });
     }
-  }
+  };
+
+  const handleQuantityChange = (itemId: number, value: string) => {
+    logger.debug("handleQuantityChange 호출", { itemId, value, viewMode, activeCharacterId: activeCharacter?.id });
+    let targetCharacter = null;
+    if (viewMode === "single" && activeCharacter) {
+      targetCharacter = activeCharacter;
+    } else if (viewMode === "all" && characters.length > 0) {
+      targetCharacter = characters[0];
+    }
+
+    if (targetCharacter) {
+      logger.debug("handleQuantityChange: 캐릭터 인벤토리 업데이트 진행", { itemId, value, targetCharacterId: targetCharacter.id });
+      const newQuantity = Math.max(0, parseInt(value) || 0);
+      const newInventory = { ...targetCharacter.inventory };
+
+      if (newQuantity === 0) {
+        delete newInventory[itemId];
+        logger.debug("handleQuantityChange: 아이템 수량 0이 되어 인벤토리에서 삭제 (텍스트박스 입력)", { itemId });
+      } else {
+        newInventory[itemId] = newQuantity;
+        logger.debug("handleQuantityChange: 아이템 수량 업데이트 (텍스트박스 입력)", { itemId, newQuantity });
+      }
+
+      updateCharacter(targetCharacter.id, { inventory: newInventory });
+      logger.debug("handleQuantityChange: 캐릭터 인벤토리 업데이트 완료", { targetCharacterId: targetCharacter.id, newInventory });
+    } else {
+      logger.debug("handleQuantityChange: 활성 캐릭터 또는 타겟 캐릭터 없음, 업데이트 건너뜀", { viewMode, activeCharacter: !!activeCharacter, charactersCount: characters.length });
+    }
+  };
+
+  const handleCategoryToggle = (category: string) => {
+    logger.debug("handleCategoryToggle 호출", { category });
+    setSelectedCategory((prev) => {
+      if (category === "전체") {
+        logger.debug("카테고리 전체 선택");
+        return ["전체"];
+      } else {
+        let newCategories: string[];
+        if (prev.includes("전체")) {
+          // "전체"가 선택된 상태에서 다른 카테고리 선택 시 "전체" 제거
+          newCategories = [category];
+          logger.debug("'전체' 제거 후 카테고리 선택", { category });
+        } else if (prev.includes(category)) {
+          // 이미 선택된 카테고리 해제
+          newCategories = prev.filter((c) => c !== category);
+          logger.debug("카테고리 선택 해제", { category });
+        } else {
+          // 새로운 카테고리 선택
+          newCategories = [...prev, category];
+          logger.debug("새로운 카테고리 선택", { category });
+        }
+
+        // 모든 카테고리가 선택 해제되면 자동으로 "전체" 선택
+        if (newCategories.length === 0) {
+          logger.debug("모든 카테고리 해제, '전체' 자동 선택");
+          return ["전체"];
+        }
+
+        logger.debug("handleCategoryToggle 결과", { newCategories });
+        return newCategories;
+      }
+    });
+  };
 
   const canCraft = (recipe: Recipe) => {
     logger.debug("canCraft 호출", { recipeResultId: recipe.resultId });
@@ -163,7 +237,7 @@ export default function InventoryPage() {
       if (!item) return false
 
       // Category filter
-      const categoryMatch = selectedCategory === "전체" || item.category === selectedCategory
+      const categoryMatch = selectedCategory.includes("전체") || selectedCategory.includes(item.category);
 
       // Favorites filter
       const favoritesMatch = !showFavoritesOnly || item.isFavorite
@@ -230,12 +304,10 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <CharacterScopedHeader title="내 아이템 목록" icon={Package} />
-
       <Tabs defaultValue={currentMainTab} onValueChange={setCurrentMainTab} className="space-y-6">
         <div className="document-card p-4">
           <Tabs
-            defaultValue="inventory-card"
+            defaultValue="inventory-table"
             value={currentMainTab}
             onValueChange={setCurrentMainTab}
             className="section-spacing"
@@ -244,21 +316,14 @@ export default function InventoryPage() {
               <div className="p-4">
                 <TabsList className="bg-gray-50 border border-gray-200">
                   <TabsTrigger
-                    value="inventory-card"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                  >
-                    <LayoutGrid className="w-4 h-4 mr-2" /> 아이템 (카드)
-                  </TabsTrigger>
-                  <TabsTrigger
                     value="inventory-table"
                     className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
                   >
                     <Table2 className="w-4 h-4 mr-2" /> 아이템 (테이블)
                   </TabsTrigger>
                   <TabsTrigger
-                    value="crafting"
+                    value="craftable-items"
                     className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    disabled={viewMode === "all"}
                   >
                     <Sparkles className="w-4 h-4 mr-2" /> 제작 가능 ({craftableRecipes.length})
                   </TabsTrigger>
@@ -266,313 +331,187 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <TabsContent value="inventory-card" className="section-spacing">
-              <Card className="border border-gray-200 shadow-sm">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-2">
-                      <Package className="w-5 h-5" />
-                      <span>{viewMode === "single" ? "개인 인벤토리" : "통합 인벤토리"}</span>
-                    </CardTitle>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="favorites-toggle"
-                          checked={showFavoritesOnly}
-                          onCheckedChange={setShowFavoritesOnly}
-                        />
-                        <Label htmlFor="favorites-toggle" className="text-sm font-medium flex items-center space-x-1">
-                          <Star className="w-4 h-4" />
-                          <span>즐겨찾기만</span>
-                        </Label>
-                      </div>
-                      <FavoriteToggle id="inventory-main" name="인벤토리 메인" type="inventory" />
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    총 {Array.from(inventory.values()).reduce((a, b) => a + b, 0)}개 아이템
-                    {viewMode === "all" && ` (${characters.length}명의 캐릭터)`}
-                    {showFavoritesOnly && " • 즐겨찾기 필터 적용"}
+            <TabsContent value="inventory-table" className="space-y-6">
+              <Card className="document-card">
+                <CardHeader className="excel-header flex-row items-center justify-between">
+                  <CardTitle className="text-gray-900 flex items-center space-x-2">
+                    <Package className="w-5 h-5" />
+                    <span>통합 인벤토리</span>
+                    <Badge variant="secondary" className="ml-2 font-normal text-gray-500">
+                      총 {filteredItems.length}개 아이템 ({activeCharacter ? activeCharacter.name : '선택된 캐릭터 없음'})
+                    </Badge>
+                  </CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="favorites-only"
+                      checked={showFavoritesOnly}
+                      onCheckedChange={setShowFavoritesOnly}
+                    />
+                    <Label htmlFor="favorites-only" className="text-sm text-muted-foreground">
+                      즐겨찾기만
+                    </Label>
+                    <FavoriteToggle
+                      itemId="inventory-header"
+                      itemType="header"
+                      size="sm"
+                      className="ml-2"
+                    />
                   </div>
                 </CardHeader>
-              </Card>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className={cn(
-                      "transition-all duration-200",
-                      selectedCategory === category
-                        ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400",
-                    )}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                {filteredItems.map((item) => (
-                  <Card
-                    key={item.id}
-                    className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <CardHeader className="pb-2 p-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          <div className="text-xl flex-shrink-0">{item.icon}</div>
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-gray-900 text-xs font-medium truncate">{item.name}</CardTitle>
-                            <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 mt-1">
-                              {item.category}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0 ml-1">
-                          <FavoriteToggle id={`item-${item.id}`} name={item.name} type="item" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0 p-3">
-                      <div className="flex items-center justify-between">
-                        {viewMode === "single" ? (
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="font-semibold text-gray-900 text-sm min-w-[40px] text-center">
-                              {inventory.get(item.id) || 0}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="font-semibold text-gray-900 text-sm">{inventory.get(item.id) || 0}개</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 text-center">{item.price}G</div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="inventory-table" className="section-spacing">
-              <div className="flex flex-wrap gap-2 mb-4">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className={cn(
-                      "transition-all duration-200",
-                      selectedCategory === category
-                        ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400",
-                    )}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-              <Card className="border border-gray-200 shadow-sm">
                 <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">아이콘</TableHead>
-                        <TableHead>이름</TableHead>
-                        <TableHead>카테고리</TableHead>
-                        <TableHead className="w-[100px] text-right">수량</TableHead>
-                        <TableHead className="w-[120px] text-right">가격</TableHead>
-                        {viewMode === "single" && <TableHead className="w-[120px] text-center">관리</TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="text-2xl">{item.icon}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell className="text-right font-bold">{inventory.get(item.id) || 0}개</TableCell>
-                          <TableCell className="text-right text-sm text-gray-500">{item.price}G</TableCell>
-                          {viewMode === "single" && (
-                            <TableCell className="flex items-center justify-center space-x-1">
-                              <Button size="sm" variant="outline" onClick={() => updateQuantity(item.id, -1)}>
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => updateQuantity(item.id, 1)}>
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          )}
+                  <div className="flex flex-wrap gap-2 mb-4 p-4">
+                    {categories.map((category) => (
+                      <Button
+                        key={category}
+                        variant={selectedCategory.includes(category) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleCategoryToggle(category)}
+                        className={cn(
+                          "transition-all duration-200",
+                          selectedCategory.includes(category)
+                            ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400",
+                        )}
+                      >
+                        {category}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="max-h-[600px] overflow-y-auto excel-scrollbar">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[50px] text-center">즐겨찾기</TableHead>
+                          <TableHead className="w-[80px]">아이콘</TableHead>
+                          <TableHead>이름</TableHead>
+                          <TableHead>카테고리</TableHead>
+                          <TableHead className="text-right w-[150px]">수량</TableHead>
+                          <TableHead className="text-right w-[150px]">관리</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="text-center">
+                              <FavoriteToggle itemId={item.id.toString()} itemType="item" size="sm" />
+                            </TableCell>
+                            <TableCell className="text-2xl">
+                              {/* 아이콘 이미지 경로 대신 이모지를 직접 렌더링합니다. */}
+                              {item.icon}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {item.name}
+                            </TableCell>
+                            <TableCell>{item.category}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                  disabled={item.quantity <= 0}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                                  className="w-24 text-center inline-block mx-1"
+                                  min={0}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {filteredItems.length === 0 && (
+                    <div className="p-6 text-center text-muted-foreground">
+                      표시할 아이템이 없습니다.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="crafting" className="section-spacing">
-              <Card className="border border-gray-200 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center space-x-2">
+            <TabsContent value="craftable-items" className="space-y-6">
+              <Card className="document-card">
+                <CardHeader className="excel-header">
+                  <CardTitle className="text-gray-900 flex items-center space-x-2">
                     <Sparkles className="w-5 h-5" />
                     <span>제작 가능 아이템</span>
+                    <Badge variant="secondary" className="ml-2 font-normal text-gray-500">
+                      총 {craftableRecipes.length}개
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
-              </Card>
-
-              <Tabs
-                defaultValue="card"
-                value={currentCraftingViewMode}
-                onValueChange={setCurrentCraftingViewMode}
-                className="mt-4"
-              >
-                <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                  <div className="p-4">
-                    <TabsList className="bg-gray-50 border border-gray-200">
-                      <TabsTrigger
-                        value="card"
-                        className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                      >
-                        <LayoutGrid className="w-4 h-4 mr-2" /> 카드 뷰
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="table"
-                        className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                      >
-                        <Table2 className="w-4 h-4 mr-2" /> 테이블 뷰
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-                </div>
-
-                <TabsContent value="card" className="section-spacing">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredRecipes.map((recipe) => (
-                      <Card
-                        key={recipe.resultId}
-                        className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className="text-2xl">{allItems[recipe.resultId.toString()]?.icon}</div>
-                              <div className="flex-1">
-                                <CardTitle className="text-gray-900 text-sm">{allItems[recipe.resultId.toString()]?.name}</CardTitle>
-                                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                                  제작 가능
-                                </Badge>
-                              </div>
-                            </div>
-                            <FavoriteToggle
-                              id={`recipe-${recipe.resultId}`}
-                              name={allItems[recipe.resultId.toString()]?.name || ""}
-                              type="recipe"
-                            />
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0 p-3">
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            {recipe.materials.map((material, index) => {
-                              const materialItem = allItems[material.itemId.toString()];
-                              return (
-                                <div key={index} className="flex items-center justify-between text-xs text-gray-700">
-                                  <span>
-                                    {material.quantity}x {materialItem?.name}
-                                  </span>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-xs",
-                                      (inventory.get(material.itemId) || 0) < material.quantity
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-green-100 text-green-700",
-                                    )}
-                                  >
-                                    {inventory.get(material.itemId) || 0}
-                                  </Badge>
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => craftItem(recipe)}
-                            className="w-full mt-3"
-                            disabled={!canCraft(recipe) || viewMode === "all"}
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" /> 제작
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="table" className="section-spacing">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]"></TableHead>
-                        <TableHead>아이템</TableHead>
-                        <TableHead>재료</TableHead>
-                        <TableHead className="w-[100px] text-right">제작</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRecipes.map((recipe) => (
-                        <TableRow key={recipe.resultId}>
-                          <TableCell className="text-2xl">{allItems[recipe.resultId.toString()]?.icon}</TableCell>
-                          <TableCell className="font-medium">{allItems[recipe.resultId.toString()]?.name}</TableCell>
-                          <TableCell>
-                            {recipe.materials.map((material, index) => {
-                              const materialItem = allItems[material.itemId.toString()];
-                              return (
-                                <div key={index} className="flex items-center space-x-1 text-xs text-gray-700">
-                                  <span>
-                                    {material.quantity}x {materialItem?.name}
-                                  </span>
-                                </div>
-                              )
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => craftItem(recipe)}
-                              disabled={!canCraft(recipe) || viewMode === "all"}
-                            >
-                              <Sparkles className="w-4 h-4" /> 제작
-                            </Button>
-                          </TableCell>
+                <CardContent className="p-0">
+                  <div className="max-h-[600px] overflow-y-auto excel-scrollbar">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[50px] text-center">즐겨찾기</TableHead>
+                          <TableHead className="w-[80px]">아이콘</TableHead>
+                          <TableHead>이름</TableHead>
+                          <TableHead>필요 재료</TableHead>
+                          <TableHead className="text-right">제작</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-              </Tabs>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRecipes.map((recipe) => (
+                          <TableRow key={recipe.resultId}>
+                            <TableCell className="text-center">
+                              <FavoriteToggle itemId={recipe.resultId.toString()} itemType="recipe" size="sm" />
+                            </TableCell>
+                            <TableCell>
+                              {allItems[recipe.resultId.toString()]?.icon && (
+                                <img
+                                  src={allItems[recipe.resultId.toString()]?.icon}
+                                  alt={allItems[recipe.resultId.toString()]?.name}
+                                  className="w-8 h-8 object-contain"
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {allItems[recipe.resultId.toString()]?.name}
+                            </TableCell>
+                            <TableCell>
+                              {recipe.materials.map((material, index) => (
+                                <Badge key={index} variant="outline" className="mr-1 mb-1">
+                                  {allItems[material.itemId.toString()]?.name} x{material.quantity}
+                                </Badge>
+                              ))}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                onClick={() => craftItem(recipe)}
+                                disabled={!canCraft(recipe) || viewMode !== "single"}
+                              >
+                                제작
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {filteredRecipes.length === 0 && (
+                    <div className="p-6 text-center text-muted-foreground">
+                      제작 가능한 아이템이 없습니다.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
