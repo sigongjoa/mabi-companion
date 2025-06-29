@@ -9,6 +9,8 @@ import equipmentData from "@/data/equipment.json"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { ItemDetailsPopup } from "@/components/item-details-popup"
+import { logger } from "@/lib/logger"
 
 interface Equipment {
   id: number

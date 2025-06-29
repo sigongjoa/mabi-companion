@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, Sword, Shield, Star, TrendingUp, Users, Target, Zap, Heart, Package, Home, Hourglass } from "lucide-react"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
-import allItemsData from "@/data/items.json";
+import itemsData from '@/data/items.json';
 import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
@@ -30,14 +30,12 @@ export default function HomePage() {
 
   if (!activeCharacter) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Welcome to Mabi Companion</h1>
-          <p className="text-muted-foreground mb-6">Create or select a character to get started</p>
-          <Button onClick={() => router.push('/characters')}>Create Character</Button>
-        </div>
+      <div className="container mx-auto p-6 text-center">
+        <h2 className="text-xl font-bold mb-4">캐릭터가 없습니다.</h2>
+        <p className="text-muted-foreground mb-6">새로운 캐릭터를 생성하거나 기존 캐릭터를 선택해주세요.</p>
+        <Button onClick={() => router.push('/characters')}>Create Character</Button>
       </div>
-    )
+    );
   }
 
   const dailyProgress = (getDailyQuestCount(activeCharacter) / getTotalDailyQuests()) * 100
@@ -70,155 +68,156 @@ export default function HomePage() {
         </div>
       </div>
 
-      {!activeCharacter ? (
-        <div className="container mx-auto p-6 text-center">
-          <h2 className="text-xl font-bold mb-4">캐릭터가 없습니다.</h2>
-          <p className="text-muted-foreground mb-6">새로운 캐릭터를 생성하거나 기존 캐릭터를 선택해주세요.</p>
-          <Button onClick={() => router.push('/characters')}>Create Character</Button>
-        </div>
-      ) : (
-        <>
-          <CharacterScopedHeader title="요약 정보" icon={Users} />
+      <>
+        <CharacterScopedHeader title="요약 정보" icon={Users} />
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="document-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">일일 퀘스트</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {getDailyQuestCount(activeCharacter)}/{getTotalDailyQuests()}
-                </div>
-                <Progress value={dailyProgress} className="mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">{Math.round(dailyProgress)}% 완료</p>
-              </CardContent>
-            </Card>
-
-            <Card className="document-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">주간 퀘스트</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {getWeeklyQuestCount(activeCharacter)}/{getTotalWeeklyQuests()}
-                </div>
-                <Progress value={weeklyProgress} className="mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">{Math.round(weeklyProgress)}% 완료</p>
-              </CardContent>
-            </Card>
-
-            <Card className="document-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">전투력</CardTitle>
-                <Sword className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeCharacter.combatPower || "N/A"}</div>
-                <p className="text-xs text-muted-foreground">
-                  <TrendingUp className="inline w-3 h-3 mr-1" />
-                  지난 주 대비 +12%
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="document-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">길드 랭크</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeCharacter.guildRank || "멤버"}</div>
-                <p className="text-xs text-muted-foreground">{activeCharacter.guildName || "길드 없음"}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="document-card">
-            <CardHeader>
-              <CardTitle>빠른 실행</CardTitle>
-              <CardDescription>자주 사용하는 기능으로 바로 이동</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">일일 퀘스트</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Button variant="outline" className="h-20 flex-col bg-transparent">
-                  <Zap className="h-6 w-6 mb-2" />
-                  <span className="text-sm">스킬</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col bg-transparent">
-                  <Shield className="h-6 w-6 mb-2" />
-                  <span className="text-sm">장비</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col bg-transparent">
-                  <Star className="h-6 w-6 mb-2" />
-                  <span className="text-sm">퀘스트</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col bg-transparent">
-                  <Heart className="h-6 w-6 mb-2" />
-                  <span className="text-sm">즐겨찾기</span>
-                </Button>
+              <div className="text-2xl font-bold">
+                {getDailyQuestCount(activeCharacter)}/{getTotalDailyQuests()}
               </div>
+              <Progress value={dailyProgress} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">{Math.round(dailyProgress)}% 완료</p>
             </CardContent>
           </Card>
 
-          {/* Completed Crafting Timers */}
-          <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {characters.map((char) => {
-              const completedTimers = Object.values(char.craftingQueues || {}).flatMap(queues => 
-                queues.filter(q => !q.isProcessing && q.timeLeft === 0 && q.itemName)
-              );
+          <Card className="document-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">주간 퀘스트</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {getWeeklyQuestCount(activeCharacter)}/{getTotalWeeklyQuests()}
+              </div>
+              <Progress value={weeklyProgress} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">{Math.round(weeklyProgress)}% 완료</p>
+            </CardContent>
+          </Card>
 
-              if (completedTimers.length === 0) return null;
+          <Card className="document-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">전투력</CardTitle>
+              <Sword className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCharacter.combatPower || "N/A"}</div>
+              <p className="text-xs text-muted-foreground">
+                <TrendingUp className="inline w-3 h-3 mr-1" />
+                지난 주 대비 +12%
+              </p>
+            </CardContent>
+          </Card>
 
-              return (
-                <Card key={char.id} className="document-card">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{char.name}</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {completedTimers.map((timer, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">{timer.itemName || `아이템 #${timer.id}`}</p>
-                        <Badge>완료</Badge>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <Card className="document-card">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">길드 랭크</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCharacter.guildRank || "멤버"}</div>
+              <p className="text-xs text-muted-foreground">{activeCharacter.guildName || "길드 없음"}</p>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Character Specific Item Counts */}
-          <CharacterScopedHeader title="캐릭터별 재화" icon={Package} />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {characters.map((char) => (
+        {/* Quick Actions */}
+        <Card className="document-card">
+          <CardHeader>
+            <CardTitle>빠른 실행</CardTitle>
+            <CardDescription>자주 사용하는 기능으로 바로 이동</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Button variant="outline" className="h-20 flex-col bg-transparent">
+                <Zap className="h-6 w-6 mb-2" />
+                <span className="text-sm">스킬</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col bg-transparent">
+                <Shield className="h-6 w-6 mb-2" />
+                <span className="text-sm">장비</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col bg-transparent">
+                <Star className="h-6 w-6 mb-2" />
+                <span className="text-sm">퀘스트</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col bg-transparent">
+                <Heart className="h-6 w-6 mb-2" />
+                <span className="text-sm">즐겨찾기</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Completed Crafting Timers */}
+        <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {characters.map((char) => {
+            const completedTimers = Object.values(char.craftingQueues || {}).flatMap(queues => 
+              queues.filter(q => !q.isProcessing && q.timeLeft === 0 && q.itemName)
+            );
+
+            if (completedTimers.length === 0) return null;
+
+            return (
               <Card key={char.id} className="document-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{char.name}</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">마족 공물:</p>
-                      <p className="text-lg font-bold">{char.demonTribute?.toLocaleString() || 0}</p>
+                <CardContent className="space-y-2">
+                  {completedTimers.map((timer, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">{timer.itemName || `아이템 #${timer.id}`}</p>
+                      <Badge>완료</Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">은동전:</p>
-                      <p className="text-lg font-bold">{char.silverCoins?.toLocaleString() || 0}</p>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </>
-      )}
+            );
+          })}
+        </div>
+
+        {/* Character Specific Item Counts */}
+        <CharacterScopedHeader title="캐릭터별 재화" icon={Package} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {characters.map((char) => (
+            <Card key={char.id} className="document-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{char.name}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between space-x-2 text-sm">
+                  <p className="text-muted-foreground">골드</p>
+                  <span className="font-bold">{char.gold?.toLocaleString() || 0}</span>
+                </div>
+                <div className="flex items-center justify-between space-x-2 text-sm">
+                  <p className="text-muted-foreground">두카트</p>
+                  <span className="font-bold">{char.ducats?.toLocaleString() || 0}</span>
+                </div>
+                {/* Dynamically display other key items */}
+                {Object.entries(char.inventory || {}).map(([itemId, quantity]) => {
+                  const item = itemsData[itemId];
+                  if (!item || !['골드', '두카트'].includes(item.name)) return null; // Filter out gold and ducats if already displayed
+                  return (
+                    <div key={itemId} className="flex items-center justify-between space-x-2 text-sm">
+                      <p className="text-muted-foreground">{item.name}</p>
+                      <span className="font-bold">{quantity.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </>
     </div>
   )
 }

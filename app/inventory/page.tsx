@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
+import { logger } from "@/lib/logger"
 
 import allItemsData from "@/data/items.json"
 import recipesData from "@/data/recipes.json"
@@ -32,13 +33,21 @@ interface Item {
 }
 
 interface Recipe {
-  resultId: number
-  materials: { itemId: number; quantity: number }[]
+  outputItem: string
+  materials: { itemName: string; quantity: number }[]
 }
 
 const allItems: Record<string, Item> = allItemsData as Record<string, Item>
 
-const recipes: Recipe[] = recipesData as Recipe[]
+const recipes: Recipe[] = recipesData as any[]
+
+// Helper function to find item by name
+const getItemByName = (name: string): Item | undefined => {
+  logger.debug("getItemByName 호출", { name });
+  const foundItem = Object.values(allItems).find(item => item.name === name);
+  logger.debug("getItemByName 결과", { foundItem });
+  return foundItem;
+}
 
 // Update categories to include individual material categories
 const categories = [
@@ -61,6 +70,7 @@ const categories = [
 ]
 
 export default function InventoryPage() {
+  logger.debug("InventoryPage 렌더링 시작");
   const { activeCharacter, viewMode, characters, updateCharacter } = useCharacter()
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
@@ -71,11 +81,13 @@ export default function InventoryPage() {
 
   // Get inventory data based on view mode
   const getInventoryData = () => {
+    logger.debug("getInventoryData 호출");
     let currentInventoryMap = new Map<number, number>() // Initialize map
     if (viewMode === "single" && activeCharacter) {
       currentInventoryMap = new Map(
         Object.entries(activeCharacter.inventory as Record<string, number>).map(([k, v]) => [Number(k), v]),
       )
+      logger.debug("getInventoryData - single character mode", { activeCharacterId: activeCharacter.id });
     } else if (viewMode === "all") {
       // Aggregate all character inventories
       const aggregated = new Map<number, number>()
@@ -88,13 +100,17 @@ export default function InventoryPage() {
         )
       })
       currentInventoryMap = aggregated
+      logger.debug("getInventoryData - all characters mode", { characterCount: characters.length });
     }
+    logger.debug("getInventoryData 결과", { inventorySize: currentInventoryMap.size });
     return currentInventoryMap
   }
 
   const inventory = getInventoryData()
+  logger.debug("인벤토리 데이터 로드됨", { inventory });
 
   const updateQuantity = (itemId: number, change: number) => {
+    logger.debug("updateQuantity 호출", { itemId, change });
     if (viewMode === "single" && activeCharacter) {
       const currentQuantity = activeCharacter.inventory[itemId] || 0
       const newQuantity = Math.max(0, currentQuantity + change)
@@ -102,8 +118,10 @@ export default function InventoryPage() {
       const newInventory = { ...activeCharacter.inventory }
       if (newQuantity === 0) {
         delete newInventory[itemId]
+        logger.debug("아이템 수량 0이 되어 인벤토리에서 삭제", { itemId });
       } else {
         newInventory[itemId] = newQuantity
+        logger.debug("아이템 수량 업데이트", { itemId, newQuantity });
       }
 
       updateCharacter(activeCharacter.id, { inventory: newInventory })
@@ -111,38 +129,63 @@ export default function InventoryPage() {
   }
 
   const canCraft = (recipe: Recipe) => {
+    logger.debug("canCraft 호출", { recipeOutputItem: recipe.outputItem });
     const result = recipe.materials.every((material) => {
-      const currentInventory = inventory.get(material.itemId) || 0
-      const requiredQuantity = material.quantity
-      return currentInventory >= requiredQuantity
-    })
-    return result
-  }
+      const materialItem = getItemByName(material.itemName);
+      if (!materialItem) {
+        logger.warn("재료 아이템을 allItems에서 찾을 수 없음", { itemName: material.itemName });
+        return false;
+      }
+      const currentInventory = inventory.get(materialItem.id) || 0;
+      const requiredQuantity = material.quantity;
+      logger.debug("재료 확인", { materialName: material.itemName, currentInventory, requiredQuantity });
+      return currentInventory >= requiredQuantity;
+    });
+    logger.debug("canCraft 결과", { result });
+    return result;
+  };
 
   const craftItem = (recipe: Recipe) => {
+    logger.debug("craftItem 호출", { recipeOutputItem: recipe.outputItem });
     if (!canCraft(recipe) || viewMode !== "single" || !activeCharacter) {
-      return
+      logger.warn("제작 불가 조건", { canCraft: canCraft(recipe), viewMode, activeCharacter: !!activeCharacter });
+      return;
     }
 
-    const newInventory = { ...activeCharacter.inventory }
+    const newInventory = { ...activeCharacter.inventory };
+    logger.debug("제작 전 인벤토리", { newInventory });
 
     // 재료 소모
     recipe.materials.forEach((material) => {
-      const current = newInventory[material.itemId] || 0
-      newInventory[material.itemId] = current - material.quantity
-    })
+      const materialItem = getItemByName(material.itemName);
+      if (!materialItem) {
+        logger.error("재료 아이템을 찾을 수 없음", { itemName: material.itemName });
+        return;
+      }
+      const current = newInventory[materialItem.id] || 0;
+      newInventory[materialItem.id] = current - material.quantity;
+      logger.debug("재료 소모됨", { materialId: materialItem.id, quantityUsed: material.quantity });
+    });
 
     // 결과물 추가
-    const currentResult = newInventory[recipe.resultId] || 0
-    newInventory[recipe.resultId] = currentResult + 1
+    const resultItem = getItemByName(recipe.outputItem);
+    if (!resultItem) {
+      logger.error("결과 아이템을 찾을 수 없음", { outputItem: recipe.outputItem });
+      return;
+    }
+    const currentResult = newInventory[resultItem.id] || 0;
+    newInventory[resultItem.id] = currentResult + 1;
+    logger.debug("결과 아이템 추가됨", { resultItemId: resultItem.id, newQuantity: newInventory[resultItem.id] });
 
-    updateCharacter(activeCharacter.id, { inventory: newInventory })
-  }
+    updateCharacter(activeCharacter.id, { inventory: newInventory });
+    logger.debug("아이템 제작 완료, 캐릭터 인벤토리 업데이트됨");
+  };
 
   const filteredItems = Array.from(inventory.entries())
     .map(([id, quantity]) => {
       const item = allItems[id.toString()]
       if (!item) {
+        logger.warn("인벤토리 아이템을 allItems에서 찾을 수 없음", { itemId: id });
         return null // Item not found, skip this entry
       }
       const filteredItem = { ...item, quantity }
@@ -161,22 +204,33 @@ export default function InventoryPage() {
       const searchMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      logger.debug("아이템 필터링 중", { itemName: item.name, categoryMatch, favoritesMatch, searchMatch });
 
       return categoryMatch && favoritesMatch && searchMatch
     })
     .sort((a, b) => a.name.localeCompare(b.name))
+  logger.debug("filteredItems 결과", { filteredItemsLength: filteredItems.length });
 
   const craftableRecipes = recipes.filter(canCraft)
+  logger.debug("craftableRecipes 결과", { craftableRecipesLength: craftableRecipes.length });
 
   const filteredRecipes = recipes.filter((recipe) => {
-    const resultItem = allItems[recipe.resultId.toString()];
-    if (!resultItem) return false;
+    logger.debug("filteredRecipes 필터링 중", { recipeOutputItem: recipe.outputItem });
+    const resultItem = getItemByName(recipe.outputItem);
+    if (!resultItem) {
+      logger.warn("제작 결과 아이템을 allItems에서 찾을 수 없음", { outputItem: recipe.outputItem });
+      return false;
+    }
 
     const searchMatch = resultItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        recipe.materials.some(material => allItems[material.itemId.toString()]?.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+                        recipe.materials.some(material => {
+                            const materialItem = getItemByName(material.itemName);
+                            return materialItem && materialItem.name.toLowerCase().includes(searchQuery.toLowerCase());
+                        });
+    logger.debug("레시피 검색 일치 여부", { recipeOutputItem: recipe.outputItem, searchMatch });
     return searchMatch;
   })
+  logger.debug("filteredRecipes 결과", { filteredRecipesLength: filteredRecipes.length });
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -447,47 +501,55 @@ export default function InventoryPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredRecipes.map((recipe) => (
                       <Card
-                        key={recipe.resultId}
+                        key={recipe.outputItem}
                         className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <div className="text-2xl">{allItems[recipe.resultId]?.icon}</div>
+                              <div className="text-2xl">{getItemByName(recipe.outputItem)?.icon}</div>
                               <div className="flex-1">
-                                <CardTitle className="text-gray-900 text-sm">{allItems[recipe.resultId]?.name}</CardTitle>
+                                <CardTitle className="text-gray-900 text-sm">{getItemByName(recipe.outputItem)?.name}</CardTitle>
                                 <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                                   제작 가능
                                 </Badge>
                               </div>
                             </div>
                             <FavoriteToggle
-                              id={`recipe-${recipe.resultId}`}
-                              name={allItems[recipe.resultId]?.name || ""}
+                              id={`recipe-${recipe.outputItem}`}
+                              name={getItemByName(recipe.outputItem)?.name || ""}
                               type="recipe"
                             />
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="mb-3">
-                            <p className="text-gray-600 text-xs mb-2">필요 재료:</p>
-                            {recipe.materials.map((material, index) => (
-                              <div key={index} className="flex items-center justify-between text-xs text-gray-700">
-                                <span>{allItems[material.itemId]?.name}:</span>
-                                <span
-                                  className={
-                                    inventory.get(material.itemId) || 0 < material.quantity
-                                      ? "text-red-500"
-                                      : "text-green-600"
-                                  }
-                                >
-                                  {inventory.get(material.itemId) || 0}/{material.quantity}
-                                </span>
-                              </div>
-                            ))}
+                        <CardContent className="pt-0 p-3">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {recipe.materials.map((material, index) => {
+                              const materialItem = getItemByName(material.itemName);
+                              return (
+                                <div key={index} className="flex items-center justify-between text-xs text-gray-700">
+                                  <span>{materialItem?.name}:</span>
+                                  <span
+                                    className={
+                                      (inventory.get(materialItem?.id || -1) || 0) < material.quantity
+                                        ? "text-red-500 font-medium"
+                                        : "font-medium"
+                                    }
+                                  >
+                                    {(inventory.get(materialItem?.id || -1) || 0)} / {material.quantity}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => craftItem(recipe)}>
-                            제작하기
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => craftItem(recipe)}
+                            className="w-full mt-3"
+                            disabled={!canCraft(recipe) || viewMode === "all"}
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" /> 제작
                           </Button>
                         </CardContent>
                       </Card>
@@ -496,53 +558,53 @@ export default function InventoryPage() {
                 </TabsContent>
 
                 <TabsContent value="table" className="section-spacing">
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px]">아이콘</TableHead>
-                            <TableHead>아이템</TableHead>
-                            <TableHead>필요 재료</TableHead>
-                            <TableHead className="w-[120px] text-center">제작</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredRecipes.map((recipe) => (
-                            <TableRow key={recipe.resultId}>
-                              <TableCell className="text-2xl">{allItems[recipe.resultId]?.icon}</TableCell>
-                              <TableCell className="font-medium">{allItems[recipe.resultId]?.name}</TableCell>
-                              <TableCell>
-                                {recipe.materials.map((material, index) => (
-                                  <div key={index} className="flex items-center justify-between text-xs text-gray-700">
-                                    <span>{allItems[material.itemId]?.name}:</span>
-                                    <span
-                                      className={
-                                        inventory.get(material.itemId) || 0 < material.quantity
-                                          ? "text-red-500"
-                                          : "text-green-600"
-                                      }
-                                    >
-                                      {inventory.get(material.itemId) || 0}/{material.quantity}
-                                    </span>
-                                  </div>
-                                ))}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Button
-                                  size="sm"
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                  onClick={() => craftItem(recipe)}
-                                >
-                                  제작하기
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]"></TableHead>
+                        <TableHead>아이템</TableHead>
+                        <TableHead>재료</TableHead>
+                        <TableHead className="w-[100px] text-right">제작</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRecipes.map((recipe) => (
+                        <TableRow key={recipe.outputItem}>
+                          <TableCell className="text-2xl">{getItemByName(recipe.outputItem)?.icon}</TableCell>
+                          <TableCell className="font-medium">{getItemByName(recipe.outputItem)?.name}</TableCell>
+                          <TableCell>
+                            {recipe.materials.map((material, index) => {
+                              const materialItem = getItemByName(material.itemName);
+                              return (
+                                <div key={index} className="flex items-center space-x-1 text-xs text-gray-700">
+                                  <span>{materialItem?.name}:</span>
+                                  <span
+                                    className={
+                                      (inventory.get(materialItem?.id || -1) || 0) < material.quantity
+                                        ? "text-red-500 font-medium"
+                                        : "font-medium"
+                                    }
+                                  >
+                                    {(inventory.get(materialItem?.id || -1) || 0)} / {material.quantity}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => craftItem(recipe)}
+                              disabled={!canCraft(recipe) || viewMode === "all"}
+                            >
+                              <Sparkles className="w-4 h-4" /> 제작
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </TabsContent>
               </Tabs>
             </TabsContent>

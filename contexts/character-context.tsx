@@ -1,12 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
-
-import allItemsData from "@/data/items.json"
-import questsData from "@/data/quests.json"
-import equipmentData from "@/data/equipment.json"
-import skillsData from "@/data/skills.json"
-import craftingFacilitiesData from "@/data/craftingFacilities.json"
+import { logger } from "@/lib/logger"
 
 interface ProcessingQueue {
   id: number
@@ -77,46 +72,48 @@ interface CharacterContextType {
   deleteCharacter: (id: string) => void
   toggleCharacterFavorite: (id: string) => void
   toggleCraftingFacilityFavorite: (facilityId: string) => void
+  isLoadingData: boolean;
+  dataLoadError: string | null;
+  allItems: Record<string, any>;
+  allQuests: any;
+  allEquipment: any[];
+  allSkillsData: any[];
+  allCraftingFacilitiesData: any[];
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined)
 
-const allItems: Record<string, any> = allItemsData
-const allQuests: any = questsData
-const allEquipment: any[] = equipmentData
-const allSkillsData: any[] = skillsData
-const allCraftingFacilitiesData: any[] = craftingFacilitiesData
-
-const createInitialInventory = (initialQuantities: Record<number, number> = {}): Record<number, number> => {
-  console.debug("Entering createInitialInventory with initialQuantities:", initialQuantities)
+const createInitialInventory = (
+  allItems: Record<string, any>,
+  initialQuantities: Record<number, number> = {},
+): Record<number, number> => {
+  logger.debug("Entering createInitialInventory with initialQuantities:", initialQuantities)
   const inventory: Record<number, number> = {}
-  // Initialize all items from items.json with quantity 0
   Object.values(allItems).forEach((item: any) => {
     if (item && item.id !== undefined) {
       inventory[item.id] = 0
     }
   })
-  console.debug("Initial inventory with all items set to 0:", inventory)
+  logger.debug("Initial inventory with all items set to 0:", inventory)
 
-  // Merge provided initial quantities
   for (const itemId in initialQuantities) {
     if (Object.prototype.hasOwnProperty.call(initialQuantities, itemId)) {
       inventory[Number(itemId)] = initialQuantities[itemId]
     }
   }
-  console.debug("Exiting createInitialInventory, merged inventory:", inventory)
+  logger.debug("Exiting createInitialInventory, merged inventory:", inventory)
   return inventory
 }
 
 const createInitialQuestProgress = (
+  allQuests: any,
   initialCompletedDaily: Record<string, boolean> = {},
   initialCompletedWeekly: Record<string, boolean> = {},
 ): { completedDailyTasks: Record<string, boolean>; completedWeeklyTasks: Record<string, boolean> } => {
-  console.debug("Entering createInitialQuestProgress")
+  logger.debug("Entering createInitialQuestProgress")
   const dailyTasks: Record<string, boolean> = {}
   const weeklyTasks: Record<string, boolean> = {}
 
-  // Initialize all daily quests to false, then merge existing completed states
   Object.values(allQuests.daily)
     .flat()
     .forEach((task: any) => {
@@ -129,9 +126,8 @@ const createInitialQuestProgress = (
       dailyTasks[taskId] = initialCompletedDaily[taskId]
     }
   }
-  console.debug("Initial dailyTasks:", dailyTasks)
+  logger.debug("Initial dailyTasks:", dailyTasks)
 
-  // Initialize all weekly quests to false, then merge existing completed states
   Object.values(allQuests.weekly)
     .flat()
     .forEach((task: any) => {
@@ -144,13 +140,13 @@ const createInitialQuestProgress = (
       weeklyTasks[taskId] = initialCompletedWeekly[taskId]
     }
   }
-  console.debug("Initial weeklyTasks:", weeklyTasks)
+  logger.debug("Initial weeklyTasks:", weeklyTasks)
 
   return { completedDailyTasks: dailyTasks, completedWeeklyTasks: weeklyTasks }
 }
 
 const createInitialEquipment = (initialEquipped: Record<string, number | null> = {}): Record<string, number | null> => {
-  console.debug("Entering createInitialEquipment with initialEquipped:", initialEquipped)
+  logger.debug("Entering createInitialEquipment with initialEquipped:", initialEquipped)
   const equipped: Record<string, number | null> = {
     weapon: null,
     shield: null,
@@ -161,47 +157,46 @@ const createInitialEquipment = (initialEquipped: Record<string, number | null> =
     ring1: null,
     ring2: null,
     belt: null,
-  } // Define all possible slots
+  }
 
-  // Merge provided initial equipped items
   for (const slot in initialEquipped) {
     if (Object.prototype.hasOwnProperty.call(initialEquipped, slot)) {
       equipped[slot] = initialEquipped[slot]
     }
   }
-  console.debug("Exiting createInitialEquipment, merged equipped:", equipped)
+  logger.debug("Exiting createInitialEquipment, merged equipped:", equipped)
   return equipped
 }
 
-const createInitialSkills = (initialSkillLevels: Record<number, number> = {}): Record<number, number> => {
-  console.debug("Entering createInitialSkills with initialSkillLevels:", initialSkillLevels)
+const createInitialSkills = (
+  allSkillsData: any[],
+  initialSkillLevels: Record<number, number> = {},
+): Record<number, number> => {
+  logger.debug("Entering createInitialSkills with initialSkillLevels:", initialSkillLevels)
   const skills: Record<number, number> = {}
-  // Initialize all skills from skills.json with level 1
   allSkillsData.forEach((skill: any) => {
     if (skill && skill.id !== undefined) {
       skills[skill.id] = 1
     }
   })
-  console.debug("Initial skills with all levels set to 1:", skills)
+  logger.debug("Initial skills with all levels set to 1:", skills)
 
-  // Merge provided initial skill levels
   for (const skillId in initialSkillLevels) {
     if (Object.prototype.hasOwnProperty.call(initialSkillLevels, skillId)) {
       skills[Number(skillId)] = initialSkillLevels[skillId]
     }
   }
-  console.debug("Exiting createInitialSkills, merged skills:", skills)
+  logger.debug("Exiting createInitialSkills, merged skills:", skills)
   return skills
 }
 
 const createInitialCraftingQueues = (
   initialQueues: Record<string, ProcessingQueue[]> = {},
 ): Record<string, ProcessingQueue[]> => {
-  console.debug("Entering createInitialCraftingQueues with initialQueues:", initialQueues)
+  logger.debug("Entering createInitialCraftingQueues with initialQueues:", initialQueues)
   const craftingQueues: Record<string, ProcessingQueue[]> = {}
 
-  allCraftingFacilitiesData.forEach((facility: any) => {
-    const facilityId = facility.id
+  for (const facilityId in initialQueues) {
     const defaultQueues: ProcessingQueue[] = Array(4)
       .fill(null)
       .map((_, i) => ({ id: i, isProcessing: false, timeLeft: 0, totalTime: 0, itemName: undefined, quantity: undefined }))
@@ -210,28 +205,31 @@ const createInitialCraftingQueues = (
     craftingQueues[facilityId] = initialQueues[facilityId]
       ? initialQueues[facilityId].map((q, i) => ({ ...defaultQueues[i], ...q }))
       : defaultQueues
-  })
-  console.debug("Exiting createInitialCraftingQueues, merged craftingQueues:", craftingQueues)
+  }
+  logger.debug("Exiting createInitialCraftingQueues, merged craftingQueues:", craftingQueues)
   return craftingQueues
 }
 
 const createInitialFavoriteCraftingFacilities = (
+  allCraftingFacilitiesData: any[],
   initialFavorites: Record<string, boolean> = {},
 ): Record<string, boolean> => {
-  console.debug("Entering createInitialFavoriteCraftingFacilities with initialFavorites:", initialFavorites)
-  const favoriteFacilities: Record<string, boolean> = {}
+  logger.debug("Entering createInitialFavoriteCraftingFacilities with initialFavorites:", initialFavorites)
+  const facilities: Record<string, boolean> = {}
 
   allCraftingFacilitiesData.forEach((facility: any) => {
-    favoriteFacilities[facility.id] = false
+    if (facility && facility.id) {
+      facilities[facility.id] = false
+    }
   })
 
   for (const facilityId in initialFavorites) {
     if (Object.prototype.hasOwnProperty.call(initialFavorites, facilityId)) {
-      favoriteFacilities[facilityId] = initialFavorites[facilityId]
+      facilities[facilityId] = initialFavorites[facilityId]
     }
   }
-  console.debug("Exiting createInitialFavoriteCraftingFacilities, merged favoriteFacilities:", favoriteFacilities)
-  return favoriteFacilities
+  logger.debug("Exiting createInitialFavoriteCraftingFacilities, merged facilities:", facilities)
+  return facilities
 }
 
 const defaultCharacters: Character[] = [
@@ -250,12 +248,12 @@ const defaultCharacters: Character[] = [
       daily: { completed: 8, total: 12 },
       weekly: { completed: 3, total: 6 },
     },
-    inventory: createInitialInventory({ 1: 10, 2: 59, 3: 30, 4: 21, 5: 45, 13: 10 }), // 13번 아이템 10개 추가
+    inventory: { 1: 10, 2: 59, 3: 30, 4: 21, 5: 45, 13: 10 }, // 13번 아이템 10개 추가
     equipment: {},
-    skills: createInitialSkills({ 1: 1, 2: 1, 3: 2, 4: 6 }),
+    skills: { 1: 1, 2: 1, 3: 2, 4: 6 },
     completedDailyTasks: { d1: true, d4: true, w1: true },
     completedWeeklyTasks: {},
-    equippedItems: createInitialEquipment({
+    equippedItems: {
       weapon: 1,
       shield: 2,
       armor: 3,
@@ -265,9 +263,9 @@ const defaultCharacters: Character[] = [
       ring1: 7,
       ring2: 8,
       belt: 9,
-    }),
-    craftingQueues: createInitialCraftingQueues(),
-    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
+    },
+    craftingQueues: {},
+    favoriteCraftingFacilities: { 1: true },
     currencyTimers: {
       silver: {
         current: 0,
@@ -301,14 +299,14 @@ const defaultCharacters: Character[] = [
       daily: { completed: 5, total: 12 },
       weekly: { completed: 1, total: 6 },
     },
-    inventory: createInitialInventory({ 10: 5, 11: 15, 12: 25 }),
+    inventory: { 10: 5, 11: 15, 12: 25 },
     equipment: {},
-    skills: createInitialSkills({ 5: 1, 6: 3, 7: 5 }),
+    skills: { 5: 1, 6: 3, 7: 5 },
     completedDailyTasks: { d2: true, d5: true },
     completedWeeklyTasks: {},
-    equippedItems: createInitialEquipment(),
-    craftingQueues: createInitialCraftingQueues(),
-    favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(),
+    equippedItems: {},
+    craftingQueues: {},
+    favoriteCraftingFacilities: { 1: true },
     currencyTimers: {
       silver: {
         current: 0,
@@ -330,278 +328,219 @@ const defaultCharacters: Character[] = [
 ]
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
+  logger.debug("CharacterProvider 렌더링 시작")
   const [characters, setCharacters] = useState<Character[]>([])
   const [activeCharacter, setActiveCharacterState] = useState<Character | null>(null)
-  const [viewMode, setViewMode] = useState<"single" | "all">("single")
-  const [isLoaded, setIsLoaded] = useState(false); // New state to track if data is loaded
+  const [viewMode, setViewMode] = useState<"single" | "all">("all")
 
-  useEffect(() => {
-    console.debug("CharacterProvider: useEffect - Initializing characters from localStorage.");
+  // JSON 데이터들을 위한 상태
+  const [allItems, setAllItems] = useState<Record<string, any>>({})
+  const [allQuests, setAllQuests] = useState<any>({})
+  const [allEquipment, setAllEquipment] = useState<any[]>([])
+  const [allSkillsData, setAllSkillsData] = useState<any[]>([])
+  const [allCraftingFacilitiesData, setAllCraftingFacilitiesData] = useState<any[]>([])
+
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [dataLoadError, setDataLoadError] = useState<string | null>(null)
+
+  // 모든 JSON 데이터 로드 함수
+  const loadJsonData = useCallback(async () => {
+    logger.debug("JSON 데이터 로드 시작")
+    setIsLoadingData(true)
+    setDataLoadError(null)
     try {
-      const storedCharacters = localStorage.getItem("characters");
-      if (storedCharacters) {
-        const parsedCharacters: Character[] = JSON.parse(storedCharacters);
-        // Apply initial structures to loaded characters to ensure new fields are present
-        const initializedCharacters = parsedCharacters.map((char: Character) => {
-          const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
-            char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
-            char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
-          );
-          return {
-            ...char,
-            inventory: createInitialInventory(char.inventory),
-            // Ensure questProgress is initialized if missing from parsed data (it holds numbers)
-            questProgress: char.questProgress || {
-              daily: { completed: 0, total: Object.keys(allQuests.daily).length },
-              weekly: { completed: 0, total: Object.keys(allQuests.weekly).length },
-            },
-            completedDailyTasks, // Use the initialized boolean maps
-            completedWeeklyTasks, // Use the initialized boolean maps
-            equipment: createInitialEquipment(char.equipment),
-            skills: createInitialSkills(char.skills),
-            craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-            currencyTimers: char.currencyTimers ? Object.entries(char.currencyTimers).reduce((acc: Record<string, CurrencyTimerState>, [key, value]: [string, any]) => {
-              acc[key] = {
-                current: value.current,
-                isRunning: value.isRunning,
-                nextChargeTime: value.nextChargeTime ? value.nextChargeTime : null,
-                fullChargeTime: value.fullChargeTime ? value.fullChargeTime : null,
-              };
-              return acc;
-            }, {}) : {
-              silver: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
-              demon: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
-            },
-          };
-        });
-        setCharacters(initializedCharacters);
-        console.debug("CharacterProvider: Loaded characters from localStorage.", initializedCharacters);
+      const [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes] = await Promise.all([
+        fetch("/data/items.json"),
+        fetch("/data/quests.json"),
+        fetch("/data/equipment.json"),
+        fetch("/data/skills.json"),
+        fetch("/data/craftingFacilities.json"),
+      ])
 
-        const storedActiveCharacterId = localStorage.getItem("activeCharacterId");
-        if (storedActiveCharacterId) {
-          const foundActive = initializedCharacters.find(char => char.id === storedActiveCharacterId);
-          setActiveCharacterState(foundActive || null);
-          console.debug("CharacterProvider: Set active character from localStorage.", foundActive);
+      // 모든 응답이 OK인지 확인
+      for (const res of [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes]) {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status} for ${res.url}`);
         }
-
-        const storedViewMode = localStorage.getItem("viewMode") as "single" | "all";
-        if (storedViewMode) {
-          setViewMode(storedViewMode);
-          console.debug("CharacterProvider: Set view mode from localStorage.", storedViewMode);
-        }
-
-      } else {
-        console.debug("CharacterProvider: No characters found in localStorage. Initializing with default characters.");
-        // If no characters in localStorage, initialize with default characters
-        const initializedDefaults = defaultCharacters.map(char => {
-          const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
-            char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
-            char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
-          );
-          return {
-            ...char,
-            inventory: createInitialInventory(char.inventory),
-            questProgress: char.questProgress, // defaultCharacters already has this correctly defined (it holds numbers)
-            completedDailyTasks, // Use the initialized boolean maps
-            completedWeeklyTasks, // Use the initialized boolean maps
-            equipment: createInitialEquipment(char.equipment),
-            skills: createInitialSkills(char.skills),
-            craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-            currencyTimers: {
-              silver: {
-                current: 0,
-                isRunning: false,
-                nextChargeTime: null,
-                fullChargeTime: null,
-              },
-              demon: {
-                current: 0,
-                isRunning: false,
-                nextChargeTime: null,
-                fullChargeTime: null,
-              },
-            },
-          };
-        });
-        setCharacters(initializedDefaults);
-        setActiveCharacterState(initializedDefaults.length > 0 ? initializedDefaults[0] : null); // Set first default character as active
-        console.debug("CharacterProvider: Initialized with default characters and set active.", initializedDefaults);
       }
+
+      const [items, quests, equipment, skills, facilities] = await Promise.all(
+        [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes].map(res => res.json())
+      );
+      
+      logger.debug("JSON 데이터 로드 성공", { items, quests, equipment, skills, facilities })
+
+      setAllItems(items)
+      setAllQuests(quests)
+      setAllEquipment(equipment)
+      setAllSkillsData(skills)
+      setAllCraftingFacilitiesData(facilities)
     } catch (error) {
-      console.error("CharacterProvider: Error loading from localStorage:", error);
-      // Fallback to default characters on error as well
-      const initializedDefaults = defaultCharacters.map(char => {
-        const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress(
-          char.completedDailyTasks, // Pass existing completedDailyTasks (Record<string, boolean>)
-          char.completedWeeklyTasks  // Pass existing completedWeeklyTasks (Record<string, boolean>)
-        );
-        return {
-          ...char,
-          inventory: createInitialInventory(char.inventory),
-          questProgress: char.questProgress, // defaultCharacters already has this correctly defined (it holds numbers)
-          completedDailyTasks, // Use the initialized boolean maps
-          completedWeeklyTasks, // Use the initialized boolean maps
-          equipment: createInitialEquipment(char.equipment),
-          skills: createInitialSkills(char.skills),
-          craftingQueues: createInitialCraftingQueues(char.craftingQueues),
-          favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(char.favoriteCraftingFacilities),
-          currencyTimers: {
-            silver: {
-              current: 0,
-              isRunning: false,
-              nextChargeTime: null,
-              fullChargeTime: null,
-            },
-            demon: {
-              current: 0,
-              isRunning: false,
-              nextChargeTime: null,
-              fullChargeTime: null,
-            },
-          },
-        };
-      });
-      setCharacters(initializedDefaults);
-      setActiveCharacterState(initializedDefaults.length > 0 ? initializedDefaults[0] : null);
-      console.debug("CharacterProvider: Fallback to default characters due to localStorage error.", initializedDefaults);
+      logger.error("JSON 데이터 로드 실패", { error })
+      setDataLoadError(`데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-      setIsLoaded(true); // Mark as loaded whether successful or not
+      setIsLoadingData(false)
+      logger.debug("JSON 데이터 로드 완료")
     }
-  }, []);
+  }, [])
+
+  // 컴포넌트 마운트 시 JSON 데이터 로드
+  useEffect(() => {
+    logger.debug("useEffect: loadJsonData 호출")
+    loadJsonData()
+  }, [loadJsonData])
 
   useEffect(() => {
-    if (isLoaded) { // Only save to localStorage after initial load
-      console.debug("CharacterProvider: useEffect - Saving characters to localStorage.", characters);
-      localStorage.setItem("characters", JSON.stringify(characters));
-    }
-  }, [characters, isLoaded]);
+    logger.debug("useEffect: 캐릭터 데이터 로드 및 초기화 시작", { isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData })
 
-  useEffect(() => {
-    if (isLoaded && activeCharacter) { // Only save to localStorage after initial load
-      console.debug("CharacterProvider: useEffect - Saving activeCharacterId to localStorage.", activeCharacter.id);
-      localStorage.setItem("activeCharacterId", activeCharacter.id);
-    } else if (isLoaded && !activeCharacter) {
-      localStorage.removeItem("activeCharacterId");
-    }
-  }, [activeCharacter, isLoaded]);
+    if (!isLoadingData && !dataLoadError && Object.keys(allItems).length > 0) {
+      logger.debug("JSON 데이터 로드 완료, localStorage에서 캐릭터 로드 시도")
+      const storedCharacters = localStorage.getItem("characters")
+      let initialCharacters: Character[];
 
-  useEffect(() => {
-    if (isLoaded) { // Only save to localStorage after initial load
-      console.debug("CharacterProvider: useEffect - Saving viewMode to localStorage.", viewMode);
-      localStorage.setItem("viewMode", viewMode);
-    }
-  }, [viewMode, isLoaded]);
-
-  const updateCharacter = useCallback((id: string, updates: Partial<Character>) => {
-    console.debug(`updateCharacter: Updating character with ID ${id}.`, updates);
-    setCharacters((prevCharacters: Character[]) => {
-      const updated = prevCharacters.map((char: Character) =>
-        char.id === id ? { ...char, ...updates, lastActive: new Date().toISOString() } : char,
-      )
-      // Ensure activeCharacter is updated if it's the one being modified
-      if (activeCharacter?.id === id) {
-        setActiveCharacterState((prevActive: Character | null) => prevActive ? { ...prevActive, ...updates, lastActive: new Date().toISOString() } : null);
+      if (storedCharacters) {
+        try {
+          const parsedCharacters: Character[] = JSON.parse(storedCharacters)
+          initialCharacters = parsedCharacters.map(char => {
+            // 모든 초기화 함수에 로드된 JSON 데이터 전달
+            return {
+              ...char,
+              inventory: createInitialInventory(allItems, char.inventory),
+              ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks),
+              equippedItems: createInitialEquipment(char.equippedItems),
+              skills: createInitialSkills(allSkillsData, char.skills),
+              craftingQueues: createInitialCraftingQueues(char.craftingQueues),
+              favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
+            }
+          })
+          logger.debug("localStorage에서 캐릭터 로드 및 초기화 성공", { initialCharactersLength: initialCharacters.length });
+        } catch (e) {
+          logger.error("localStorage 캐릭터 데이터 파싱 실패", { error: e })
+          initialCharacters = []; // Fallback to empty if parsing fails
+        }
+      } else {
+        logger.debug("localStorage에 저장된 캐릭터 없음. defaultCharacters로 초기화.")
+        initialCharacters = defaultCharacters.map(char => ({
+            ...char,
+            inventory: createInitialInventory(allItems, char.inventory), // Use default character's initial inventory with allItems
+            ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks), // Use default character's quest progress with allQuests
+            equippedItems: createInitialEquipment(char.equippedItems), // Use default character's equipped items
+            skills: createInitialSkills(allSkillsData, char.skills), // Use default character's skills with allSkillsData
+            craftingQueues: createInitialCraftingQueues(char.craftingQueues), // Use default character's crafting queues
+            favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities), // Use default character's favorite facilities
+        }));
+        logger.debug("defaultCharacters로 캐릭터 초기화 성공", { initialCharactersLength: initialCharacters.length });
       }
-      return updated
-    })
-  }, [activeCharacter]); // Depend on activeCharacter
+
+      setCharacters(initialCharacters);
+
+      // If no active character is set, set the first character from the loaded list
+      // This is important for the initial load if localStorage was empty or had no active character
+      if (initialCharacters.length > 0 && !activeCharacter) {
+          setActiveCharacterState(initialCharacters[0]);
+          logger.debug("활성 캐릭터 설정됨 (첫 번째 캐릭터)", { characterName: initialCharacters[0].name });
+      }
+    } else if (dataLoadError) {
+      logger.error("데이터 로드 오류로 인해 캐릭터 초기화 건너뜜", { dataLoadError })
+    } else {
+      logger.debug("JSON 데이터 로딩 중이거나 아직 로드되지 않아 캐릭터 초기화 대기")
+    }
+  }, [isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData]);
+
+  // 캐릭터 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!isLoadingData && !dataLoadError) {
+      logger.debug("useEffect: 캐릭터 데이터 변경 감지, localStorage에 저장", { characters });
+      localStorage.setItem("characters", JSON.stringify(characters))
+    }
+  }, [characters, isLoadingData, dataLoadError])
 
   const setActiveCharacter = useCallback((character: Character | null) => {
-    console.debug("setActiveCharacter: Setting active character to:", character);
-    setActiveCharacterState(character);
-  }, []);
+    logger.debug("setActiveCharacter 호출", { character });
+    setActiveCharacterState(character)
+  }, [])
 
-  const addCharacter = useCallback(
-    (character: Omit<
-      Character,
-      | "id"
-      | "lastActive"
-      | "completedDailyTasks"
-      | "completedWeeklyTasks"
-      | "equippedItems"
-      | "skills"
-      | "craftingQueues"
-      | "favoriteCraftingFacilities"
-    >) => {
-      console.debug("addCharacter: Adding new character:", character);
-      const newId = `char-${Date.now()}`
-      const now = new Date().toISOString()
-      
-      // Initialize values for properties that are omitted from the input 'character'
-      const { completedDailyTasks, completedWeeklyTasks } = createInitialQuestProgress();
-      const initialEquipment = createInitialEquipment(); // Pass no argument, use default
-      const initialSkills = createInitialSkills();       // Pass no argument, use default
-      const initialCraftingQueues = createInitialCraftingQueues(); // Pass no argument, use default
-      const initialFavoriteCraftingFacilities = createInitialFavoriteCraftingFacilities(); // Pass no argument, use default
-
-      const newCharacter: Character = {
-        ...character, // Spread incoming 'character' properties first
-        id: newId,
-        lastActive: now,
-        inventory: createInitialInventory(character.inventory),
-        questProgress: {
-          daily: character.questProgress?.daily || { completed: 0, total: Object.keys(allQuests.daily).length },
-          weekly: character.questProgress?.weekly || { completed: 0, total: Object.keys(allQuests.weekly).length },
-        },
-        completedDailyTasks: completedDailyTasks,
-        completedWeeklyTasks: completedWeeklyTasks,
-        equipment: initialEquipment,
-        skills: initialSkills,
-        equippedItems: initialEquipment, // Initialize equipped items as well, reusing initialEquipment
-        craftingQueues: initialCraftingQueues,
-        favoriteCraftingFacilities: initialFavoriteCraftingFacilities,
-        currencyTimers: {
-          silver: {
-            current: 0,
-            isRunning: false,
-            nextChargeTime: null,
-            fullChargeTime: null,
-          },
-          demon: {
-            current: 0,
-            isRunning: false,
-            nextChargeTime: null,
-            fullChargeTime: null,
-          },
-        },
-      }
-      setCharacters((prev: Character[]) => [...prev, newCharacter])
-      setActiveCharacterState(newCharacter) // Set newly added character as active
-      console.debug("addCharacter: New character added and set as active:", newCharacter);
+  const updateCharacter = useCallback(
+    (id: string, updates: Partial<Character>) => {
+      logger.debug("updateCharacter 호출", { id, updates });
+      setCharacters((prevCharacters) =>
+        prevCharacters.map((char) =>
+          char.id === id ? { ...char, ...updates } : char,
+        ),
+      )
     },
     [],
   )
 
+  const addCharacter = useCallback(
+    (
+      character: Omit<
+        Character,
+        | "id"
+        | "lastActive"
+        | "completedDailyTasks"
+        | "completedWeeklyTasks"
+        | "equippedItems"
+        | "skills"
+        | "craftingQueues"
+        | "favoriteCraftingFacilities"
+      >,
+    ) => {
+      logger.debug("addCharacter 호출", { character });
+      if (isLoadingData || dataLoadError) {
+        logger.warn("JSON 데이터 로드 중이거나 오류 발생으로 인해 캐릭터 추가 불가")
+        return;
+      }
+      const newCharacter: Character = {
+        id: Date.now().toString(),
+        lastActive: new Date().toISOString(),
+        ...character,
+        inventory: createInitialInventory(allItems), // 빈 재고로 시작
+        ...createInitialQuestProgress(allQuests), // 빈 퀘스트 진행 상황으로 시작
+        equippedItems: createInitialEquipment(), // 빈 장비로 시작
+        skills: createInitialSkills(allSkillsData), // 초기 스킬 레벨로 시작
+        craftingQueues: createInitialCraftingQueues(), // 빈 제작 대기열로 시작
+        favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData), // 빈 즐겨찾기 시설로 시작
+        currencyTimers: {
+          eventCoin: { current: 0, isRunning: false, nextChargeTime: null, fullChargeTime: null },
+          // ... 기타 통화 타이머 (필요 시 추가)
+        }
+      }
+      setCharacters((prevCharacters) => [...prevCharacters, newCharacter])
+      logger.debug("새 캐릭터 추가됨", { newCharacter });
+    },
+    [allItems, allQuests, allSkillsData, allCraftingFacilitiesData, isLoadingData, dataLoadError], // 의존성 추가
+  )
+
   const deleteCharacter = useCallback((id: string) => {
-    console.debug(`deleteCharacter: Deleting character with ID ${id}.`);
-    setCharacters((prev: Character[]) => prev.filter((char: Character) => char.id !== id))
-    setActiveCharacterState(null) // Clear active character if deleted
-  }, [])
+    logger.debug("deleteCharacter 호출", { id });
+    setCharacters((prevCharacters) =>
+      prevCharacters.filter((char) => char.id !== id),
+    )
+    if (activeCharacter?.id === id) {
+      setActiveCharacterState(null)
+    }
+  }, [activeCharacter])
 
   const toggleCharacterFavorite = useCallback((id: string) => {
-    console.debug(`toggleCharacterFavorite: Toggling favorite for character ID ${id}.`);
-    setCharacters((prev: Character[]) =>
-      prev.map((char: Character) =>
+    logger.debug("toggleCharacterFavorite 호출", { id });
+    setCharacters((prevCharacters) =>
+      prevCharacters.map((char) =>
         char.id === id ? { ...char, favorite: !char.favorite } : char,
       ),
     )
   }, [])
 
   const toggleCraftingFacilityFavorite = useCallback((facilityId: string) => {
-    console.debug(`toggleCraftingFacilityFavorite: Toggling favorite for crafting facility ID ${facilityId}.`);
-    if (!activeCharacter) {
-      console.warn("toggleCraftingFacilityFavorite: No active character to toggle favorite facility.");
-      return;
-    }
+    logger.debug("toggleCraftingFacilityFavorite 호출", { facilityId });
+    if (!activeCharacter) return;
 
-    const currentFavorites = activeCharacter.favoriteCraftingFacilities || {};
-    const newFavorites = {
-      ...currentFavorites,
-      [facilityId]: !currentFavorites[facilityId],
-    };
-    updateCharacter(activeCharacter.id, { favoriteCraftingFacilities: newFavorites });
+    updateCharacter(activeCharacter.id, {
+      favoriteCraftingFacilities: {
+        ...activeCharacter.favoriteCraftingFacilities,
+        [facilityId]: !activeCharacter.favoriteCraftingFacilities[facilityId]
+      }
+    });
   }, [activeCharacter, updateCharacter]);
 
   const contextValue = React.useMemo(
@@ -616,14 +555,41 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       deleteCharacter,
       toggleCharacterFavorite,
       toggleCraftingFacilityFavorite,
+      isLoadingData,
+      dataLoadError,
+      allItems,
+      allQuests,
+      allEquipment,
+      allSkillsData,
+      allCraftingFacilitiesData,
     }),
-    [characters, activeCharacter, viewMode, setActiveCharacter, setViewMode, updateCharacter, addCharacter, deleteCharacter, toggleCharacterFavorite, toggleCraftingFacilityFavorite],
+    [
+      characters,
+      activeCharacter,
+      viewMode,
+      setActiveCharacter,
+      setViewMode,
+      updateCharacter,
+      addCharacter,
+      deleteCharacter,
+      toggleCharacterFavorite,
+      toggleCraftingFacilityFavorite,
+      isLoadingData,
+      dataLoadError,
+      allItems,
+      allQuests,
+      allEquipment,
+      allSkillsData,
+      allCraftingFacilitiesData,
+    ],
   )
 
-  return <CharacterContext.Provider value={contextValue}>{isLoaded ? children : null}</CharacterContext.Provider>;
+  logger.debug("CharacterProvider 렌더링 완료")
+  return <CharacterContext.Provider value={contextValue}>{children}</CharacterContext.Provider>
 }
 
 export function useCharacter() {
+  logger.debug("useCharacter 호출")
   const context = useContext(CharacterContext)
   if (context === undefined) {
     throw new Error("useCharacter must be used within a CharacterProvider")

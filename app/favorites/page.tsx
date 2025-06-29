@@ -19,6 +19,15 @@ import craftingFacilitiesData from "@/data/craftingFacilities.json"
 import { cn } from "@/lib/utils"
 import { Popover as UIPopover } from "@/components/ui/popover"
 import { FavoriteToggle } from "@/components/favorite-toggle"
+import { ItemDetailsPopup } from "@/components/item-details-popup"
+
+// Import data files
+import allItemsData from "@/data/items.json"
+import equipmentData from "@/data/equipment.json"
+import gemsData from "@/data/gems.json"
+import questsData from "@/data/quests.json"
+import skillsData from "@/data/skills.json"
+import recipesData from "@/data/recipes.json"
 
 const typeColors: Record<string, string> = {
   inventory: "bg-blue-100 text-blue-800",
@@ -49,13 +58,26 @@ interface CraftingQueueItem {
 // Explicitly type craftingFacilitiesData to ensure correct data structure
 const allCraftingFacilities: CraftingFacility[] = craftingFacilitiesData as CraftingFacility[];
 
+const allItems: Item[] = allItemsData as Item[]
+const allEquipment: Equipment[] = equipmentData as Equipment[]
+const allGems: Gem[] = gemsData as Gem[]
+const allSkills: Skill[] = skillsData as Skill[]
+const allQuests: Quest[] = questsData as Quest[]
+const allRecipes: Recipe[] = recipesData as Recipe[]
+
+const getItemByName = (name: string): Item | undefined => {
+  logger.debug("getItemByName 호출", { name });
+  return allItems.find(item => item.name === name);
+}
+
 export default function FavoritesPage() {
-  console.debug("Rendering FavoritesPage component");
+  logger.debug("FavoritesPage 렌더링 시작");
   const { favorites, removeFavorite, getFavoritesByType } = useFavorites()
   const [selectedType, setSelectedType] = useState("all")
   const { activeCharacter, updateCharacter, favoriteCraftingFacilities, toggleCraftingFacilityFavorite } = useCharacter()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([])
+  const [isClient, setIsClient] = useState(false);
 
   const types = Array.from(new Set(favorites.map((f) => f.type)))
   const filteredFavorites = selectedType === "all" ? favorites : getFavoritesByType(selectedType)
@@ -214,6 +236,20 @@ export default function FavoritesPage() {
       }
     }
   }, [activeCharacter, updateCharacter]);
+
+  useEffect(() => {
+    logger.debug("useEffect 시작: isClient 설정");
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    logger.debug("클라이언트가 아님: 로딩 상태 렌더링");
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen bg-gray-50">
+        <p>Loading favorites...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">

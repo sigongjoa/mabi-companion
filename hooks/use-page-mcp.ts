@@ -91,6 +91,7 @@ function buildPageContext(
 
 // 3) 직렬화 함수
 function serializeContext(ctx: PageContext): string {
+  logger.debug("serializeContext 호출", { ctx });
   return JSON.stringify(ctx, (key, value) => {
     if (value instanceof Date) {
       return value.toISOString();
@@ -101,6 +102,7 @@ function serializeContext(ctx: PageContext): string {
 
 // 4) LLM 호출 함수 (클라이언트 사이드에서 서버 API 호출)
 async function callLLM(userInput: string, ctx: PageContext): Promise<string> {
+  logger.debug("callLLM 호출", { userInput, ctx });
   const response = await fetch("/api/llm-context-chat", {
     method: "POST",
     headers: {
@@ -110,21 +112,53 @@ async function callLLM(userInput: string, ctx: PageContext): Promise<string> {
   });
 
   if (!response.ok) {
+    logger.error("LLM API 응답 실패", { status: response.status, statusText: response.statusText });
     throw new Error("Failed to get response from LLM API.");
   }
 
   const data = await response.json();
+  logger.debug("LLM API 응답 성공", { data });
   return data.response;
 }
 
 // 5) React 훅으로 묶기
 export function usePageMCP() {
-  const { activeCharacter, characters } = useCharacter();
+  logger.debug("usePageMCP 훅 호출 시작");
+  const {
+    activeCharacter,
+    characters,
+    allItems,
+    allQuests,
+    allEquipment,
+    allSkillsData,
+    allCraftingFacilitiesData,
+    isLoadingData,
+    dataLoadError
+  } = useCharacter();
   const { favorites } = useFavorites();
   const pathname = usePathname();
 
   // 훅의 최상위 레벨에서 데이터를 수집하고 useMemo로 래핑
   const pageContext = useMemo(() => {
+    logger.debug("pageContext 계산 시작", { activeCharacter, characters, favorites, pathname, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData });
+    if (isLoadingData || dataLoadError) {
+      logger.debug("pageContext: 데이터 로딩 중이거나 오류 발생, 기본값 반환");
+      return {
+        selectedCharacter: null,
+        characters: [],
+        inventory: [],
+        quests: { daily: {}, weekly: {} },
+        equipment: [],
+        equippedItems: {},
+        skills: [],
+        characterSkills: {},
+        craftingFacilities: [],
+        favoriteCraftingFacilities: {},
+        craftingQueues: {},
+        favorites: [],
+        currentPage: pathname,
+      };
+    }
     return buildPageContext(
       activeCharacter,
       characters,
@@ -133,26 +167,35 @@ export function usePageMCP() {
       allItems,
       allQuests,
       allEquipment,
-      allSkills,
-      allCraftingFacilities
+      allSkillsData,
+      allCraftingFacilitiesData
     );
   }, [
     activeCharacter,
     characters,
     favorites,
     pathname,
-    // allItems, allQuests, allEquipment, allSkills, allCraftingFacilities는 상수이므로 의존성 배열에 포함할 필요 없음
+    allItems,
+    allQuests,
+    allEquipment,
+    allSkillsData,
+    allCraftingFacilitiesData,
+    isLoadingData,
+    dataLoadError,
   ]);
 
   const mcp = useCallback(async (userInput: string) => {
+    logger.debug("mcp 함수 호출", { userInput });
     try {
       const result = await callLLM(userInput, pageContext);
+      logger.debug("mcp 함수 결과", { result });
       return result;
     } catch (error) {
-      console.error("Error in MCP function:", error);
+      logger.error("MCP 함수에서 오류 발생", { error });
       return "LLM 호출 중 오류가 발생했습니다.";
     }
   }, [pageContext]);
 
+  logger.debug("usePageMCP 훅 호출 완료");
   return mcp;
 }
