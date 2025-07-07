@@ -1,0 +1,338 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Plus+Jakarta+Sans%3Awght%40400%3B500%3B700%3B800"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div class="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f3f4] px-10 py-3">
+          <div class="flex items-center gap-4 text-[#111518]">
+            <div class="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor"></path>
+              </svg>
+            </div>
+            <h2 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em]">Mabinogi Mobile</h2>
+          </div>
+          <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-9">
+              <a class="text-[#111518] text-sm font-medium leading-normal" href="#">Home</a>
+              <a class="text-[#111518] text-sm font-medium leading-normal" href="#">Items</a>
+              <a class="text-[#111518] text-sm font-medium leading-normal" href="#">Recipes</a>
+              <a class="text-[#111518] text-sm font-medium leading-normal" href="#">Quests</a>
+              <a class="text-[#111518] text-sm font-medium leading-normal" href="#">Community</a>
+            </div>
+            <button
+              class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-[#f0f3f4] text-[#111518] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
+            >
+              <div class="text-[#111518]" data-icon="Bell" data-size="20px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDsJDQ5zuvkWubPDNben9gpfDumH_z9lfQ7Fc1RPoTGgD4k_dS02eu9Zb5Z7rEfzm0WszygB24BCOQW8sfaam_F7niVTuJ60ULv9U2UHoDNn1YLLOAx4ZN2_z5qJvzhbRkf5wIO1ZB8GLnlJ9ut-2rtYYLxGDKHm-SXxEJdgMPegvHPfqJ6kaNPkcd3mIGvr2pR_Ogdwqq78ZadUKBDpyA3lNk-5-IeXW8OrR4keLhIaP4UZ2pb6P0Qb-y6CLkgKBD6XPAR0Z1cBozb");'
+            ></div>
+          </div>
+        </header>
+        <div class="px-40 flex flex-1 justify-center py-5">
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            <div class="flex flex-wrap justify-between gap-3 p-4">
+              <div class="flex min-w-72 flex-col gap-3">
+                <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Favorites</p>
+                <p class="text-[#637c88] text-sm font-normal leading-normal">Manage your saved items, recipes, and quests.</p>
+              </div>
+            </div>
+            <div class="pb-3">
+              <div class="flex border-b border-[#dce2e5] px-4 gap-8">
+                <a class="flex flex-col items-center justify-center border-b-[3px] border-b-[#111518] text-[#111518] pb-[13px] pt-4" href="#">
+                  <p class="text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]">Items (12)</p>
+                </a>
+                <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#637c88] pb-[13px] pt-4" href="#">
+                  <p class="text-[#637c88] text-sm font-bold leading-normal tracking-[0.015em]">Recipes (8)</p>
+                </a>
+                <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#637c88] pb-[13px] pt-4" href="#">
+                  <p class="text-[#637c88] text-sm font-bold leading-normal tracking-[0.015em]">Quests (5)</p>
+                </a>
+              </div>
+            </div>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Items</h3>
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDHvg7Y4-kXaz6DBSHyYgqUtGQUrodVcmY2ymCSiN1OKfQSVGv5iK3MPmOdJ35u6XE74mW9r8-c8HzBvTmcbrPRQsrGh8z2t_VeULtFqpRuLd5CCK1n_cpx24BRsnhLvodJ5QBlmjiJyAXGQ7jyR8fi1mteM2ZMpVOqOrhSHk28GXoB6ApAdQDtzoOAP0jzk0n72S3I0CrOzbMWGN2ZS0qQAW1Zyuhkk3AGeKr33PmF6sXifGS-CA0Vstv_qeZXXh_S56vAvBIrZlSg");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Mystic Sword</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Weapon</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDREe5_g000qw5K4_pRuQcJs5b4ELJdPf6YfLhSzLk5LRBKThVg7w93TYMHKJk2CbfHlYSkuqsascYNVF5sasqZm3WgHQauPh1Oaw8wQ4Ht8RLyKukHvI9PYNGlx1dE9sNGPCJhPl6eC9R_h8PlMDK8UCCIZahgyi7ZNLVUKLFf4fsCc_h8UGIwHHeBwPxcZqiPpYSO50AEqvhvIPdWEfLL5v9O468Dw1Y3naqGQ3-aEfLPe3Ha_vuM7AMwxwKjsVpn9m489LJEOyKS");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Healing Potion</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Consumable</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAA2b2N8mm6np4NUzRcHaSQOVUthVLIMRDhuD3oShZ6HLrQ1yppJQB8Pe56mfmKGkhcbiR2JBb323xhWw6deMoixRDXPSeCLUf1_VuAs_BrllQtd2gj8Zl1RO5_mEVZFvjsybYuAt6ac6nuGV8Vkpcz1Q5FFJHI8y401VYLzyVhs7hU_KrB6wv-Y18dn8GZILstNVb39zNqFImQYn4py2U1Oo-1Xpng8ANcxMQEwmLqb96PsOuVvIJl8zep2tqv4L5YsF7jsI6KFhbZ");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Enchanted Armor</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Armor</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJC_vOys0Cutc_BKNw6vOiUO4GcYwdUmcf-olCMjwbFEpWuMinPhJqueVwP8Yt20N62-Jxl6dJa9BcBZAGl46fmo3JxN3WJHciwweXJiruepf0g2-Q0aBfoc423CusivSNWrn8QQQ_E0GbUhPG62ViSWI6buG8cA-5UFjvfdRFkE79Nk4T9QndrCLVtbCrOwFkcdBg30hKig1qhCfAE3wa2_hnp_D5iDDVgOXPzZtUowqMWSTGKKOvC1w0ScEsR2sPUFJY8RlQyqqI");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Guardian Shield</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Armor</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAY9vBEIrlmIXWqYEiOAQvuqNCbXwxZVxLgCcTvrak5pPn8wUg4jPlPJwzinpsC6EUPfeFSnNQA5ntg0avT8xT4JIV7G8mjkBu18Jp_wJUrcyim56cChlOkiWZPMJaJtw9UXSvtDAYVpcrbtUOpP1vXHx4gMzLwmn5-ZI9Xvof3_O97qieNINJQ4RAVAbsF5fumSHYMDwsJ5qvCUvsLHEYA394tjFCegvpAMTuj25ZHTVMST9iQ5hVOZI9CLuI1YDDKICJjsVu1JS0n");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Elven Bow</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Weapon</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAuj3hax9I0_0AHZ8hSA7TiVmyvQOWcHY_Ep6IedCrgu0ibxHPfGfdYdNHBErtIWfGZH4bEcfnuCFCS4AeakOBwnc0_3JxFJWxAsW28lSKxoRrlOxD3RmyuUyK_c0Hxzo82LF6LOVB2epagHP7X4CIba94i-A0NcLKipbTRNrXnb17CFCyyWXcXzdTGYPgJRoeLivWe3s_mMwkb9osBq_ufmXaTif5DBYDk00c-vAqkxEeMoKJqoFsjGree81D78HxQo0ycCwGV9WBY");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Precise Arrows</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Consumable</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC7hpkxcS2Bh6kNIWpQFCGbgV5YgPBvjsVq4hy-HW-S915OIE9AOQy6VgT9m7EHbiZalBckXo1sKj7Jhfc3XyqIcSWs5CAFMuXV-xoC0SftZHyN01vtztc9-UyasthIsXE0kCFZ0e1etuAVjXv8g4t3RQaQ43Q5kq8c1idfqOFn9lgrwSr0Xq7ICxMU5Igm6kAq3PV6vBUnOkH_FETD8AuRsn9NFTtvyNtb5J3lbLNBvPb-WnBlzwTZoUWaGOaaeqrc49wrPGBejXJf");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Steel Helmet</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Armor</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAg6Olj2F9P3GetGCOuYhBV4tPACIRp9ivot2fB5AdQTmba1Qf37-AheuifmrHtH0ptY73T8-HLQo2akYMSxyU401cdQnH9ul8AFbdSlR09JmIDYOegUfE69u0SjczXkbfZ5GT3WxPU9eiY9b3HQ4N2JqtDyQrnzwB67_xbbwlgjL3KqfTZte6gyIZoCikpnU2JJP9hutstxe4oQ--54viCYqwBxgAWRRcGUiO_cqC-QuoiYCCpFqjCnfz1X0AFbfsJOv9nYOFQkyMQ");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Leather Boots</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Armor</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDgGXjq9tUniGbyiF3aUzgr_roa_0cRSYX7Ln53n9I7gTOYj8NkCdp47VDCo-k2b1M9kYy8IjAXfMdV19ZfoJXyZrzvA6jRBeUDZllvFI1wSqB6x1w8Pzb3z19qzfNe2zNkUwRCUGkz3o5ZhaeXmi6fGdzkSsQJ2oaUtSYJyMkn5-1_PKkRALbUxs-7xSkqhf9UIcdXvNCTMD3Fxmw1m-6oOb5zSZu5rTa_N6fFS8UcIUGonl-hR6jvJxMg5-ruBhfi865Yo0VGYlhq");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Iron Gloves</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Armor</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDW5TwtUJE_kyO94Aekxw1eko2ZpOomRHVXXNYkvj30KLIBsi_R2bPDZfWgss30v4XBUSz5EXsXv3cTOYZ8Ccu4ujTrXhBNMLp2TxBYOpOjkJlPrb1lD2rkaWgsSDWmCy3Q-i539fcXt6lzH3zBvFnytndCRGzDKJNNDguel4ZeBZuoMgezSkhYsWjrJUhbe8ckj8PhCCb1x-f9PbQNrx9BPGFhRPjEr3bbAQC-eRpYiytL4-3W_5y3OcOMVqboHRPeYO11Z5gzKva4");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Ruby Ring</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Accessory</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuASd2E2puH2mzK4OmbZAoRfYkz05de1SIcELdYxKnqKSom5ag9-eUnSoMVCK6yXKsGZo2cpqQfZxQMR2TqOmtPb3_nU1peVnKow8H0oJt-6xV8DdPxRU96Tem9xmZ9iTObB_azPSEP_NF7XAzMdew8p3QbSCiOJuGBGSFSCu_8aW3_b2t_5Byi_8iKOPmz9Keqyc90D9M9kQ35PCiM1LTgRIkqQQpE6_Fizk-02Gl-G1kL0WoHs9Mx8DV5oNSrgDwoIlpPSz-n2ptaQ");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Sapphire Amulet</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Accessory</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC8oXstlL94swIPfKctnQUugKMbCfgPgl0lwHkJF3wueSry8aSO9aeqYCglgbxTbrdobgMuqp1wZwWwNwdC6sNhUL7lkmpZFFtIyGbMdellTefsm117sV4fyoUZbOTlXFxUk-Vig18nQyfVmdzwaIpOIUwwgbtIiVgGQha3_OMVrzMm3x-UWDN9XD3SJvOxcZWDzNl89sizbgpq-36c9PPacOpJkwJnUnU3BstxExnZq2BfeHNJPL9nrNz9AU_bDfdgKJOB6940FfAd");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Leather Belt</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Accessory</p>
+                </div>
+              </div>
+            </div>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Recipes</h3>
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCxu3Z2x1FJbYZH9yZRIErfHH_oJMRO169q-zxxRvyERebiynFj2-O298r6JZb2XoUrwyKTbTajGXFskjD4dNVtLJkqs3vQ2hS45bqE5Vh0s9Sc3X9YCaW0vS0KHFUqgCoox-tGsjh9t_3Jn-fqal9ehfo4yCAVTIPMwvkz8vsO_OcIlnQD8kC0vEIPa28VKEB55KOI7n7Yu-dVy74HSzWsTd42xu6uU4gfDxo3RToaU53K--DAHRo6H1pE_mtYfzE2Z7PKIn4qzdW3");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Sword Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Crafting</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJbEtftTx9k1BP6ZFWU6EG-rnCI1CzePxvzKPn_qtaQAUm1RZceZVqO9XVfVgK1yuW10elRualg-Jotec82HVO01HEgKsZ1GTVCh8xoZBfGA2EiL5F9mADtYMks_ME4xIxIXIQFGG0_EozMSrjQR1XPhejPugrLoXMJpdCe5RThN4OiLeIicrHhla97oG-lTMTsbAt8ESOsxwRCoo0hJNGRMhnBUQJIxoK3tMFsoliygyyU2NlRCvfheZ9v7Ci5faDTv0gN9AxiiRJ");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Potion Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Alchemy</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBVnW9xQKiCqtV5s9nVLDSCD89I06CjDbv3I04Y_JETBuSuS067T6uHDZIjsF8-0-Ux9Ft5lIVoK52BrJ1E4icZNmMIICpnQr2KKzV9Q5pl2L_Bz5_OUyfaCRqELPtDrll-XxUSG1vHL1lVjHkIiwfa74TZ1lNaTYyAwSGjsH74B9FvxQQpEn4s2U-xMZLosSjHTqHC5iuXd5OOfXT8N-BJ2MNnIjc_8d_epe2uPLm-044IBADj-odQ0PRxWWgzv7RdlBJbcbMagDA1");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Armor Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Smithing</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCLHsqTereG9h7Dn4tzlOeozRTFT6tD8bV8pBmUmbmVG6hIBeuSIziFkQbQL_H7oXT6n4WoQTWFpZc7By5AWjjoyyDLLNO-We09iHOpkii-vwqtjrQumzMIK0PFaV52V_mJTmMW4kDXOcdkipVFqHaklX-6WWgGmd3gyY6hIJe-HmxBTbRCye1ZvD9A1TaApDVYQSwSXp_sqiKHzg0FuevpqfNXuxXYrBZ257_3SmrpNBpax2qev7BUAVc5RU26Y8j2DJLj1GiclD1t");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Shield Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Smithing</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDG1IQlKwq91iMhT9XmOqi8ZADS7HP4stQzraPOWqoxiSIBzs9YIKc7fJvXYrh_uCGDaoFvwoBazVrG9TFxMeDiCuOS2y4PHsBjSiOHhiMrILy1wLDRlmlhzxUTobuNapceW5DpEGP1pSWMEAhoOfJDoX3F2wUgWrrWnR7TdAn9CW6Xz7SRPxS7U2EPtHZKz0-jpVuk9PqaN91GZdFVWkYeAPjks5T4nFLeKQnotfCBMlQH-NR6Lzk9gxt7QJ78-sAsvPc-06DIVocV");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Bow Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Crafting</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBVzXQZIlKdwCl3nTOtOX_ikfY7_cbR1VVh4yqLSRUYmEGT3xIK8pr3LrybYzAwH1DyDjykqUS3KiIPPtMNmfnYWfe-4It9hosDZ0dISMOv3e6VkNUOQGJQeb-1L6307xInMFq9fc3jYi87gO4rVgYurOesCiUOn_InfJ8aKw4eNQPqTp1nyuuleny_w8KbKgish6QPHXXqlslZnDJ1pzTCrqozIcKtb6WSEZg5zQM7dE-n5lRg6JvH25TDZP5rzudzL2Or7yDEHHkP");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Arrow Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Crafting</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA_2o9eJ94C6Oyjb_4m6pjXTWL255Hf8VUaXUFlQsIzVGP2mfvI8yLJOZ93xtjAZggz9OF4treLLfGRMz7h3KJc60LAt81RUxyIUG2eIU26TV8SHYlN-WR6xdl2TefNVsoOnCsvPTlknRYtwCxNzHqFEDfpPQ_0Teh0ibUco9ELfpevgGaIgGKiaaFcso78bT5354UFSCrlFfoS4FtD-Xle3WXtBv6fglLL3FE5pba6WZwZdTxIGot0dpzulKXkD-88mwCT1Wrug6K6");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Helmet Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Smithing</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAcFaFONWWS7O7x7_Vj27bEnZTemsu2sJHvhCFCrTRDCZtK6A-hkMQ8sFPBF5crghfV--xZ-syhVLo-zmkL5yH0hFmpoeeVsx5gdQBX13-QCWUk-0fqXaH-dix0afPRN5jvTZXAG9hC3DG5coYQFPvvTNA3NTCnNwmi8EgNeLf95uatzSoJh1RwKBN6657ZN-Yc0OifewJO9seg8TNdaCbk35d5Uun_jQ1TZrH1VHAda7sRtNI_HYvvIgXn_UB30KPMQYS6zi4zZ_-N");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">Boots Recipe</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Smithing</p>
+                </div>
+              </div>
+            </div>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Quests</h3>
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlAx0yIOxgoBVwWgxI2XQHbSZTMWroV8hvaw7SutD7uqUQcM2gXL2FQKNoOkjZ50B95NS48qbYgzJvdj3DK1gVgj18lAqpYxN8drnaqZzrKEEUltImFrxAgQKWJD4lhNrSNVOPyN5fz9lrFPD_WCOFP-Mk1dVAw5IrSz34KxVUqNV8JI7knYvdKZ_ZNyTNQWJti5JHVXFnHMuYYNwDPKToKiJrX9y-xjtZMCIf_XH8RAiTPI9UHlvv1utSCudkIGS9mMlUAoJ85KJV");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">The Lost Artifact</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Main Quest</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBwWFq9f47Z8uFvjYgpbn2qtosRLXtj0EFMn-9cTNoMBz6P3S0PrP1sf7E4EZ9Lib0b-PIi6tP3TlEKu-YuyzUkC3w2xN_NqSPpRQQozxTmo1B2zSUurvw1kJsFo3xFP1pk9IEWwKPNPhipMCrQ547lrf86lfbs8Ya3k9dNz1CbCZKdg6oNp_tnbdWb5b4wh7FCGHVQhI9h2FYBHUCAVVyvJ2AV-BadBNPTSToSxqnTt5ijNygZjqfhVUhoeH9GTK5uXVkmtgTGxcIy");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">The Dragon's Lair</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Side Quest</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJqgI7BbdnTxmle0kOVvIgpu6699d-sAppfoRrSqJK9ssXUXb9hwony4kyi4JvgImriT3udXwgD3E4hw4rjsgQwnRCtvFI0qOiyJmpKDJRhrtnGkxuxJgRyFW9lqRI97PKP9GOqWDCdH506n58VuFyoCbM68xnuc-ZX27QCA2JMccIYShION0FVxsTxKKXKub6ep2uBpMaQNYW61fAd92yJVBGosThzmv5FsBmFzfT2L1K62XDfTvr8GZW1-3p8oVAfpxzJD4W6V_A");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">The Secret Garden</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Main Quest</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBqub-HXzlvlcAeyKSu9lW9pT7o6ir6p1g-U5axADe8E_ttnljPOYOoNm5C_W3Y5Aid64xYe_cZU_xuZ7am9Nat-1G8Qf314joUGqcalbhAkyZ1OXj5ZpKRUCO5As9NffCPcfE0WeOzA6z9jHj9XohVIBCGwu7XyYJrQ_D6ZD1bARA8H7A1c05zM3RvHcoHdQmfXViE1PL-AmyfGrmYwPSeCBUWoW8bsaqZAIKJEH9YNj3BX9UpZhIzD7ePCBdqlpT1guiNmhz0sAQK");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">The Hidden Treasure</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Side Quest</p>
+                </div>
+              </div>
+              <div class="flex flex-1 gap-3 rounded-lg border border-[#dce2e5] bg-white p-4 flex-col">
+                <div
+                  class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-10 shrink-0"
+                  style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDdnQXK9ytsmw5HFV_xxO7hBut7GTCZvkJD8Uglg84Vgf_K-wkpYDPmzdwqJ4osTX2ivgvbHDynif96oaCxvB5IN2UByEAHdwwauhYYOhdQyrIbGCvW-OkB-XmnKtGU8cEO_IOe5yvjhLQrmKTpsEwUhKLZuvDq8Zr3xm8clTYvObyVD4rMwfoqU4tcBr0xboOkADK-HGfUB1i9tqcvVXUooT4q8oa9-l9nF0bYyJLnJh0Omn15SIYJJGL0m7G38zf1h8bwg_VTHhyC");'
+                ></div>
+                <div class="flex flex-col gap-1">
+                  <h2 class="text-[#111518] text-base font-bold leading-tight">The Ancient Ruins</h2>
+                  <p class="text-[#637c88] text-sm font-normal leading-normal">Main Quest</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

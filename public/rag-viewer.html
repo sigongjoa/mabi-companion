@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chunks Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        pre {
+            background-color: #eee;
+            padding: 5px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .loading, .error {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAG Chunks Viewer</h1>
+        <div id="app">
+            <div class="loading">RAG 청크 데이터를 로드 중입니다...</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchChunks() {
+            const appDiv = document.getElementById('app');
+            try {
+                const cpResponse = await fetch('/data/rag-cp-chunks.json');
+                const skillResponse = await fetch('/data/rag-skill-chunks.json');
+
+                if (!cpResponse.ok) throw new Error(`Failed to load CP chunks: ${cpResponse.statusText}`);
+                if (!skillResponse.ok) throw new Error(`Failed to load Skill chunks: ${skillResponse.statusText}`);
+
+                const cpData = await cpResponse.json();
+                const skillData = await skillResponse.json();
+
+                appDiv.innerHTML = `
+                    <h2>전투력 (CP) 청크 (${cpData.length}개)</h2>
+                    ${renderTable(cpData)}
+
+                    <h2>스킬 (Skill) 청크 (${skillData.length}개)</h2>
+                    ${renderTable(skillData)}
+                `;
+
+            } catch (err) {
+                appDiv.innerHTML = `<div class="error">데이터 로드 중 오류 발생: ${err.message}</div>`;
+                console.error("Failed to fetch RAG chunks:", err);
+            }
+        }
+
+        function renderTable(chunks) {
+            if (chunks.length === 0) {
+                return `<p>표시할 청크가 없습니다.</p>`;
+            }
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Content</th>
+                            <th>Metadata</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${chunks.map(chunk => `
+                            <tr>
+                                <td>${chunk.id}</td>
+                                <td>${chunk.content}</td>
+                                <td><pre>${JSON.stringify(chunk.metadata, null, 2)}</pre></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        fetchChunks();
+    </script>
+</body>
+</html>

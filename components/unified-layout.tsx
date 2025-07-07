@@ -29,7 +29,6 @@ export interface UnifiedLayoutProps {
 export function UnifiedLayout({ children, isOpen = true, setIsOpen }: UnifiedLayoutProps) {
   return (
     <div className="flex min-h-screen">
-      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
       <main className="flex-1 bg-gray-50 p-4 md:p-8">{children}</main>
     </div>
   )

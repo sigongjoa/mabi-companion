@@ -9,6 +9,7 @@ import { useCharacter, Character } from "@/contexts/character-context"
 import { FavoriteToggle } from "@/components/favorite-toggle"
 import { CharacterScopedHeader } from "@/components/character-scoped-header"
 import { logger } from "@/lib/logger"
+import UnifiedLayout from "@/components/unified-layout";
 
 import questsData from "/public/data/quests.json"
 
@@ -118,117 +119,119 @@ export default function QuestsPage() {
   const weeklyProgress = activeCharacter ? getProgress(allWeeklyQuests, activeCharacter.completedWeeklyTasks) : { completed: 0, total: 0, percentage: 0 };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <CharacterScopedHeader
-        title="숙제 관리"
-        description="일일/주간 숙제 체크리스트, 캐릭터별 숙제 진행 상황 및 초기화 정보"
-        icon={CheckSquare}
-      />
+    <UnifiedLayout>
+      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        <CharacterScopedHeader
+          title="숙제 관리"
+          description="일일/주간 숙제 체크리스트, 캐릭터별 숙제 진행 상황 및 초기화 정보"
+          icon={CheckSquare}
+        />
 
-      <Tabs defaultValue="daily" className="space-y-6">
-        <div className="document-card p-4">
-          <TabsList className="bg-gray-100 border border-gray-200">
-            <TabsTrigger value="daily" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              일일 숙제
-            </TabsTrigger>
-            <TabsTrigger value="weekly" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              주간 숙제
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <Tabs defaultValue="daily" className="space-y-6">
+          <div className="document-card p-4">
+            <TabsList className="bg-gray-100 border border-gray-200">
+              <TabsTrigger value="daily" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+                일일 숙제
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+                주간 숙제
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value="daily" className="space-y-6">
-          <Card className="document-card">
-            <CardHeader className="excel-header">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-gray-900 flex items-center space-x-2">
-                  <Clock className="w-5 h-5" />
-                  <span>일일 초기화까지</span>
-                </CardTitle>
-                <span className="text-green-600 font-mono text-lg">{timeLeft.daily}</span>
-              </div>
-              <div className="progress-bar mt-2">
-                <div className="progress-fill" style={{ width: `${dailyProgress.percentage}%` }} />
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                {dailyProgress.completed}/{dailyProgress.total} 완료 ({dailyProgress.percentage.toFixed(0)}%)
-              </p>
-            </CardHeader>
-          </Card>
-
-          {Object.entries(allDailyQuests).map(([category, tasks]) => (
-            <Card key={category} className="document-card">
+          <TabsContent value="daily" className="space-y-6">
+            <Card className="document-card">
               <CardHeader className="excel-header">
-                <CardTitle className="text-gray-900 text-lg border-l-4 border-purple-500 pl-3">{category}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-gray-900 flex items-center space-x-2">
+                    <Clock className="w-5 h-5" />
+                    <span>일일 초기화까지</span>
+                  </CardTitle>
+                  <span className="text-green-600 font-mono text-lg">{timeLeft.daily}</span>
+                </div>
+                <div className="progress-bar mt-2">
+                  <div className="progress-fill" style={{ width: `${dailyProgress.percentage}%` }} />
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  {dailyProgress.completed}/{dailyProgress.total} 완료 ({dailyProgress.percentage.toFixed(0)}%)
+                </p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {tasks.map((task) => (
-                  <div key={task.id} className="excel-cell hover:excel-selected p-3 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        checked={activeCharacter?.completedDailyTasks[task.id] || false}
-                        onCheckedChange={() => toggleTask(task.id, "daily")}
-                        className="mt-0.5"
-                      />
-                      <span
-                        className={`flex-1 text-sm ${activeCharacter?.completedDailyTasks[task.id] ? "line-through text-gray-500" : "text-gray-700"}`}
-                      >
-                        {task.text}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
             </Card>
-          ))}
-        </TabsContent>
 
-        <TabsContent value="weekly" className="space-y-6">
-          <Card className="document-card">
-            <CardHeader className="excel-header">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-gray-900 flex items-center space-x-2">
-                  <Calendar className="w-5 h-5" />
-                  <span>주간 초기화까지</span>
-                </CardTitle>
-                <span className="text-blue-600 font-mono text-lg">{timeLeft.weekly}</span>
-              </div>
-              <div className="progress-bar mt-2">
-                <div className="progress-fill" style={{ width: `${weeklyProgress.percentage}%` }} />
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                {weeklyProgress.completed}/{weeklyProgress.total} 완료 ({weeklyProgress.percentage.toFixed(0)}%)
-              </p>
-            </CardHeader>
-          </Card>
+            {Object.entries(allDailyQuests).map(([category, tasks]) => (
+              <Card key={category} className="document-card">
+                <CardHeader className="excel-header">
+                  <CardTitle className="text-gray-900 text-lg border-l-4 border-purple-500 pl-3">{category}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="excel-cell hover:excel-selected p-3 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          checked={activeCharacter?.completedDailyTasks[task.id] || false}
+                          onCheckedChange={() => toggleTask(task.id, "daily")}
+                          className="mt-0.5"
+                        />
+                        <span
+                          className={`flex-1 text-sm ${activeCharacter?.completedDailyTasks[task.id] ? "line-through text-gray-500" : "text-gray-700"}`}
+                        >
+                          {task.text}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
-          {Object.entries(allWeeklyQuests).map(([category, tasks]) => (
-            <Card key={category} className="document-card">
+          <TabsContent value="weekly" className="space-y-6">
+            <Card className="document-card">
               <CardHeader className="excel-header">
-                <CardTitle className="text-gray-900 text-lg border-l-4 border-blue-500 pl-3">{category}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-gray-900 flex items-center space-x-2">
+                    <Calendar className="w-5 h-5" />
+                    <span>주간 초기화까지</span>
+                  </CardTitle>
+                  <span className="text-blue-600 font-mono text-lg">{timeLeft.weekly}</span>
+                </div>
+                <div className="progress-bar mt-2">
+                  <div className="progress-fill" style={{ width: `${weeklyProgress.percentage}%` }} />
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  {weeklyProgress.completed}/{weeklyProgress.total} 완료 ({weeklyProgress.percentage.toFixed(0)}%)
+                </p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {tasks.map((task) => (
-                  <div key={task.id} className="excel-cell hover:excel-selected p-3 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        checked={activeCharacter?.completedWeeklyTasks[task.id] || false}
-                        onCheckedChange={() => toggleTask(task.id, "weekly")}
-                        className="mt-0.5"
-                      />
-                      <span
-                        className={`flex-1 text-sm ${activeCharacter?.completedWeeklyTasks[task.id] ? "line-through text-gray-500" : "text-gray-700"}`}
-                      >
-                        {task.text}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
             </Card>
-          ))}
-        </TabsContent>
-      </Tabs>
-    </div>
+
+            {Object.entries(allWeeklyQuests).map(([category, tasks]) => (
+              <Card key={category} className="document-card">
+                <CardHeader className="excel-header">
+                  <CardTitle className="text-gray-900 text-lg border-l-4 border-blue-500 pl-3">{category}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="excel-cell hover:excel-selected p-3 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          checked={activeCharacter?.completedWeeklyTasks[task.id] || false}
+                          onCheckedChange={() => toggleTask(task.id, "weekly")}
+                          className="mt-0.5"
+                        />
+                        <span
+                          className={`flex-1 text-sm ${activeCharacter?.completedWeeklyTasks[task.id] ? "line-through text-gray-500" : "text-gray-700"}`}
+                        >
+                          {task.text}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </UnifiedLayout>
   )
 }

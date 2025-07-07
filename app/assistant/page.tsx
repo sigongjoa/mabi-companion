@@ -1,241 +1,231 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import Link from "next/link";
+import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from "@/lib/logger";
-import { PageHeader } from "@/components/page-header";
-import { Brain } from "lucide-react";
+import { getLLMService, ChatMessage } from "@/lib/llm-service";
+import { Brain, Package, Book, ScrollText, BarChart, PlusCircle, Home, Sword, CheckSquare, Users, Hammer, Sparkles, Map, Save, FileText, Settings, Download, Upload, RefreshCw, Clock, Star, User, MessageSquare, Mic, Bell } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import UnifiedLayout from '@/components/unified-layout';
 
-// localStorage에 저장된 데이터 키 목록
-const LOCAL_STORAGE_KEYS = [
-  'mabinogi-favorites',
-  'characters',
-  'activeCharacterId',
-  'viewMode',
-  'characterGems',
-  'craftingQueues',
-  'inventory',
-  'currencyTimers',
-  'isSidebarOpen',
-  // 새로 추가된 아바타 컬렉션 데이터 키
-  'mabinogi-avatar-collection'
-];
-
-// 각 데이터 키에 대한 한글 설명
-const DATA_DESCRIPTIONS: { [key: string]: string } = {
-  'mabinogi-favorites': '즐겨찾기 아이템',
-  'characters': '캐릭터 목록',
-  'activeCharacterId': '현재 활성화된 캐릭터 ID',
-  'viewMode': '캐릭터 보기 모드',
-  'characterGems': '캐릭터 보석 정보',
-  'craftingQueues': '가공 대기열',
-  'inventory': '인벤토리',
-  'currencyTimers': '재화 타이머',
-  'isSidebarOpen': '사이드바 상태',
-  // 새로 추가된 아바타 컬렉션 데이터 설명
-  'mabinogi-avatar-collection': '아바타 컬렉션 보유 현황'
-};
-
-// 가상의 LLM API 호출 함수 (콘솔 로그로 대체)
-async function queryLLM(prompt: string) {
-  logger.debug(`---- LLM에 전송될 프롬프트 ----`);
-  logger.debug(prompt);
-  // 여기에 실제 LLM API 호출 로직을 구현합니다.
-  // 예: const response = await openai.chat.completions.create(...)
-  return "선택된 데이터를 성공적으로 받았습니다. 무엇을 도와드릴까요?";
+interface DisplayChatMessage extends ChatMessage {
+  type?: "rag_context";
+  documents?: string[];
 }
 
+// Placeholder for user avatar
+const USER_AVATAR_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuBUIDHCb-w9WuYen-_HGeFvwsbCCfTAsLDgP37CcW58jovNVJ7kRc_fMDpQX0oIL4zU3W3hvpTiwceyADrmHHOjeOlm_6xNmAkHK5CQ0G3_g_bNR-MQc-kbQJcjaND3iLz3RUvcaZsfR1dPP0-S-rwlzWjXGAhpgmEMMe-dxRzYdx-Xt5nGmHKUy70hPiw84kTBXKhNBLRLe0UQAEk_7IfgAGpQ5VUThk3fUEydwLDJJDFrxOzaUr9upa6arpXmqZOMF66LtnGX58o";
+// Placeholder for AI avatar
+const AI_AVATAR_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuALx4KGDyMJEcSykBcnBL432h1PTy6Z82Y5GfEmZVeT3yFGjy4ndslmIchLqDiZ_Vf2T7at0O5YTbegEObZ8z2-tRHjpA5Z9NW1YQmqravZA_rk0DMSyIHGBH__FYJn5HysDIIvgy1se1_e6ufhVKXZcRkWwugidUE3_VmxdIC3DM89m_7282AZpFxvSCSoLQW1_3gKAi1KthNf_r0zyZkMQVPa7w6ozvkdQSB2Jx8BO4lfC3_-B-dJ5sldW1qwigmEX4nTrpiAdBs";
 
-// 데이터 선택 모달 컴포넌트
-const DataSelectionModal = ({ isOpen, onClose, onConfirm }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (selectedKeys: string[]) => void;
-}) => {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  logger.debug(`DataSelectionModal rendered. isOpen: ${isOpen}`);
-
-  useEffect(() => {
-    if (isOpen) {
-      logger.debug(`DataSelectionModal opened. Resetting selected keys.`);
-      setSelectedKeys([]); // 모달이 열릴 때마다 선택 초기화
-    }
-  }, [isOpen]);
-
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const handleCheckboxChange = (key: string) => {
-    logger.debug(`Checkbox for key '${key}' changed.`);
-    setSelectedKeys(prev => {
-      const newSelectedKeys = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
-      logger.debug(`New selected keys: ${newSelectedKeys.join(', ')}`);
-      return newSelectedKeys;
-    });
-  };
-
-  const handleConfirm = () => {
-    logger.debug(`Confirming data selection. Selected keys: ${selectedKeys.join(', ')}`);
-    onConfirm(selectedKeys);
-    onClose();
-  };
-
-  return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
-        <h3 style={styles.modalTitle}>LLM에게 전송할 데이터 선택</h3>
-        <p style={styles.modalDescription}>AI 어시스턴트에게 제공할 컨텍스트를 선택하세요.</p>
-        <div style={styles.checkboxContainer}>
-          {LOCAL_STORAGE_KEYS.map(key => (
-            <div key={key} style={styles.checkboxItem}>
-              <input
-                type="checkbox"
-                id={key}
-                checked={selectedKeys.includes(key)}
-                onChange={() => handleCheckboxChange(key)}
-                style={styles.checkboxInput}
-              />
-              <label htmlFor={key} style={styles.checkboxLabel}>
-                {DATA_DESCRIPTIONS[key] || key}
-              </label>
-            </div>
-          ))}
-        </div>
-        <div style={styles.modalActions}>
-          <button onClick={() => {
-            logger.debug(`Data selection modal: Cancel button clicked.`);
-            onClose();
-          }} style={{...styles.button, ...styles.buttonSecondary}}>취소</button>
-          <button onClick={handleConfirm} style={{...styles.button, ...styles.buttonPrimary}}>선택 완료 및 전송</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-// 메인 채팅 컴포넌트
 export default function AIAssistantChat() {
   logger.debug("AIAssistantChat 함수 진입");
   const [message, setMessage] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  logger.debug(`AIAssistantChat component rendered. Modal open state: ${isModalOpen}`);
+  const [llmProvider, setLlmProvider] = useState("lmstudio"); // Default to LM Studio
+  const [llmModel, setLlmModel] = useState(""); // Default model for LM Studio, now empty
+  const [chatHistory, setChatHistory] = useState<DisplayChatMessage[]>([
+    { role: "assistant", content: "Hello! How can I assist you today in your Mabinogi Mobile adventure?" }
+  ]);
+  const [lmStudioModels, setLmStudioModels] = useState<string[]>([]); // State to store LM Studio models
+  const [useRAGContext, setUseRAGContext] = useState(false); // State for RAG context checkbox
+  const [includeLocalStorageData, setIncludeLocalStorageData] = useState(false); // State for local storage data checkbox
 
-  // 모달에서 선택된 데이터를 처리하는 함수
-  const handleConfirmSelection = (selectedKeys: string[]) => {
-    logger.debug("handleConfirmSelection 함수 진입", { selectedKeys });
-    if (selectedKeys.length === 0) {
-      logger.debug("전송할 데이터가 없습니다. 알림을 표시합니다.");
-      alert("전송할 데이터를 하나 이상 선택해주세요.");
-      return;
-    }
-
-    let prompt = "아래는 사용자가 선택한 현재 애플리케이션 데이터입니다. 이 정보를 바탕으로 다음 질문에 답변해주세요.\n\n";
-    prompt += "--- 사용자가 선택한 데이터 ---\n";
-    logger.debug("프롬프트 구성을 시작합니다.");
-
-    selectedKeys.forEach(key => {
-      logger.debug(`데이터 키 처리: ${key}`);
-      try {
-        const item = localStorage.getItem(key);
-        if (item) {
-          prompt += `\n[${DATA_DESCRIPTIONS[key] || key} (${key})]:\n`;
-          prompt += "```json\n"; // Escaping backticks for prompt string
-          // JSON.parse 시도, 실패하면 원본 문자열 사용
-          try {
-             prompt += JSON.stringify(JSON.parse(item), null, 2);
-             logger.debug(`키 ${key}에 대한 JSON 파싱 및 추가 성공`);
-          } catch {
-             prompt += item;
-             logger.debug(`키 ${key}에 대한 원본 문자열 추가 (유효한 JSON 아님)`);
+  // Fetch LM Studio models when provider is LM Studio
+  useEffect(() => {
+    if (llmProvider === "lmstudio") {
+      const fetchLmStudioModels = async () => {
+        try {
+          const lmStudioService = getLLMService("lmstudio");
+          const response = await fetch(`${process.env.NEXT_PUBLIC_LMSTUDIO_BASE_URL}/v1/models`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch LM Studio models: ${response.statusText}`);
           }
-          prompt += "\n```\n";
-        } else {
-          logger.debug(`localStorage 항목 '${key}'를 찾을 수 없습니다.`);
+          const data = await response.json();
+          const models = data.data.map((m: any) => m.id); // Adjust based on actual response structure
+          setLmStudioModels(models);
+          setLlmModel(currentLlmModel => {
+            if (models.length > 0 && !models.includes(currentLlmModel)) {
+              return models[0]; // Set first model as default if current is not in list
+            } else if (models.length === 0) {
+              return "";
+            }
+            return currentLlmModel;
+          });
+        } catch (error) {
+          logger.error("Error fetching LM Studio models", error);
+          setLmStudioModels([]);
+          setLlmModel("");
         }
-      } catch (error) {
-        logger.debug(`localStorage에서 '${key}' 데이터 읽기 오류 발생: ${error}`);
-        console.error(`'${key}' 데이터를 읽는 중 오류 발생:`, error);
-      }
-    });
+      };
+      fetchLmStudioModels();
+    } else {
+        setLmStudioModels([]);
+        setLlmModel("");
+    }
+  }, [llmProvider]);
 
-    prompt += "\n--- 데이터 끝 ---\n\n이제 이 정보를 바탕으로 질문을 입력하세요.";
-    logger.debug("프롬프트 구성 완료. 메시지 입력 필드를 설정합니다.");
-    // 가공된 프롬프트를 메시지 입력창에 설정
-    setMessage(prompt);
-    logger.debug("handleConfirmSelection 함수 종료");
-  };
-  
   const handleSendMessage = async () => {
     logger.debug("handleSendMessage 함수 진입", { messageLength: message.trim().length });
     if (!message.trim()) {
       logger.debug("메시지가 비어있습니다. 전송을 중단합니다.");
       return;
     }
-    // ... 실제 메시지 전송 로직 ...
-    logger.debug(`메시지 전송: ${message}`);
-    // 예시: await queryLLM(message);
-    setMessage('');
-    logger.debug("메시지 전송 및 입력 지우기 완료");
+
+    const userMessage: DisplayChatMessage = { role: "user", content: message };
+    let updatedChatHistory: DisplayChatMessage[] = [...chatHistory, userMessage];
+    setChatHistory(updatedChatHistory);
+    setMessage(""); // Clear input after sending
+
+    try {
+      let messagesToSend: ChatMessage[] = [...chatHistory, userMessage]; // Start with the current chat history
+
+      // Handle local storage data inclusion (simplified for this design)
+      if (includeLocalStorageData) {
+        // This part would typically involve a more sophisticated way to select and format data
+        // For now, it's just a placeholder to acknowledge the setting.
+        logger.debug("Local storage data inclusion is enabled, but not implemented in this design.");
+      }
+
+      if (useRAGContext) {
+        logger.debug("RAG 컨텍스트 사용 활성화. RAG API 호출을 시작합니다.");
+        try {
+          const ragResponse = await fetch("/api/rag-chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: message,
+            }),
+          });
+
+          if (!ragResponse.ok) {
+            const errorData = await ragResponse.json();
+            throw new Error(errorData.error || "RAG API 호출 실패");
+          }
+
+          const ragResult = await ragResponse.json();
+          if (ragResult.response && Array.isArray(ragResult.response) && ragResult.response.length > 0) {
+            const ragDocuments = ragResult.response; 
+            const ragContextContent = ragDocuments.join("\n\n");
+            
+            const ragContextMessage: DisplayChatMessage = {
+              role: "system",
+              type: "rag_context",
+              content: `참조 문서 (${ragDocuments.length}개)`, // Content for the Accordion header
+              documents: ragDocuments,
+            };
+            updatedChatHistory = [...updatedChatHistory, ragContextMessage];
+            setChatHistory(updatedChatHistory);
+            logger.debug("RAG 컨텍스트 메시지가 채팅 기록에 추가되었습니다.");
+
+            // Add RAG context as a system message for the LLM
+            messagesToSend = [
+              { role: "system", content: `다음 문서를 참고해서 답변해 줘:\n\n${ragContextContent}` },
+              ...messagesToSend,
+            ];
+          } else {
+            logger.debug("RAG API에서 유효한 응답을 받지 못했습니다.");
+          }
+        } catch (ragError) {
+          logger.error("RAG API 호출 중 오류 발생:", ragError);
+          // RAG 오류가 발생해도 LLM 호출은 계속 진행 (컨텍스트 없이)
+        }
+      }
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: messagesToSend,
+          model: llmModel,
+          provider: llmProvider,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Unknown error");
+      }
+
+      const result = await response.json();
+      const assistantMessage: DisplayChatMessage = { role: "assistant", content: result.response || result.result };
+      setChatHistory((prev) => [...prev, assistantMessage]);
+      logger.debug("LLM 응답 수신", result);
+    } catch (error) {
+      logger.error("LLM 호출 오류", error);
+      const errorMessage: DisplayChatMessage = { role: "assistant", content: `오류: ${error instanceof Error ? error.message : String(error)}` };
+      setChatHistory((prev) => [...prev, errorMessage]);
+    }
+
     logger.debug("handleSendMessage 함수 종료");
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <PageHeader
-        title="AI 어시스턴트"
-        description="메시지를 입력하거나, 데이터를 선택하여 질문의 컨텍스트를 추가하세요."
-        icon={<Brain className="w-8 h-8 text-blue-600" />}
-      />
-
-      <div className="modern-card fade-in p-6">
-        <div className="space-y-4">
-          <textarea
-            value={message}
-            onChange={(e) => {
-              logger.debug(`메시지 입력 변경. 새 값 길이: ${e.target.value.length}`);
-              setMessage(e.target.value);
-            }}
-            placeholder="메시지를 입력하거나, 데이터를 선택하여 질문의 컨텍스트를 추가하세요."
-            className="w-full min-h-[120px] p-3 border rounded-md resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
-            <button onClick={() => {
-              logger.debug(`"컨텍스트 데이터 선택" 버튼 클릭. 모달을 엽니다.`);
-              setIsModalOpen(true);
-            }} className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500">
-              컨텍스트 데이터 선택
-            </button>
-            <button onClick={handleSendMessage} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600">
-              전송
-            </button>
+    <UnifiedLayout>
+      <div className="px-40 flex flex-1 justify-center py-5 bg-white" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
+        <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+          <div className="flex p-4 @container">
+            <div className="flex w-full flex-col gap-4 items-center">
+              <div className="flex gap-4 flex-col items-center">
+                <div
+                  className="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32"
+                  style={{ backgroundImage: `url('${AI_AVATAR_URL}')` }}
+                ></div>
+                <div className="flex flex-col items-center justify-center justify-center">
+                  <p className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">AI Assistant</p>
+                  <p className="text-[#607c8a] text-base font-normal leading-normal text-center">Your Mabinogi Mobile Companion</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50 rounded-lg">
+            {chatHistory.filter(msg => msg.type !== "rag_context").map((msg, index) => (
+              <div key={index} className={`flex items-start gap-4 ${msg.role === "user" ? "justify-end" : ""}`}>
+                {msg.role === "assistant" && (
+                  <div className="size-10 rounded-full bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url("${AI_AVATAR_URL}")` }}></div>
+                )}
+                <div className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : ""}`}>
+                  <p className="text-sm text-gray-500">{msg.role === "user" ? "You" : "AI Chatbot"}</p>
+                  <div className={`max-w-md rounded-lg ${msg.role === "user" ? "rounded-tr-none bg-blue-500 text-white" : "rounded-tl-none bg-gray-200"} px-4 py-3`}>
+                    <p>{msg.content}</p>
+                  </div>
+                </div>
+                {msg.role === "user" && (
+                  <div className="size-10 rounded-full bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url("${USER_AVATAR_URL}")` }}></div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-gray-200 p-4 bg-white">
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Input
+                  className="form-input w-full resize-none rounded-lg border-gray-300 bg-gray-100 text-black placeholder:text-gray-500 focus:border-blue-500 focus:ring-0 pl-4 pr-24 h-12"
+                  placeholder="Type your message..."
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+              </div>
+              <button
+                className="flex-shrink-0 rounded-lg bg-blue-500 px-6 h-12 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+                onClick={handleSendMessage}
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      <DataSelectionModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          logger.debug(`DataSelectionModal 닫힘.`);
-          setIsModalOpen(false);
-        }}
-        onConfirm={handleConfirmSelection}
-      />
-    </div>
+    </UnifiedLayout>
   );
 }
-
-// 간단한 스타일 객체 (이제 필요 없는 스타일은 제거하거나 Tailwind CSS로 대체)
-const styles: { [key: string]: React.CSSProperties } = {
-    // container, title, inputArea, textarea, buttonContainer, button, buttonPrimary, buttonSecondary, buttonAccent 스타일은 Tailwind CSS로 대체
-    modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
-    modalContent: { backgroundColor: 'white', padding: '25px', borderRadius: '8px', width: '90%', maxWidth: '500px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' },
-    modalTitle: { marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '15px' },
-    modalDescription: { color: '#666', fontSize: '14px' },
-    checkboxContainer: { maxHeight: '300px', overflowY: 'auto', padding: '10px', border: '1px solid #eee', borderRadius: '4px', marginTop: '15px' },
-    checkboxItem: { display: 'flex', alignItems: 'center', padding: '8px 0' },
-    checkboxInput: { marginRight: '10px', width: '16px', height: '16px' },
-    checkboxLabel: { fontSize: '16px', cursor: 'pointer' },
-    modalActions: { display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' },
-}; 

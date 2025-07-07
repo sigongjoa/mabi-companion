@@ -1,0 +1,458 @@
+[
+  {
+    "id": "skill_rag_overview",
+    "content": "이 보고서는 스킬 최적화에 중점을 두는 게임 사용자들을 위한 혁신적인 검색 증강 생성(RAG) 시스템 도입 방안을 제시합니다. 이 시스템은 게임 내 공식 매뉴얼의 한계, 테스트 환경 부재, 숨겨진 버그 정보 부족 등 사용자들이 겪는 핵심적인 어려움을 해결합니다. 직업별 최적화 공략, 상위권 사용자 팁, 스킬 DPS 계산기 및 시뮬레이터, 공식 스킬 계수 및 데미지 공식 등을 포함하는 전문화된 데이터 라이브러리를 제공합니다.",
+    "metadata": {
+      "category": "Overview",
+      "topic": "Skill Optimization RAG",
+      "source": "Report"
+    }
+  },
+  {
+    "id": "user_pain_points_official_manual_limits",
+    "content": "사용자들은 스킬 툴팁만으로는 실제 스킬의 효율성을 파악하기 어렵고, 직접 계산해야 하는 번거로움을 겪습니다. RAG 시스템은 다양한 출처의 데이터를 해석하고 종합하여 공식 출처에서는 얻기 힘든 실행 가능한 정보를 제공해야 합니다.",
+    "metadata": {
+      "category": "User Pain Points",
+      "problem": "Official Manual Limits",
+      "solution_aspect": "Information Synthesis"
+    }
+  },
+  {
+    "id": "user_pain_points_no_test_environment",
+    "content": "스킬 DPS나 콤보를 테스트할 수 있는 전용 모드가 없어, 사용자들은 실제 게임 플레이에서 시행착오를 겪으며 시간과 자원을 낭비합니다. DPS 계산기와 시뮬레이터는 게임 내 페널티 없이 자원을 최적화하고 성능을 향상시키는 핵심 도구가 될 수 있습니다.",
+    "metadata": {
+      "category": "User Pain Points",
+      "problem": "No In-game Test Environment",
+      "solution_aspect": "DPS Calculator, Simulator"
+    }
+  },
+  {
+    "id": "user_pain_points_hidden_bugs",
+    "content": "스킬 및 룬과 관련된 숨겨진 버그나 오류에 대한 정보가 부족하여 사용자들은 예상치 못한 문제에 직면합니다. RAG 시스템은 포럼, 블로그, 소셜 미디어 등 다양한 커뮤니티 출처에서 이러한 버그가 논의되는 정보를 취합하고 종합함으로써, 이 중요하고 종종 문서화되지 않은 정보를 식별하고 전파하는 주요 원천이 될 수 있습니다.",
+    "metadata": {
+      "category": "User Pain Points",
+      "problem": "Hidden Bugs/Errors",
+      "solution_aspect": "Community Intelligence Aggregation"
+    }
+  },
+  {
+    "id": "desired_feature_dps_calculator_simulator",
+    "content": "사용자들은 자신의 스펙과 스킬 레벨을 입력하여 예상 DPS를 예측하고 최적의 스킬 사이클을 시뮬레이션하기를 원합니다. 시스템은 쿨다운, 버프, 디버프, 발동 확률 등 복잡한 상호작용을 시간에 따라 모델링할 수 있는 강력한 시뮬레이션 엔진을 필요로 합니다.",
+    "metadata": {
+      "category": "Desired Features",
+      "feature": "DPS Calculator & Simulator",
+      "complexity": "High"
+    }
+  },
+  {
+    "id": "desired_feature_specialized_guides",
+    "content": "직업별 최적화 공략, 상위권 사용자 팁 및 노하우를 큐레이션하여 제공해야 합니다. RAG 시스템은 단순히 기존 가이드를 검색하는 것을 넘어, 모범 사례를 종합하고 정제하여 사용자의 현재 빌드나 플레이 스타일에 맞게 일관되고 실행 가능한 형식으로 제시할 수 있어야 합니다.",
+    "metadata": {
+      "category": "Desired Features",
+      "feature": "Specialized Guides",
+      "approach": "Curation and Synthesis"
+    }
+  },
+  {
+    "id": "desired_feature_data_library",
+    "content": "공식 스킬 계수, 공식 등 전문화된 지식을 제공하는 데이터베이스가 필요합니다. 이 데이터는 DPS 계산기의 기반이 되며 신뢰할 수 있는 가이드를 생성하는 토대가 됩니다. 데미지 공식의 다양성은 유연하고 매개변수화된 데이터 모델이 필요함을 강조합니다.",
+    "metadata": {
+      "category": "Desired Features",
+      "feature": "Data Library",
+      "data_type": "Official Formulas, Skill Coefficients"
+    }
+  },
+  {
+    "id": "skill_cycle_optimization_overview",
+    "content": "최대 초당 피해량(DPS)을 위한 효율적인 스킬 시퀀스를 추출하고 모델링하는 방법을 다룹니다. 스킬 사이클은 고정된 순서가 아니라 쿨다운, 버프, 디버프, 그리고 외부 요인에 의해 영향을 받는 동적인 의사결정 트리입니다.",
+    "metadata": {
+      "category": "Core Game Mechanics",
+      "topic": "Skill Cycle Optimization",
+      "aspect": "Dynamic Decision Tree"
+    }
+  },
+  {
+    "id": "skill_cycle_example_lostark_battlemaster_choshim_tadae",
+    "content": "로스트아크 배틀마스터 초심 (타대) 빌드의 핵심 스킬 시퀀스는 바용뇌창방선섬뇌입니다. 창천 시 버스트, 보스 이탈 시 조건부 발동이 있으며, 내공연소, 바람의 속삭임, 용맹의 포효가 중요 버프/디버프 유지 스킬입니다. 단죄/심판 룬, 속행 룬, 질풍 룬, 출혈/중독 룬이 사이클에 영향을 미칩니다.",
+    "metadata": {
+      "category": "Skill Cycle Example",
+      "game": "Lost Ark",
+      "class": "Battlemaster",
+      "build_type": "초심 (타대)",
+      "skill_sequence": "바용뇌창방선섬뇌"
+    }
+  },
+  {
+    "id": "skill_cycle_example_lostark_battlemaster_choshim_giseup",
+    "content": "로스트아크 배틀마스터 초심 (기습) 빌드의 핵심 스킬 시퀀스는 바용뇌섬창방선뇌섬입니다. 속행 발동 시 내연펑 당기기가 중요 조건부 발동이며, 내공연소, 바람의 속삭임, 용맹의 포효가 중요 버프/디버프 유지 스킬입니다. 질풍 룬, 중독 룬이 사이클에 영향을 미칩니다.",
+    "metadata": {
+      "category": "Skill Cycle Example",
+      "game": "Lost Ark",
+      "class": "Battlemaster",
+      "build_type": "초심 (기습)",
+      "skill_sequence": "바용뇌섬창방선뇌섬"
+    }
+  },
+  {
+    "id": "skill_cycle_example_mmorpg_light_knight",
+    "content": "일반 MMORPG 빛의 기사 직업은 성휘스킬 전에 간파베기, 계시의 검을 먼저 사용하는 것이 핵심 스킬 시퀀스입니다. 쿨타임이 알맞게 돌아오도록 하는 것이 중요하며, 간파베기, 계시의 검이 중요 버프/디버프 유지 스킬입니다.",
+    "metadata": {
+      "category": "Skill Cycle Example",
+      "game": "MMORPG (General)",
+      "class": "Light Knight",
+      "skill_sequence": "Z(빛의 기사) - 성휘스킬 전에 간파베기, 계시의 검 먼저 사용"
+    }
+  },
+  {
+    "id": "skill_cycle_example_mmorpg_end_light",
+    "content": "일반 MMORPG 종언의 빛 직업은 X(종언의 빛) 전에 전진 찌르기로 시너지&이속버프 갱신하는 것이 핵심 스킬 시퀀스입니다. 전진 찌르기가 중요 버프/디버프 유지 스킬입니다.",
+    "metadata": {
+      "category": "Skill Cycle Example",
+      "game": "MMORPG (General)",
+      "class": "End of Light",
+      "skill_sequence": "X(종언의 빛) 전에 전진 찌르기로 시너지&이속버프 갱신"
+    }
+  },
+  {
+    "id": "skill_enhancement_priority_overview",
+    "content": "스킬 강화 우선순위는 게임, 직업 역할, 그리고 게임 진행 단계에 따라 매우 동적으로 변합니다. 자동 플레이 시스템은 '버프 스킬(전술 스킬), 회복 스킬 > 공격 스킬' 순으로 우선순위를 매깁니다. 특정 임계점에서 비용이 급격히 증가하는 등 비용-효율 분석도 중요합니다.",
+    "metadata": {
+      "category": "Core Game Mechanics",
+      "topic": "Skill Enhancement Priority",
+      "aspect": "Dynamic and Cost-Benefit"
+    }
+  },
+  {
+    "id": "enhancement_priority_general_early_buff_heal",
+    "content": "일반 MMORPG 초반 단계에서는 모든 직업이 버프 스킬과 회복 스킬을 최우선으로 강화해야 합니다. 이는 지속적인 전투 능력 확보, 파티 기여도 증대, 생존력 증대, 물약 소모 감소에 기여합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "MMORPG (General)",
+      "role": "All",
+      "game_stage": "Early",
+      "enhancement_type": "Buff/Heal Skills",
+      "priority": "1st"
+    }
+  },
+  {
+    "id": "enhancement_priority_general_early_basic_attack",
+    "content": "일반 MMORPG 초반 단계에서는 모든 직업이 기본 공격 스킬을 두 번째로 우선 강화해야 합니다. 이는 몬스터 사냥 효율 증대, 레벨업 가속에 기여합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "MMORPG (General)",
+      "role": "All",
+      "game_stage": "Early",
+      "enhancement_type": "Basic Attack Skills",
+      "priority": "2nd"
+    }
+  },
+  {
+    "id": "enhancement_priority_arc_lord_ranged_survival",
+    "content": "아크로드2 원거리 딜러는 초반에 '거리 벌리기' 생존 스킬을 필수 5레벨까지 강화해야 합니다. 이는 적과의 거리 유지, 생존력 극대화에 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Arc Lord 2",
+      "role": "Ranged DPS",
+      "game_stage": "Early",
+      "enhancement_type": "Survival Skill (Distance)",
+      "priority": "Essential"
+    }
+  },
+  {
+    "id": "enhancement_priority_arc_lord_ranged_accuracy",
+    "content": "아크로드2 원거리 딜러는 초반에 '적중도 패시브 (초점 집중, 목표 예측)'를 최우선으로 강화해야 합니다. 이는 부족한 적중도 보완, 딜 효율 증대에 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Arc Lord 2",
+      "role": "Ranged DPS",
+      "game_stage": "Early",
+      "enhancement_type": "Accuracy Passive",
+      "priority": "Highest"
+    }
+  },
+  {
+    "id": "enhancement_priority_arc_lord_staff_heal",
+    "content": "아크로드2 지팡이/완드 직업은 초반에 치유 스킬에 1포인트 투자해야 합니다. 이는 솔로 플레이 및 초/중반 파티 플레이 시 자가 치유를 가능하게 합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Arc Lord 2",
+      "role": "Staff/Wand",
+      "game_stage": "Early",
+      "enhancement_type": "Heal Skill",
+      "priority": "1 Point"
+    }
+  },
+  {
+    "id": "enhancement_priority_lostark_battlemaster_naeyeon",
+    "content": "로스트아크 배틀마스터는 모든 단계에서 '내연 격전 유지 (쿨누수 없이)'를 1순위로, '내연펑 타이밍 신경쓰기'를 3순위로 고려해야 합니다. 이는 지속적인 딜량 유지 및 순간 폭딜 극대화에 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Lost Ark",
+      "class": "Battlemaster",
+      "game_stage": "All",
+      "enhancement_type": "Skill Rotation",
+      "priority": "1st/3rd"
+    }
+  },
+  {
+    "id": "enhancement_priority_lostark_battlemaster_basok",
+    "content": "로스트아크 배틀마스터는 8겁작 이전에는 '바속 8작 (보석)'을 최우선으로 해야 합니다. 이는 핵심 스킬 쿨타임 감소에 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Lost Ark",
+      "class": "Battlemaster",
+      "game_stage": "Pre-8th Engraving",
+      "enhancement_type": "Gem (Cooldown)",
+      "priority": "Highest"
+    }
+  },
+  {
+    "id": "enhancement_priority_lostark_battlemaster_naeyeon_gem",
+    "content": "로스트아크 배틀마스터는 9->10겁작 시 '내연 10겁 (보석)'을 최우선으로 해야 합니다. 이는 핵심 스킬 데미지 극대화에 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "Lost Ark",
+      "class": "Battlemaster",
+      "game_stage": "9th->10th Engraving",
+      "enhancement_type": "Gem (Damage)",
+      "priority": "Highest"
+    }
+  },
+  {
+    "id": "enhancement_priority_maplestory_starforce_cost",
+    "content": "메이플스토리에서는 10성 구간에서 강화 비용이 급격히 증가하므로, 비용 효율적 강화 및 급격한 비용 증가 구간 회피를 위해 강화 비용을 고려하는 것이 중요합니다.",
+    "metadata": {
+      "category": "Enhancement Priority Example",
+      "game": "MapleStory",
+      "role": "All",
+      "game_stage": "10-Star Section",
+      "enhancement_type": "Star Force",
+      "priority": "Important (Cost-Efficiency)"
+    }
+  },
+  {
+    "id": "damage_calculation_model_overview",
+    "content": "게임 내 데미지 공식과 DPS에 대한 스탯 기여도를 분석합니다. 다양한 데미지 공식은 RAG 시스템이 단일 공식을 하드코딩할 수 없으며, 게임별 공식을 유연하게 적용할 수 있는 구성 가능한 엔진으로 설계되어야 함을 의미합니다. '특화와 자버프 효율'의 중요성은 정확한 DPS 계산을 위해 동적인 버프와 그 스케일링 상호작용을 모델링해야 함을 시사합니다.",
+    "metadata": {
+      "category": "Core Game Mechanics",
+      "topic": "Damage Calculation Model",
+      "aspect": "Flexible Engine, Dynamic Buffs"
+    }
+  },
+  {
+    "id": "damage_formula_type_additive_defense",
+    "content": "덧셈 방어 공식: 공격력 + 무기 보너스 - 방어력 (최소 1). 직관적이며 1:1 스케일링, 방어력이 공격력과 같으면 무기 데미지 부여.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Additive Defense",
+      "equation": "Attack + Weapon Bonus - Defense (min 1)"
+    }
+  },
+  {
+    "id": "damage_formula_type_multiplicative_defense",
+    "content": "곱셈 방어 공식: 기본 데미지 * X / (X + 방어력). 방어력이 높을수록 항상 데미지 감소, 최소 컷오프 없음.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Multiplicative Defense",
+      "equation": "Base Damage * X / (X + Defense)"
+    }
+  },
+  {
+    "id": "damage_formula_type_percentage_based_reduction",
+    "content": "% 기반 감소 공식: 마법 데미지 * (1 - 저항력%). 저항력에 비례하여 데미지 감소. 아르케나이츠 마법 데미지 예시.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Percentage-Based Reduction",
+      "equation": "Magic Damage * (1 - Resistance%)"
+    }
+  },
+  {
+    "id": "damage_formula_type_hybrid_physical",
+    "content": "하이브리드 (물리) 공식: 물리 데미지 - 방어력. 아르케나이츠 물리 데미지 예시, 방어력 상한 없음.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Hybrid Physical",
+      "equation": "Physical Damage - Defense"
+    }
+  },
+  {
+    "id": "damage_formula_type_complex_physical",
+    "content": "복합 물리 공식: (P.Atk * 버프 + 공격력 - 적 P.Def * 버프) * 데미지 스케일링 * 속성 보너스 * 속성 약점 * 스킬 보너스. 다양한 요인이 복합적으로 작용하는 현실적인 MMORPG 데미지 공식.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Complex Physical",
+      "equation": "(P.Atk * Buff + Attack - Enemy P.Def * Buff) * Damage Scaling * Element Bonus * Element Weakness * Skill Bonus"
+    }
+  },
+  {
+    "id": "damage_formula_type_rf_online_next",
+    "content": "RF 온라인 넥스트 공식: (공격력+고정피해+포스or물리공격력) x (시너지%) + (무기 공격력x극대화 피해량%) = 합산 대미지 x 스킬 % 대미지 = 최종 대미지. 특정 게임의 복합적인 데미지 계산 방식, 스탯 효율 순위 제공.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "RF Online Next",
+      "equation": "(Attack + Fixed Damage + Force/Physical Attack) * Synergy% + (Weapon Attack * Critical Damage%) = Total Damage * Skill % Damage = Final Damage"
+    }
+  },
+  {
+    "id": "damage_formula_type_dps_basic",
+    "content": "DPS 기본 공식: 데미지 / 쿨다운. 초당 피해량의 기본 원리.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "DPS Basic",
+      "equation": "Damage / Cooldown"
+    }
+  },
+  {
+    "id": "damage_formula_type_critical_dps",
+    "content": "치명타 DPS 공식: 치명타 확률 % * 치명타 배수 + 1 = DPS 배수. 무작위 확률 효과를 통계적 평균으로 단순화하여 DPS에 곱셈기로 적용.",
+    "metadata": {
+      "category": "Damage Formula Type",
+      "type": "Critical DPS",
+      "equation": "Critical Chance % * Critical Multiplier + 1 = DPS Multiplier"
+    }
+  },
+  {
+    "id": "bug_identification_resolution_overview",
+    "content": "스킬 관련 버그 및 오류에 대한 정보를 수집하고 통합하는 전략을 다룹니다. 공식 채널이 버그 신고를 위해 존재하지만, '숨겨진' 버그에 대한 실제적인 정보 확산과 커뮤니티 이해는 비공식 커뮤니티 플랫폼을 통해 이루어지는 경우가 많습니다. RAG 시스템은 이러한 다양하고 종종 비정형적인 커뮤니티 소스에서 정보를 적극적으로 수집하고 종합하여 이 격차를 메울 수 있습니다.",
+    "metadata": {
+      "category": "Core Game Mechanics",
+      "topic": "Bug Identification & Resolution",
+      "aspect": "Community Sourcing"
+    }
+  },
+  {
+    "id": "rag_architecture_workflow_overview",
+    "content": "게임별 정보에 맞춰진 RAG 프레임워크의 개요를 제시합니다. RAG는 일반적으로 '데이터 인덱스 구축', '검색 시스템 구축', '답변 생성'의 세 가지 핵심 단계로 구성됩니다. 검색 모델과 생성 모델을 결합하여 외부 원본에서 관련 정보를 검색하고, 이 정보가 수집되면 응답 생성을 알리고 향상시키는 데 사용됩니다.",
+    "metadata": {
+      "category": "RAG System Design",
+      "topic": "Architecture & Workflow",
+      "phases": ["Data Indexing", "Retrieval System", "Answer Generation"]
+    }
+  },
+  {
+    "id": "data_indexing_retrieval_strategy",
+    "content": "다양한 게임 데이터 소스(포럼, 위키, 공식 패치)를 준비하고 검색하는 방법을 다룹니다. '다양한 데이터 형식'을 처리하고 '반복적인 RAG' 또는 '그래프/트리 기반' 방법을 통해 '암시적 사실 쿼리'를 처리하는 강조점은 단순한 텍스트 청크에 대한 벡터 검색만으로는 복잡한 게임 최적화에 불충분하다는 것을 시사합니다. 시스템은 데이터 내의 '구조화된 관계'를 이해하고 다단계 추론을 수행해야 합니다.",
+    "metadata": {
+      "category": "RAG System Design",
+      "topic": "Data Indexing & Retrieval",
+      "approach": "Hybrid (Text + Graph)"
+    }
+  },
+  {
+    "id": "generative_ai_for_personalization_simulation",
+    "content": "검색된 정보를 실행 가능한 조언으로 종합하고 결과를 시뮬레이션하는 LLM의 역할을 설명합니다. 응답 생성은 검색된 정보가 충분한지 판단하고, 필요한 경우 '지도형 미세 조정'과 같은 기술을 사용하여 추가 데이터를 가져와 보완해야 합니다. RAG는 LLM에서 생성된 응답의 '정확도와 관련성을 크게 향상시키며', 요청과 관련된 특정 정보를 검색하여 '상황에 맞는 응답을 생성'함으로써 '컨텍스트 관련성을 높입니다.'",
+    "metadata": {
+      "category": "RAG System Design",
+      "topic": "Generative AI",
+      "role": "Actionable Advice, Simulation"
+    }
+  },
+  {
+    "id": "skill_database_schema_design",
+    "content": "복잡한 스킬, 아이템, 캐릭터 데이터를 저장하기 위한 적절한 데이터베이스 스키마 유형을 권장합니다. 게임 데이터의 고도로 상호 연결된 특성을 고려할 때, 관계형 모델은 복잡한 관계를 관리하고 데이터 무결성을 보장하는 데 강력한 후보입니다. 스킬 트리나 복잡한 버프 상호작용과 같이 고도로 동적인 상호 연결된 데이터의 경우, 그래프 모델은 관계 기반 쿼리에 더 우수한 성능을 제공할 수 있습니다. 따라서 핵심적이고 구조화된 데이터에는 관계형 데이터베이스를, 복잡하고 상호 연결된 관계에는 그래프 데이터베이스를 사용하는 하이브리드 접근 방식이 스토리지와 복잡한 쿼리 성능을 모두 최적화할 수 있습니다.",
+    "metadata": {
+      "category": "Data Management & Structuring",
+      "topic": "Skill Database Schema",
+      "approach": "Hybrid (Relational + Graph)"
+    }
+  },
+  {
+    "id": "skill_database_schema_example",
+    "content": "핵심 스킬 속성을 위한 제안된 고수준 데이터베이스 스키마 (관계형 모델)는 다음과 같습니다: Skills (SkillID, SkillName, ClassID, SkillType, BaseDamage, ManaCost, Cooldown, Description, IconURL, MaxLevel, DamageScalingFactor, EffectDescription), SkillEnhancements (EnhancementID, SkillID, Level, AttributeModified, ValueIncrease, Cost), SkillTripods (TripodID, SkillID, TripodName, EffectDescription, LevelRequirement), Classes (ClassID, ClassName, Role), Stats (StatID, StatName, Description, BaseValue, GrowthPerLevel).",
+    "metadata": {
+      "category": "Data Management & Structuring",
+      "topic": "Skill Database Schema Example",
+      "model": "Relational"
+    }
+  },
+  {
+    "id": "data_modeling_complex_game_entities",
+    "content": "스킬, 아이템, 스탯, 캐릭터 클래스 간의 관계를 모델링하는 접근 방식을 다룹니다. 게임 메커니즘의 복잡성은 정적인 속성뿐만 아니라 동적인 효과(버프, 디버프, 조건부 데미지)와 엔티티 간의 상호 관계를 모델링할 필요성을 강조합니다. 이는 매우 세분화되고 상호 연결된 데이터 모델을 요구합니다. 예를 들어, '버프' 자체는 지속 시간, 크기, 영향을 받는 스탯과 같은 속성을 가진 엔티티로 모델링되어야 하며, 이를 부여하는 스킬/아이템과의 관계를 가져야 합니다. 이러한 수준의 세부 정보는 DPS 시뮬레이터의 정확성에 결정적입니다.",
+    "metadata": {
+      "category": "Data Management & Structuring",
+      "topic": "Complex Game Entities Modeling",
+      "aspect": "Dynamic Effects, Inter-entity Relationships"
+    }
+  },
+  {
+    "id": "json_schema_for_skill_information_exchange",
+    "content": "상호 운용성 및 유효성 검사를 위한 데이터 형식을 표준화합니다. 스킬 데이터에 JSON 스키마를 구현하는 것은 단순한 내부 유효성 검사를 넘어, 미래의 상호 운용성과 커뮤니티 기여를 위한 전략적인 움직임입니다. 잘 정의된 JSON 스키마는 이 데이터에 대한 API 계약 역할을 하여 원활한 통합을 가능하게 합니다. 개발팀은 핵심 게임 엔티티(스킬, 아이템, 스탯)에 대한 JSON 스키마를 공개하여 외부 개발자들이 데이터를 소비하거나 기여할 수 있는 도구를 구축하도록 장려하고, 이를 통해 RAG 서비스 주변의 더 넓은 생태계를 조성해야 합니다.",
+    "metadata": {
+      "category": "Data Management & Structuring",
+      "topic": "JSON Schema for Skill Information Exchange",
+      "purpose": "Interoperability, Community Contribution"
+    }
+  },
+  {
+    "id": "dps_calculator_simulator_development",
+    "content": "정확한 DPS 시뮬레이터를 구축하는 것은 단순히 공식을 적용하는 것을 넘어섭니다. 이는 시간적 이벤트(쿨다운, 버프/디버프 지속 시간), 확률적 이벤트(치명타 확률, 발동 확률), 그리고 수많은 캐릭터 속성과 스킬 효과 간의 복잡한 상호작용을 모델링할 수 있는 미니 게임 엔진을 요구합니다. 이는 상당한 엔지니어링 과제이며, 세심하게 구조화된 데이터 라이브러리에 크게 의존하는 별도의 전문화된 모듈이 필요합니다.",
+    "metadata": {
+      "category": "RAG-based Service Implementation",
+      "topic": "DPS Calculator & Simulator Development",
+      "challenge": "Mini Game Engine"
+    }
+  },
+  {
+    "id": "dps_calculator_features_requirements",
+    "content": "강력한 DPS 계산기/시뮬레이터의 주요 기능 및 기술 요구사항은 다음과 같습니다: 틱별 전투 시뮬레이션, 사용자 정의 캐릭터 스탯 입력, 스킬 빌드 및 레벨 구성, 버프/디버프 추적 및 적용, 적 방어력 및 저항 모델링, 출력 그래프 및 시각화, 최적 딜사이클 시뮬레이션, 장비/룬/각인/엘릭서 등 상세 스펙 반영, 성능 최적화, 모바일 기기 지원, 데이터 내보내기/가져오기.",
+    "metadata": {
+      "category": "RAG-based Service Implementation",
+      "topic": "DPS Calculator Features & Requirements",
+      "priority": "High"
+    }
+  },
+  {
+    "id": "specialized_guide_curation_delivery",
+    "content": "RAG를 활용하여 맞춤형 가이드를 생성하고 제시하는 방법을 다룹니다. '큐레이션' 측면은 RAG 시스템이 기존 가이드를 단순히 검색하는 것을 넘어, 이를 종합하여 일관되고 개인화된 권장 사항을 생성해야 함을 의미합니다. 이는 '정보 검색'에서 '지식 종합'으로 나아가며, 단순한 검색 엔진보다 더 높은 가치 제안을 제공합니다.",
+    "metadata": {
+      "category": "RAG-based Service Implementation",
+      "topic": "Specialized Guide Curation & Delivery",
+      "approach": "Knowledge Synthesis"
+    }
+  },
+  {
+    "id": "data_library_chatbot_interface_construction",
+    "content": "RAG 시스템을 사용자 대면 애플리케이션과 통합하는 방법을 다룹니다. 게임 스킬 최적화는 복잡하고 다단계적이며 종종 암시적인 질문을 포함하므로, LangGraph를 활용한 'AI 에이전트' 접근 방식이 단순한 규칙 기반 챗봇보다 훨씬 더 적합합니다. AI 에이전트는 자율적이고 지능적인 의사결정, 도구 사용, 그리고 진화하는 사용자 요구에 대한 적응을 가능하게 합니다.",
+    "metadata": {
+      "category": "RAG-based Service Implementation",
+      "topic": "Data Library & Chatbot Interface",
+      "approach": "AI Agent (LangGraph/LLM-based)"
+    }
+  },
+  {
+    "id": "chatbot_implementation_comparison",
+    "content": "게임 스킬 최적화를 위한 챗봇 구현 방식 비교: 규칙 기반 챗봇은 쿼리 복잡성, 멀티턴 지원, API 통합, 새로운 질문에 대한 적응성, 유지보수 비용, 개발 복잡성 측면에서 AI 에이전트(LangGraph/LLM 기반)보다 제한적입니다. AI 에이전트는 복잡한 자연어 이해, 장기 기억 및 대화 흐름 관리, 자율적인 API 호출 및 조합, 새로운 질문 이해 및 대응, 유연한 확장성, 심층적인 AI 지식 요구 측면에서 강점을 가집니다.",
+    "metadata": {
+      "category": "RAG-based Service Implementation",
+      "topic": "Chatbot Implementation Comparison",
+      "comparison_type": "Rule-based vs AI Agent"
+    }
+  },
+  {
+    "id": "strategic_recommendation_phased_implementation",
+    "content": "단계별 구현 접근 방식: 1단계(MVP)는 핵심 RAG 파이프라인 구축 및 기본 데이터 라이브러리 구축에 집중합니다. 2단계(기능 강화)는 DPS 계산기/시뮬레이터 모듈 개발 및 복잡한 스킬 가이드 생성을 목표로 합니다. 3단계(고급 기능)는 버그 추적, 고급 AI 에이전트 기능, 시각적/상호작용적 요소를 통합합니다.",
+    "metadata": {
+      "category": "Strategic Recommendations",
+      "topic": "Phased Implementation Approach",
+      "phases": ["MVP", "Feature Enhancement", "Advanced Features"]
+    }
+  },
+  {
+    "id": "strategic_recommendation_scalability_maintenance",
+    "content": "확장성 및 유지보수: 새로운 게임 데이터를 지속적으로 수집하고 업데이트하기 위한 확장 가능한 파이프라인을 설계하고, RAG 구성 요소가 독립적인 개발, 확장 및 유지보수를 위해 모듈식으로 설계되었는지 확인합니다. LLM이 발전함에 따라 모델을 미세 조정, 업데이트 및 잠재적으로 교체하기 위한 전략을 수립합니다.",
+    "metadata": {
+      "category": "Strategic Recommendations",
+      "topic": "Scalability & Maintenance",
+      "aspects": ["Data Collection Pipeline", "Modular Architecture", "LLM Management"]
+    }
+  },
+  {
+    "id": "strategic_recommendation_continuous_improvement_extensibility",
+    "content": "지속적인 개선 및 확장 가능성: 실시간 데이터 통합, 사용자 기여 콘텐츠, 개인화된 학습 경로, 크로스 게임 호환성, 수익화 기회 등을 모색합니다.",
+    "metadata": {
+      "category": "Strategic Recommendations",
+      "topic": "Continuous Improvement & Extensibility",
+      "aspects": ["Real-time Data Integration", "User Contributed Content", "Personalized Learning Paths", "Cross-Game Compatibility", "Monetization Opportunities"]
+    }
+  }
+]

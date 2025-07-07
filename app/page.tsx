@@ -1,268 +1,138 @@
-"use client"
+"use client";
 
-import { useCharacter } from "@/contexts/character-context"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, Sword, Shield, Star, TrendingUp, Users, Target, Zap, Heart, Package, Home, Hourglass } from "lucide-react"
-import { CharacterScopedHeader } from "@/components/character-scoped-header"
+import { useCharacter } from "@/contexts/character-context";
 import { useRouter } from 'next/navigation';
-import { Item } from "@/types/page-context";
 import { logger } from "@/lib/logger";
-import itemsData from "/public/data/items.json";
-import { CurrencyTimersContainer } from "@/components/currency-timers-container";
 
 export default function HomePage() {
   logger.debug("HomePage 렌더링 시작");
   const router = useRouter();
-  const { activeCharacter, allItems, allQuests, isLoadingData, dataLoadError, characters, updateCharacter } = useCharacter();
+  const { activeCharacter, characters, isLoadingData, dataLoadError } = useCharacter();
 
-  const handleCurrencyDataChange = (data: any) => {
-    logger.debug("handleCurrencyDataChange 호출됨", { data });
-    if (!activeCharacter) {
-      logger.debug("handleCurrencyDataChange: 활성 캐릭터 없음. 종료.");
-      return;
-    }
+  if (isLoadingData) {
+    return <div>로딩중...</div>;
+  }
 
-    const updatedCurrencyTimers = {
-      ...activeCharacter.currencyTimers,
-      [data.type]: {
-        current: data.current,
-        isRunning: data.isRunning,
-        nextChargeTime: data.nextChargeTime,
-        fullChargeTime: data.fullChargeTime,
-      },
-    };
-    logger.debug("handleCurrencyDataChange: 새 currencyTimers로 캐릭터 업데이트:", updatedCurrencyTimers);
-    updateCharacter(activeCharacter.id, { currencyTimers: updatedCurrencyTimers });
-  };
-
-  // Helper functions to safely calculate quest counts
-  const getDailyQuestCount = (character: any) => {
-    logger.debug("getDailyQuestCount: 캐릭터 객체", character);
-    if (!character?.completedDailyTasks) {
-      logger.debug("getDailyQuestCount: completedDailyTasks 없음, 0 반환");
-      return 0;
-    }
-    logger.debug("getDailyQuestCount: completedDailyTasks 원본 객체", character.completedDailyTasks);
-    const completedTasksArray = Object.values(character.completedDailyTasks);
-    logger.debug("getDailyQuestCount: completedDailyTasks 배열 (모든 값)", completedTasksArray);
-    const trueCount = completedTasksArray.filter(Boolean).length;
-    logger.debug("getDailyQuestCount: true 값의 개수", trueCount);
-    return trueCount; // Only count true values
-  };
-
-  const getWeeklyQuestCount = (character: any) => {
-    logger.debug("getWeeklyQuestCount: 캐릭터 객체", character);
-    if (!character?.completedWeeklyTasks) {
-      logger.debug("getWeeklyQuestCount: completedWeeklyTasks 없음, 0 반환");
-      return 0;
-    }
-    const completedTasksArray = Object.values(character.completedWeeklyTasks);
-    logger.debug("getWeeklyQuestCount: completedWeeklyTasks 배열 (모든 값)", completedTasksArray);
-    const trueCount = completedTasksArray.filter(Boolean).length;
-    logger.debug("getWeeklyQuestCount: true 값의 개수", trueCount);
-    return trueCount; // Only count true values
-  };
-
-  const getTotalDailyQuests = () => {
-    const totalDaily = Object.values(allQuests?.daily || {}).flat().length;
-    logger.debug("getTotalDailyQuests: 총 일일 숙제 수", totalDaily);
-    return totalDaily;
-  };
-
-  const getTotalWeeklyQuests = () => {
-    const totalWeekly = Object.values(allQuests?.weekly || {}).flat().length;
-    logger.debug("getTotalWeeklyQuests: 총 주간 숙제 수", totalWeekly);
-    return totalWeekly;
-  };
-
-  const dailyProgress = activeCharacter ? (getDailyQuestCount(activeCharacter) / getTotalDailyQuests()) * 100 : 0;
-  const weeklyProgress = activeCharacter ? (getWeeklyQuestCount(activeCharacter) / getTotalWeeklyQuests()) * 100 : 0;
+  if (dataLoadError) {
+    return <div>데이터를 불러오는데 실패했습니다.</div>;
+  }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Enhanced Header - Dashboard style */}
-      <div className="modern-card fade-in mb-6">
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
-                <Home className="w-8 h-8 text-blue-600" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">대시보드</h1>
-                <p className="text-lg text-gray-600 mt-1">환영합니다, {activeCharacter?.name || "모험가"}님!</p>
-                {activeCharacter && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Lv.{activeCharacter.level || 1} • {activeCharacter.profession || "모험가"} • 전투력: {activeCharacter.combatPower || "N/A"}
-                  </p>
-                )}
-              </div>
+    <div className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
+      <div className="layout-container flex h-full grow flex-col">
+        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f4f3f0] px-10 py-3">
+          <div className="flex items-center gap-4 text-[#171511]">
+            <div className="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor"></path>
+              </svg>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-              {/* 추가적인 요소가 필요하다면 여기에 추가 */}
+            <h2 className="text-[#171511] text-lg font-bold leading-tight tracking-[-0.015em]">마비노기 모바일</h2>
+          </div>
+          <div className="flex flex-1 justify-end gap-8">
+            <div className="flex items-center gap-9">
+              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">홈</a>
+              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">거래소</a>
+              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">커뮤니티</a>
+              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">가이드</a>
+              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">고객지원</a>
             </div>
+            <button
+              className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-[#f4f3f0] text-[#171511] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
+            >
+              <div className="text-[#171511]" data-icon="Bell" data-size="20px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <div
+              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+              style={{ backgroundImage: `url(${activeCharacter?.imageUrl || '/placeholder-user.jpg'})` }}
+            ></div>
+          </div>
+        </header>
+        <div className="px-40 flex flex-1 justify-center py-5">
+          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+            <section className="my-12 rounded-xl shadow-lg overflow-hidden">
+              <div className="h-1 bg-violet-500 rounded-t-xl"></div>
+              <div className="p-6 bg-gray-50">
+                <h2 className="text-violet-600 text-[32px] font-bold leading-tight tracking-[-0.015em] pb-3">
+                  캐릭터 정보
+                </h2>
+                <div className="px-4 py-3 @container">
+                  <div className="flex overflow-hidden rounded-xl border border-[#e5e2dc] bg-white">
+                    <table className="flex-1">
+                      <thead>
+                        <tr className="bg-white">
+                          <th className="px-4 py-3 text-left text-[#171511] w-[150px] text-sm font-medium leading-normal">이름</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-14 text-sm font-medium leading-normal">이미지</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-[80px] text-sm font-medium leading-normal">레벨</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-[120px] text-sm font-medium leading-normal">클래스</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-[120px] text-sm font-medium leading-normal">전투력</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-[100px] text-sm font-medium leading-normal">방어</th>
+                          <th className="px-4 py-3 text-left text-[#171511] w-[100px] text-sm font-medium leading-normal">마법방어</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {characters && characters.map((character) => (
+                          <tr className="border-t border-t-[#e5e2dc] bg-white transition-all duration-300 ease-in-out hover:shadow-md hover:-translate-y-0.5" key={character.id}>
+                            <td className="h-[72px] px-4 py-2 text-[#171511] text-sm font-normal leading-normal">{character.name}</td>
+                            <td className="h-[72px] px-4 py-2 w-14 text-sm font-normal leading-normal">
+                              <div
+                                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10"
+                                style={{ backgroundImage: `url(${character.imageUrl || '/placeholder-user.jpg'})` }}
+                              ></div>
+                            </td>
+                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.level}</td>
+                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.profession}</td>
+                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.combatPower?.toLocaleString() || 'N/A'}</td>
+                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.defense || 'N/A'}</td>
+                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.magicDefense || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="my-12 rounded-xl shadow-lg overflow-hidden">
+              <div className="h-1 bg-violet-500 rounded-t-xl"></div>
+              <div className="p-6 bg-gray-50">
+                <h2 className="text-violet-600 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3">
+                  제작 타이머
+                </h2>
+                <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 rounded-lg shadow-sm mb-3 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+                  <div className="text-violet-500 flex items-center justify-center rounded-lg bg-[#f4f3f0] shrink-0 size-12" data-icon="Clock" data-size="24px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <p className="text-[#171511] text-base font-medium leading-normal line-clamp-1">아이템 이름</p>
+                    <p className="text-violet-700 text-sm font-normal leading-normal line-clamp-2">남은 시간: 2시간 30분</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 rounded-lg shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+                  <div className="text-violet-500 flex items-center justify-center rounded-lg bg-[#f4f3f0] shrink-0 size-12" data-icon="Clock" data-size="24px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <p className="text-[#171511] text-base font-medium leading-normal line-clamp-1">다른 아이템 이름</p>
+                    <p className="text-violet-700 text-sm font-normal leading-normal line-clamp-2">남은 시간: 1시간 15분</p>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>
-
-      <>
-        <CharacterScopedHeader title="요약 정보" icon={Users} />
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="document-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">일일 숙제</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {activeCharacter ? getDailyQuestCount(activeCharacter) : 0}/{getTotalDailyQuests()}
-              </div>
-              <Progress value={dailyProgress} className="mt-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round(dailyProgress)}% 완료</p>
-            </CardContent>
-          </Card>
-
-          <Card className="document-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">주간 숙제</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {activeCharacter ? getWeeklyQuestCount(activeCharacter) : 0}/{getTotalWeeklyQuests()}
-              </div>
-              <Progress value={weeklyProgress} className="mt-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round(weeklyProgress)}% 완료</p>
-            </CardContent>
-          </Card>
-
-          <Card className="document-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전투력</CardTitle>
-              <Sword className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeCharacter?.combatPower || "N/A"}</div>
-              <p className="text-xs text-muted-foreground">
-                <TrendingUp className="inline w-3 h-3 mr-1" />
-                지난 주 대비 +12%
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="document-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">길드 랭크</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeCharacter?.guildRank || "멤버"}</div>
-              <p className="text-xs text-muted-foreground">{activeCharacter?.guildName || "길드 없음"}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="document-card">
-          <CardHeader>
-            <CardTitle>빠른 실행</CardTitle>
-            <CardDescription>자주 사용하는 기능으로 바로 이동</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="h-20 flex-col bg-transparent">
-                <Zap className="h-6 w-6 mb-2" />
-                <span className="text-sm">스킬</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col bg-transparent">
-                <Shield className="h-6 w-6 mb-2" />
-                <span className="text-sm">장비</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col bg-transparent">
-                <Star className="h-6 w-6 mb-2" />
-                <span className="text-sm">숙제</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col bg-transparent">
-                <Heart className="h-6 w-6 mb-2" />
-                <span className="text-sm">즐겨찾기</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 재화 충전 타이머 */}
-        {/* <CharacterScopedHeader title="재화 충전 타이머" icon={Clock} /> */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CurrencyTimersContainer characters={characters} handleCurrencyDataChange={handleCurrencyDataChange} dashboardMode={true} />
-        </div>
-
-        {/* Completed Crafting Timers 섹션 제거 */}
-        <CharacterScopedHeader title="완료된 제작 타이머" icon={Hourglass} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {characters.map((char) => {
-            const completedTimers = Object.values(char.craftingQueues || {}).flatMap(queues => 
-              queues.filter(q => !q.isProcessing && q.timeLeft === 0 && q.itemName)
-            );
-
-            if (completedTimers.length === 0) return null;
-
-            return (
-              <Card key={char.id} className="document-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{char.name}</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {completedTimers.map((timer, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">{timer.itemName || `아이템 #${timer.id}`}</p>
-                      <Badge>완료</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Character Specific Item Counts */}
-        {/* <CharacterScopedHeader title="캐릭터별 재화" icon={Package} /> */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> */}
-          {/* {characters.map((char) => ( */}
-            {/* <Card key={char.id} className="document-card"> */}
-              {/* <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> */}
-                {/* <CardTitle className="text-sm font-medium">{char.name}</CardTitle> */}
-                {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
-              {/* </CardHeader> */}
-              {/* <CardContent> */}
-                {/* <div className="flex items-center justify-between space-x-2 text-sm"> */}
-                  {/* <p className="text-muted-foreground">골드</p> */}
-                  {/* <span className="font-bold">{char.gold?.toLocaleString() || 0}</span> */}
-                {/* </div> */}
-                {/* <div className="flex items-center justify-between space-x-2 text-sm"> */}
-                  {/* <p className="text-muted-foreground">두카트</p> */}
-                  {/* <span className="font-bold">{char.ducats?.toLocaleString() || 0}</span> */}
-                {/* </div> */}
-                {/* Dynamically display other key items */}
-                {/* {Object.entries(char.inventory || {}).map(([itemId, quantity]) => { } */}
-                  {/* const item = itemsData[itemId]; */}
-                {/* if (!item || !['골드', '두카트'].includes(item.name)) return null; // Filter out gold and ducats if already displayed */}
-                {/* return ( */}
-                  {/* <div key={itemId} className="flex items-center justify-between space-x-2 text-sm"> */}
-                    {/* <p className="text-muted-foreground">{item.name}</p> */}
-                    {/* <span className="font-bold">{quantity.toLocaleString()}</span> */}
-                  {/* </div> */}
-                {/* ); */}
-              {/* </CardContent> */}
-            {/* </Card> */}
-          {/* ))} */}
-        {/* </div> */}
-      </>
     </div>
-  )
+  );
 }

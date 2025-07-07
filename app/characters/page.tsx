@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNotification } from "@/contexts/notification-context";
 import { logger } from "@/lib/logger";
+import UnifiedLayout from "@/components/unified-layout";
 
 interface Character {
   id: string;
@@ -140,276 +141,278 @@ export default function CharactersPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Enhanced Header - Dashboard style */}
-      <div className="modern-card fade-in mb-6">
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
-                <Users className="w-8 h-8 text-purple-600" />
+    <UnifiedLayout>
+      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        {/* Enhanced Header - Dashboard style */}
+        <div className="modern-card fade-in mb-6">
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
+                  <Users className="w-8 h-8 text-purple-600" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-4xl font-bold text-gray-900">캐릭터 관리</h1>
+                  <p className="text-lg text-gray-600 mt-1">다중 캐릭터 정보 관리</p>
+                  <p className="text-sm text-gray-500 mt-1">내 모든 캐릭터의 정보를 한눈에 보고 관리하세요.</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">캐릭터 관리</h1>
-                <p className="text-lg text-gray-600 mt-1">다중 캐릭터 정보 관리</p>
-                <p className="text-sm text-gray-500 mt-1">내 모든 캐릭터의 정보를 한눈에 보고 관리하세요.</p>
+              <div className="flex items-center space-x-4">
+                <FavoriteToggle id="characters-header" name="캐릭터 헤더" type="header" />
+                <Input
+                  type="text"
+                  placeholder="캐릭터 검색..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    console.debug(`Character search query changed: ${e.target.value}`);
+                  }}
+                  className="max-w-xs"
+                />
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-purple-600" />
+                  <span className="text-gray-900">{filteredCharacters.length}명의 캐릭터</span>
+                </div>
+                <Button onClick={() => {
+                  console.debug("Toggle add form button clicked");
+                  setIsFormModalOpen(true);
+                  setEditingCharacter(null);
+                  setNewCharacter({ name: "", server: "", level: "", profession: "", combatPower: "" });
+                }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
+                  <Plus className="w-4 h-4 mr-2" />
+                  캐릭터 추가
+                </Button>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <FavoriteToggle id="characters-header" name="캐릭터 헤더" type="header" />
-              <Input
-                type="text"
-                placeholder="캐릭터 검색..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  console.debug(`Character search query changed: ${e.target.value}`);
-                }}
-                className="max-w-xs"
-              />
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-purple-600" />
-                <span className="text-gray-900">{filteredCharacters.length}명의 캐릭터</span>
-              </div>
-              <Button onClick={() => {
-                console.debug("Toggle add form button clicked");
-                setIsFormModalOpen(true);
-                setEditingCharacter(null);
-                setNewCharacter({ name: "", server: "", level: "", profession: "", combatPower: "" });
-              }} className="form-button-primary">
-                <Plus className="w-4 h-4 mr-2" />
-                캐릭터 추가
-              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 새 캐릭터 추가/수정 모달 */}
-      <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingCharacter ? "캐릭터 수정" : "새 캐릭터 추가"}</DialogTitle>
-            <DialogDescription>
-              {editingCharacter ? "캐릭터 정보를 수정합니다." : "새로운 캐릭터를 추가합니다."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div>
-              <Label htmlFor="name" className="text-gray-700">
-                캐릭터 이름
-              </Label>
-              <Input
-                id="name"
-                value={newCharacter.name}
-                onChange={(e) => setNewCharacter((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="캐릭터 이름 입력"
-                className="form-input"
-              />
+        {/* 새 캐릭터 추가/수정 모달 */}
+        <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{editingCharacter ? "캐릭터 수정" : "새 캐릭터 추가"}</DialogTitle>
+              <DialogDescription>
+                {editingCharacter ? "캐릭터 정보를 수정합니다." : "새로운 캐릭터를 추가합니다."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div>
+                <Label htmlFor="name" className="text-gray-700">
+                  캐릭터 이름
+                </Label>
+                <Input
+                  id="name"
+                  value={newCharacter.name}
+                  onChange={(e) => setNewCharacter((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="캐릭터 이름 입력"
+                  className="form-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="server" className="text-gray-700">
+                  서버
+                </Label>
+                <Select
+                  value={newCharacter.server}
+                  onValueChange={(value) => setNewCharacter((prev) => ({ ...prev, server: value }))}
+                >
+                  <SelectTrigger className="form-input">
+                    <SelectValue placeholder="서버 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {servers.map((server) => (
+                      <SelectItem key={server} value={server}>
+                        {server}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="level" className="text-gray-700">
+                  레벨
+                </Label>
+                <Input
+                  id="level"
+                  type="number"
+                  value={newCharacter.level}
+                  onChange={(e) => {
+                    console.debug(`Level input changed: ${e.target.value}`);
+                    setNewCharacter((prev) => ({ ...prev, level: e.target.value }));
+                  }}
+                  placeholder="65"
+                  className="form-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="profession" className="text-gray-700">
+                  직업
+                </Label>
+                <Select
+                  value={newCharacter.profession}
+                  onValueChange={(value) => {
+                    console.debug(`Profession select changed: ${value}`);
+                    setNewCharacter((prev) => ({ ...prev, profession: value }));
+                  }}
+                >
+                  <SelectTrigger className="form-input">
+                    <SelectValue placeholder="직업 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {professions.map((profession) => (
+                      <SelectItem key={profession} value={profession}>
+                        {profession}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="combatPower" className="text-gray-700">
+                  전투력
+                </Label>
+                <Input
+                  id="combatPower"
+                  type="number"
+                  value={newCharacter.combatPower}
+                  onChange={(e) => {
+                    console.debug(`Combat Power input changed: ${e.target.value}`);
+                    setNewCharacter((prev) => ({ ...prev, combatPower: e.target.value }));
+                  }}
+                  placeholder="전투력 입력 (예: 12345)"
+                  className="form-input"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="server" className="text-gray-700">
-                서버
-              </Label>
-              <Select
-                value={newCharacter.server}
-                onValueChange={(value) => setNewCharacter((prev) => ({ ...prev, server: value }))}
-              >
-                <SelectTrigger className="form-input">
-                  <SelectValue placeholder="서버 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {servers.map((server) => (
-                    <SelectItem key={server} value={server}>
-                      {server}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button onClick={handleCloseFormModal} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md">
+                취소
+              </Button>
+              <Button onClick={handleSaveCharacter} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
+                저장
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="level" className="text-gray-700">
-                레벨
-              </Label>
-              <Input
-                id="level"
-                type="number"
-                value={newCharacter.level}
-                onChange={(e) => {
-                  console.debug(`Level input changed: ${e.target.value}`);
-                  setNewCharacter((prev) => ({ ...prev, level: e.target.value }));
-                }}
-                placeholder="65"
-                className="form-input"
-              />
-            </div>
-            <div>
-              <Label htmlFor="profession" className="text-gray-700">
-                직업
-              </Label>
-              <Select
-                value={newCharacter.profession}
-                onValueChange={(value) => {
-                  console.debug(`Profession select changed: ${value}`);
-                  setNewCharacter((prev) => ({ ...prev, profession: value }));
-                }}
-              >
-                <SelectTrigger className="form-input">
-                  <SelectValue placeholder="직업 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {professions.map((profession) => (
-                    <SelectItem key={profession} value={profession}>
-                      {profession}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="combatPower" className="text-gray-700">
-                전투력
-              </Label>
-              <Input
-                id="combatPower"
-                type="number"
-                value={newCharacter.combatPower}
-                onChange={(e) => {
-                  console.debug(`Combat Power input changed: ${e.target.value}`);
-                  setNewCharacter((prev) => ({ ...prev, combatPower: e.target.value }));
-                }}
-                placeholder="전투력 입력 (예: 12345)"
-                className="form-input"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2 mt-4">
-            <Button onClick={handleCloseFormModal} className="form-button-secondary">
-              취소
-            </Button>
-            <Button onClick={handleSaveCharacter} className="form-button-primary">
-              저장
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* 모든 캐릭터 요약 테이블 */}
-      <Card className="document-card">
-        <CardHeader className="excel-header">
-          <CardTitle className="text-gray-900">모든 캐릭터 요약</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          {filteredCharacters.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>이름</TableHead>
-                    <TableHead>서버</TableHead>
-                    <TableHead>레벨</TableHead>
-                    <TableHead>직업</TableHead>
-                    <TableHead>전투력</TableHead>
-                    <TableHead className="text-right">실버 코인</TableHead>
-                    <TableHead className="text-right">데몬 헌터 공물</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCharacters.map((character) => (
-                    <TableRow key={character.id}>
-                      <TableCell className="font-medium">{character.name}</TableCell>
-                      <TableCell>{character.server}</TableCell>
-                      <TableCell>{character.level}</TableCell>
-                      <TableCell>{character.profession}</TableCell>
-                      <TableCell>{character.combatPower.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{character.silverCoins.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{character.demonTribute.toLocaleString()}</TableCell>
+        {/* 모든 캐릭터 요약 테이블 */}
+        <Card className="document-card">
+          <CardHeader className="excel-header">
+            <CardTitle className="text-gray-900">모든 캐릭터 요약</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {filteredCharacters.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이름</TableHead>
+                      <TableHead>서버</TableHead>
+                      <TableHead>레벨</TableHead>
+                      <TableHead>직업</TableHead>
+                      <TableHead>전투력</TableHead>
+                      <TableHead className="text-right">실버 코인</TableHead>
+                      <TableHead className="text-right">데몬 헌터 공물</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p>표시할 캐릭터가 없습니다.</p>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCharacters.map((character) => (
+                      <TableRow key={character.id}>
+                        <TableCell className="font-medium">{character.name}</TableCell>
+                        <TableCell>{character.server}</TableCell>
+                        <TableCell>{character.level}</TableCell>
+                        <TableCell>{character.profession}</TableCell>
+                        <TableCell>{character.combatPower.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{character.silverCoins.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{character.demonTribute.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p>표시할 캐릭터가 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCharacters.length > 0 ? (
-          filteredCharacters.map((character) => (
-            <Card key={character.id} className="document-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {character.name.charAt(0)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCharacters.length > 0 ? (
+            filteredCharacters.map((character) => (
+              <Card key={character.id} className="document-card">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {character.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-gray-900 text-lg">
+                          {character.name}
+                          {character.favorite && <Star className="w-4 h-4 ml-2 inline text-yellow-400 fill-current" />}
+                        </CardTitle>
+                        <p className="text-gray-600 text-sm">
+                          {character.server} • Lv.{character.level} • {character.profession}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-gray-900 text-lg">
-                        {character.name}
-                        {character.favorite && <Star className="w-4 h-4 ml-2 inline text-yellow-400 fill-current" />}
-                      </CardTitle>
-                      <p className="text-gray-600 text-sm">
-                        {character.server} • Lv.{character.level} • {character.profession}
-                      </p>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleToggleFavorite(character.id)}
+                        className="text-yellow-500 border-yellow-500 hover:bg-yellow-50"
+                      >
+                        <Star className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleEditCharacter(character)}
+                        className="text-blue-500 border-blue-500 hover:bg-blue-50"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleDeleteCharacter(character.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">실버 코인</p>
+                    <p className="font-medium text-gray-900">{character.silverCoins.toLocaleString()}개</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">데몬 헌터 공물</p>
+                    <p className="font-medium text-gray-900">{character.demonTribute.toLocaleString()}개</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">전투력</p>
+                    <p className="font-medium text-gray-900">{character.combatPower.toLocaleString()}</p>
+                  </div>
+                  <div className="col-span-2 mt-2">
                     <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleToggleFavorite(character.id)}
-                      className="text-yellow-500 border-yellow-500 hover:bg-yellow-50"
+                      onClick={() => handleSelectCharacter(character)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md w-full"
                     >
-                      <Star className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleEditCharacter(character)}
-                      className="text-blue-500 border-blue-500 hover:bg-blue-50"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeleteCharacter(character.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
+                      선택
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">실버 코인</p>
-                  <p className="font-medium text-gray-900">{character.silverCoins.toLocaleString()}개</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">데몬 헌터 공물</p>
-                  <p className="font-medium text-gray-900">{character.demonTribute.toLocaleString()}개</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">전투력</p>
-                  <p className="font-medium text-gray-900">{character.combatPower.toLocaleString()}</p>
-                </div>
-                <div className="col-span-2 mt-2">
-                  <Button
-                    onClick={() => handleSelectCharacter(character)}
-                    className="form-button-primary w-full"
-                  >
-                    선택
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p>검색 결과가 없습니다.</p>
-        )}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p>검색 결과가 없습니다.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </UnifiedLayout>
   )
 }

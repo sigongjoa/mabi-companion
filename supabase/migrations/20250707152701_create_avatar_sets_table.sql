@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS avatar_sets (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);

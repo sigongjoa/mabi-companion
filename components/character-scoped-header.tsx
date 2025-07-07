@@ -8,11 +8,10 @@ import { Users, User } from "lucide-react"
 
 interface CharacterScopedHeaderProps {
   title: string
-  description: string
   icon: React.ComponentType<{ className?: string }>
 }
 
-export function CharacterScopedHeader({ title, description, icon: Icon }: CharacterScopedHeaderProps) {
+export function CharacterScopedHeader({ title, icon: Icon }: CharacterScopedHeaderProps) {
   const { activeCharacter, viewMode, characters } = useCharacter()
 
   return (
@@ -25,7 +24,6 @@ export function CharacterScopedHeader({ title, description, icon: Icon }: Charac
             </div>
             <div className="min-w-0">
               <h1 className="text-xl md:text-3xl font-bold text-gray-900">{title}</h1>
-              <p className="text-sm md:text-base text-gray-600 mt-1">{description}</p>
             </div>
           </div>
 

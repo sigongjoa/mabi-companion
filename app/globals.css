@@ -9,32 +9,30 @@
     padding: 0;
   }
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 100%; /* bg-white */
+    --foreground: 217 23% 7%; /* text-[#111618] */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 217 23% 7%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 217 23% 7%;
+    --primary: 217 23% 7%; /* #111618 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 3% 95%; /* #f0f3f5 */
+    --secondary-foreground: 217 23% 7%;
+    --muted: 210 3% 95%;
+    --muted-foreground: 204 15% 60%; /* #607c8a */
+    --accent: 210 3% 95%;
+    --accent-foreground: 217 23% 7%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --radius: 0.75rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 3% 95%; /* #f0f3f5 */
+    --input: 210 3% 95%;
+    --ring: 217 23% 7%;
+    --radius: 0.5rem;
 
-    /* Clean white design tokens */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    /* Custom variables for the new design */
+    --checkbox-tick-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27rgb(255,255,255)%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z%27/%3e%3c/svg%3e');
+    --select-button-svg: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724px%27 height=%2724px%27 fill=%27rgb(156,171,186)%27 viewBox=%270 0 256 256%27%3e%3cpath d=%27M181.66,170.34a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-48-48a8,8,0,0,1,11.32-11.32L128,212.69l42.34-42.35A8,8,0,0,1,181.66,170.34Zm-96-84.68L128,43.31l42.34,42.35a8,8,0,0,0,11.32-11.32l-48-48a8,8,0,0,0-11.32,0l-48-48A8,8,0,0,0,85.66,85.66Z%27%3e%3c/path%3e%3c/svg%3e');
   }
 }
 
@@ -43,7 +41,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-white text-foreground font-sans;
+    @apply bg-background text-foreground;
     font-display: swap;
   }
 
@@ -64,404 +62,27 @@
   }
 }
 
-/* Performance-optimized animations */
-@layer utilities {
-  .animate-spin-fast {
-    animation: spin 0.5s linear infinite;
+@layer components {
+  .form-select {
+    background-image: var(--select-button-svg);
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    appearance: none;
   }
 
-  .will-change-transform {
-    will-change: transform;
+  .form-input {
+    @apply block w-full rounded-lg border-gray-700 bg-gray-800 text-white placeholder:text-gray-400 focus:border-[#0c7ff2] focus:ring-0;
   }
 
-  .will-change-opacity {
-    will-change: opacity;
-  }
-
-  .gpu-accelerated {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-  }
-}
-
-/* Enhanced white card styling */
-.card {
-  @apply bg-white border border-gray-200 shadow-sm rounded-lg;
-  contain: layout style;
-  transition: all 0.2s ease;
-}
-
-.card:hover {
-  @apply shadow-md;
-  transform: translateY(-1px);
-}
-
-.card-header {
-  @apply bg-gray-50 border-b border-gray-200 px-6 py-4 rounded-t-lg;
-}
-
-.card-content {
-  @apply p-6;
-}
-
-/* Modern white card with enhanced styling */
-.modern-card {
-  @apply bg-white border border-gray-200 shadow-lg rounded-xl;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.modern-card:hover {
-  @apply shadow-xl border-gray-300;
-  transform: translateY(-2px);
-}
-
-/* Clean table styling */
-.table {
-  @apply w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm;
-}
-
-.table th {
-  @apply bg-gray-50 border-b border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-900;
-}
-
-.table td {
-  @apply border-b border-gray-100 px-4 py-3 text-sm text-gray-700;
-}
-
-.table tr:hover {
-  @apply bg-gray-50;
-}
-
-/* Ribbon-style navigation - Clean white design */
-.ribbon {
-  @apply bg-white border-b border-gray-200 shadow-sm;
-  contain: layout style;
-}
-
-.ribbon-tab {
-  @apply px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-b-2 border-transparent;
-  transition: all 0.2s ease;
-  touch-action: manipulation;
-}
-
-.ribbon-tab.active {
-  @apply text-blue-600 border-blue-600 bg-blue-50;
-}
-
-.ribbon-group {
-  @apply flex flex-col items-center p-4 border-r border-gray-200 min-w-[90px];
-  contain: layout;
-}
-
-.ribbon-button {
-  @apply flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer;
-  touch-action: manipulation;
-}
-
-.ribbon-button-large {
-  @apply flex flex-col items-center p-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer justify-center;
-  min-height: 70px;
-  touch-action: manipulation;
-}
-
-/* Timer widget styling */
-.timer-widget {
-  @apply bg-white border border-gray-200 shadow-sm rounded-lg p-4 space-y-3;
-  contain: layout style;
-}
-
-.timer-display {
-  @apply font-mono text-lg font-bold text-center p-3 bg-gray-50 border border-gray-200 rounded-lg;
-  font-variant-numeric: tabular-nums;
-}
-
-.progress-bar {
-  @apply w-full h-3 bg-gray-200 rounded-full overflow-hidden;
-  contain: layout;
-}
-
-.progress-fill {
-  @apply h-full transition-all duration-300 ease-out bg-gradient-to-r from-blue-500 to-blue-600;
-  will-change: width;
-}
-
-/* Enhanced progress bars with clean styling */
-.progress-modern {
-  @apply w-full h-3 bg-gray-200 rounded-full overflow-hidden relative;
-}
-
-.progress-fill-modern {
-  @apply h-full transition-all duration-500 ease-out rounded-full;
-  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 50%, #2563eb 100%);
-  position: relative;
-}
-
-.progress-fill-modern::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Status indicators with clean styling */
-.status-high {
-  @apply bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-full text-xs font-medium;
-}
-.status-medium {
-  @apply bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-xs font-medium;
-}
-.status-low {
-  @apply bg-green-100 text-green-800 border border-green-200 px-3 py-1 rounded-full text-xs font-medium;
-}
-.status-complete {
-  @apply bg-blue-100 text-blue-800 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium;
-}
-
-/* Enhanced status indicators */
-.status-indicator {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.status-success {
-  @apply status-indicator bg-green-100 text-green-800 border border-green-200;
-}
-
-.status-warning {
-  @apply status-indicator bg-yellow-100 text-yellow-800 border border-yellow-200;
-}
-
-.status-info {
-  @apply status-indicator bg-blue-100 text-blue-800 border border-blue-200;
-}
-
-/* Form controls */
-.form-input {
-  @apply border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white;
-  touch-action: manipulation;
-}
-
-.form-button {
-  @apply px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200;
-  touch-action: manipulation;
-}
-
-.form-button-primary {
-  @apply form-button bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700 shadow-sm hover:shadow-md;
-}
-
-.form-button-secondary {
-  @apply form-button bg-white text-gray-700 border-gray-300 hover:bg-gray-50 shadow-sm hover:shadow-md;
-}
-
-/* Modern button styles with clean white design */
-.btn-modern {
-  @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform shadow-sm;
-}
-
-.btn-modern:hover {
-  transform: translateY(-1px);
-  @apply shadow-md;
-}
-
-.btn-primary-modern {
-  @apply btn-modern bg-blue-600 text-white hover:bg-blue-700;
-}
-
-.btn-secondary-modern {
-  @apply btn-modern bg-white text-gray-700 border border-gray-300 hover:bg-gray-50;
-}
-
-/* Enhanced animations */
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.slide-up {
-  animation: slideUp 0.5s ease-out;
-}
-
-.scale-in {
-  animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .ribbon {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-  }
-
-  .ribbon-group {
-    min-width: 70px;
-    padding: 8px;
-  }
-
-  .ribbon-button-large {
-    min-height: 60px;
-    padding: 8px;
-  }
-
-  .timer-display {
-    font-size: 1rem;
-    padding: 12px;
-  }
-
-  .form-input,
-  .form-button {
-    min-height: 44px; /* iOS touch target */
-  }
-
-  .card-content {
-    @apply p-4;
-  }
-
-  .table th,
-  .table td {
-    @apply px-3 py-2;
-  }
-
-  .modern-card {
-    @apply rounded-lg;
-  }
-
-  .btn-modern {
-    @apply px-4 py-2 text-sm;
-  }
-}
-
-/* Tablet responsiveness */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .ribbon-group {
-    min-width: 80px;
-  }
-
-  .ribbon-button-large {
-    min-height: 65px;
-  }
-}
-
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .card {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  .card:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-}
-
-/* Print styles */
-@media print {
-  .ribbon {
-    display: none !important;
-  }
-
-  .card {
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .progress-fill,
-  .progress-fill-modern {
-    transition: none;
-  }
-
-  .ribbon-tab,
-  .ribbon-button,
-  .ribbon-button-large {
-    transition: none;
-  }
-
-  .form-button,
-  .btn-modern {
-    transition: none;
-  }
-
-  .modern-card {
-    transition: none;
-  }
-
-  .modern-card:hover {
-    transform: none;
-  }
-}
-
-/* Focus styles for accessibility */
-.form-input:focus,
-.form-button:focus,
-.ribbon-tab:focus,
-.ribbon-button:focus,
-.ribbon-button-large:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Loading states */
-.loading-skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
+  input[type="checkbox"] {
+    @apply h-5 w-5 rounded border-gray-600 bg-gray-800 text-[#0c7ff2] checked:bg-[#0c7ff2] checked:border-[#0c7ff2] focus:ring-0 focus:ring-offset-0 focus:border-[#0c7ff2] focus:outline-none;
+    background-image: var(--checkbox-tick-svg);
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 }
 
@@ -592,7 +213,7 @@
 }
 
 .crafting-button-secondary {
-  @apply crafting-button bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm hover:shadow-md;
+  @apply crafting-button bg-white text-gray-700 border-gray-300 hover:bg-gray-50 shadow-sm hover:shadow-md;
 }
 
 .crafting-button-success {
@@ -715,81 +336,6 @@
     width: 100%;
     justify-content: flex-end;
   }
-}
-
-/* Add basic toast styling to ensure visibility */
-.ToastViewport {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent black background */
-  display: flex !important;
-  justify-content: center !important; /* Center horizontally */
-  align-items: center !important; /* Center vertically */
-  padding: 1rem !important;
-  gap: 0.5rem !important;
-  pointer-events: none !important; /* Allows clicks to pass through viewport */
-  z-index: 99999 !important; /* Ensure toast is on top of other elements, even higher */
-  flex-direction: column !important; /* Ensure vertical stacking */
-}
-
-.Toast {
-  background-color: red !important; /* Bright red background */
-  color: white !important; /* White text */
-  padding: 2rem !important; /* Large padding */
-  font-size: 2em !important; /* Large font size */
-  text-align: center !important; /* Center text */
-  width: 80% !important; /* Make it wide */
-  max-width: 600px !important; /* Max width */
-  border: 5px solid yellow !important; /* Yellow border */
-  box-shadow: 0 0 20px rgba(255, 255, 0, 0.8) !important; /* Glowing effect */
-
-  /* Existing properties to maintain structure, also with !important */
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  space-x: 4 !important;
-  overflow: hidden !important;
-  border-radius: 0.375rem !important; /* rounded-md */
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; /* shadow-lg */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  pointer-events: auto !important;
-}
-
-.Toast[data-state="open"] {
-  animation: slideInFromRight 0.3s ease-out forwards !important;
-}
-
-.Toast[data-state="closed"] {
-  animation: fadeOut 0.2s ease-in forwards !important;
-}
-
-@keyframes slideInFromRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-.ToastClose {
-  @apply absolute right-2 top-2 rounded-md p-1 text-gray-500 opacity-0 transition-opacity hover:text-gray-900 focus:opacity-100 focus:ring-1 group-hover:opacity-100;
-  z-index: 999999 !important; /* Even higher for the close button */
-}
-
-.ToastTitle {
-  font-weight: bold !important;
-  font-size: 1.5em !important; /* Make title larger */
-}
-
-.ToastDescription {
-  opacity: 1 !important;
-  font-size: 1.2em !important; /* Make description larger */
 }
 
 /* Remove specific shadcn/ui variant styling to avoid conflicts with !important */

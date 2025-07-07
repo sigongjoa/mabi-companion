@@ -1,10 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Map, Sword, Infinity, Users, Target, Zap, Shield } from "lucide-react"
-import { FavoriteToggle } from "@/components/favorite-toggle"
-import { Input } from "@/components/ui/input"
-import { useState } from "react"
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Map, Sword, Infinity, Users, Target, Zap, Shield } from "lucide-react";
+import { FavoriteToggle } from "@/components/favorite-toggle";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import UnifiedLayout from "@/components/unified-layout";
 
 const dungeonData = [
   { name: "알비 1층", level: "~Lv.20", weaponRunes: "혹한", armorRunes: "방호, 결핍", note: "초보자~중급자 추천" },
@@ -37,7 +40,7 @@ const dungeonData = [
     armorRunes: "저격, 난투, 격통, 절망, 기습, 압도",
     note: "최상위 난이도, 고효율",
   },
-]
+];
 
 const infiniteCollectionData = [
   {
@@ -75,7 +78,7 @@ const infiniteCollectionData = [
     method: "약품 가공 메뉴 → 마력 기폭제 10회 설정 → 구하는 방법 약초 채집",
     tip: "새록버섯, 튼튼버섯 등 버섯류 주변",
   },
-]
+];
 
 const jobData = [
   {
@@ -118,11 +121,11 @@ const jobData = [
       {
         name: "빙결술사",
         tags: ["원소", "생존", "소환", "강타", "방해", "보조"],
-        feature: "빙결 특화, CC기, 파티 유틸",
+                feature: "빙결 특화, CC기, 파티 유틸",
       },
     ],
   },
-]
+];
 
 const runeData = [
   { tier: "1티어", name: "현란함", effect: "치명타 확률 +10%, 치명타 피해 +30%", note: "전 직업 공통, 딜러 필수" },
@@ -141,7 +144,7 @@ const runeData = [
   },
   { tier: "2티어", name: "날쌤+", effect: "강타 적중 시 5초간 연타 피해 18% 증가", note: "근딜, 연타 위주" },
   { tier: "3티어", name: "강렬함+", effect: "연타 적중 시 5초간 강타 피해 18% 증가", note: "연타/강타 혼합 세팅" },
-]
+];
 
 const combatTips = [
   {
@@ -171,318 +174,315 @@ const combatTips = [
       "경매장 활용한 효율적 구매",
     ],
   },
-]
+];
 
 export default function GuidesPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredDungeonData = dungeonData.filter(dungeon =>
-    dungeon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dungeon.level.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dungeon.weaponRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dungeon.armorRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dungeon.note.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDungeonData = dungeonData.filter(
+    (dungeon) =>
+      dungeon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dungeon.level.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dungeon.weaponRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dungeon.armorRunes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dungeon.note.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredInfiniteCollectionData = infiniteCollectionData.filter(item =>
-    item.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.method.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.tip.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredInfiniteCollectionData = infiniteCollectionData.filter(
+    (item) =>
+      item.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.method.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tip.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredJobData = jobData.map(series => ({
-    ...series,
-    jobs: series.jobs.filter(job =>
-      job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.feature.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  })).filter(series => series.jobs.length > 0);
+  const filteredJobData = jobData
+    .map((series) => ({
+      ...series,
+      jobs: series.jobs.filter(
+        (job) =>
+          job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.feature.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      ),
+    }))
+    .filter((series) => series.jobs.length > 0);
 
-  const filteredRuneData = runeData.filter(rune =>
-    rune.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rune.effect.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rune.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rune.tier.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRuneData = runeData.filter(
+    (rune) =>
+      rune.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rune.effect.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rune.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rune.tier.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredCombatTips = combatTips.map(category => ({
-    ...category,
-    tips: category.tips.filter(tip =>
-      tip.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(category => category.tips.length > 0);
+  const filteredCombatTips = combatTips
+    .map((category) => ({
+      ...category,
+      tips: category.tips.filter((tip) => tip.toLowerCase().includes(searchQuery.toLowerCase())),
+    }))
+    .filter((category) => category.tips.length > 0);
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Enhanced Header - Dashboard style */}
-      <div className="modern-card fade-in mb-6">
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-blue-100 rounded-2xl flex-shrink-0">
-                <Map className="w-8 h-8 text-blue-600" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">종합 가이드</h1>
-                <p className="text-lg text-gray-600 mt-1">던전, 직업, 무한채집, 룬 티어, 전투력 가이드</p>
-                <p className="text-sm text-gray-500 mt-1">게임 플레이에 필요한 모든 정보를 한 곳에서 찾아보세요.</p>
-              </div>
-            </div>
-            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-              <Input
-                type="text"
-                placeholder="검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
+    <UnifiedLayout>
+      <div className="p-6 space-y-6 bg-white min-h-screen" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
+        <div className="flex flex-wrap justify-between gap-3 p-4">
+          <div className="flex min-w-72 flex-col gap-3">
+            <p className="text-[#111518] tracking-light text-[32px] font-bold leading-tight">종합 가이드</p>
+            <p className="text-[#637c88] text-sm font-normal leading-normal">던전, 직업, 무한채집, 룬 티어, 전투력 가이드</p>
+          </div>
+          <div className="flex items-center">
+            <Input
+              type="text"
+              placeholder="검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
           </div>
         </div>
-      </div>
 
-      <Tabs defaultValue="dungeons" className="space-y-6">
-        <div className="office-card p-4">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-100">
-            <TabsTrigger value="dungeons" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              <Sword className="w-4 h-4 mr-2" />
-              던전 정보
-            </TabsTrigger>
-            <TabsTrigger value="infinite" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              <Infinity className="w-4 h-4 mr-2" />
-              무한 채집
-            </TabsTrigger>
-            <TabsTrigger value="jobs" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              <Users className="w-4 h-4 mr-2" />
-              직업 가이드
-            </TabsTrigger>
-            <TabsTrigger value="runes" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              <Zap className="w-4 h-4 mr-2" />룬 티어
-            </TabsTrigger>
-            <TabsTrigger value="combat" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
-              <Target className="w-4 h-4 mr-2" />
-              전투력
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <Tabs defaultValue="dungeons" className="space-y-6">
+          <div className="p-4">
+            <TabsList className="grid w-full grid-cols-5 bg-[#f0f3f5] rounded-lg">
+              <TabsTrigger value="dungeons" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md">
+                <Sword className="w-4 h-4 mr-2" />
+                던전 정보
+              </TabsTrigger>
+              <TabsTrigger value="infinite" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md">
+                <Infinity className="w-4 h-4 mr-2" />
+                무한 채집
+              </TabsTrigger>
+              <TabsTrigger value="jobs" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md">
+                <Users className="w-4 h-4 mr-2" />
+                직업 가이드
+              </TabsTrigger>
+              <TabsTrigger value="runes" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md">
+                <Zap className="w-4 h-4 mr-2" />룬 티어
+              </TabsTrigger>
+              <TabsTrigger value="combat" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md">
+                <Target className="w-4 h-4 mr-2" />
+                전투력
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value="dungeons" className="space-y-6">
-          <Card className="office-card">
-            <CardHeader>
-              <CardTitle className="text-gray-900">심층 던전별 드랍 아이템</CardTitle>
-              <CardDescription className="text-gray-600">
-                던전별 입장 레벨과 주요 드롭 룬(에픽 등급) 정보
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="office-table">
-                  <thead>
-                    <tr>
-                      <th>던전명</th>
-                      <th>입장 레벨</th>
-                      <th>무기 룬</th>
-                      <th>방어구 룬</th>
-                      <th>특징</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDungeonData.map((dungeon, index) => (
-                      <tr key={index}>
-                        <td className="font-medium">{dungeon.name}</td>
-                        <td>{dungeon.level}</td>
-                        <td>{dungeon.weaponRunes}</td>
-                        <td>{dungeon.armorRunes}</td>
-                        <td className="text-xs">{dungeon.note}</td>
+          <TabsContent value="dungeons" className="space-y-6">
+            <Card className="shadow-sm border border-[#dce2e5]">
+              <CardHeader>
+                <CardTitle className="text-[#111518]">심층 던전별 드랍 아이템</CardTitle>
+                <CardDescription className="text-[#637c88]">
+                  던전별 입장 레벨과 주요 드롭 룬(에픽 등급) 정보
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left text-gray-500">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3">던전명</th>
+                        <th scope="col" className="px-6 py-3">입장 레벨</th>
+                        <th scope="col" className="px-6 py-3">무기 룬</th>
+                        <th scope="col" className="px-6 py-3">방어구 룬</th>
+                        <th scope="col" className="px-6 py-3">특징</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    </thead>
+                    <tbody>
+                      {filteredDungeonData.map((dungeon, index) => (
+                        <tr key={index} className="bg-white border-b">
+                          <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{dungeon.name}</td>
+                          <td className="px-6 py-4">{dungeon.level}</td>
+                          <td className="px-6 py-4">{dungeon.weaponRunes}</td>
+                          <td className="px-6 py-4">{dungeon.armorRunes}</td>
+                          <td className="px-6 py-4 text-xs">{dungeon.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="infinite" className="space-y-6">
-          <Card className="office-card">
-            <CardHeader>
-              <CardTitle className="text-gray-900">무한/반자동 채집 아이템 정리표</CardTitle>
-              <CardDescription className="text-gray-600">
-                제작 아이템을 활용해 특정 재료를 무한 또는 반자동으로 채집하는 방법
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredInfiniteCollectionData.map((item, index) => (
-                  <Card key={index} className="office-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-gray-900 text-lg flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-bold">
-                          {item.item.charAt(0)}
+          <TabsContent value="infinite" className="space-y-6">
+            <Card className="shadow-sm border border-[#dce2e5]">
+              <CardHeader>
+                <CardTitle className="text-[#111518]">무한/반자동 채집 아이템 정리표</CardTitle>
+                <CardDescription className="text-[#637c88]">
+                  제작 아이템을 활용해 특정 재료를 무한 또는 반자동으로 채집하는 방법
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredInfiniteCollectionData.map((item, index) => (
+                    <Card key={index} className="shadow-sm border border-[#dce2e5]">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-[#111518] text-lg flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-bold">
+                            {item.item.charAt(0)}
+                          </div>
+                          <span>{item.item}</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <p className="font-semibold text-[#637c88] mb-1">채집 대상</p>
+                            <p className="text-[#111518]">{item.target}</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#637c88] mb-1">설정 수량</p>
+                            <p className="text-[#111518]">{item.quantity}</p>
+                          </div>
+                          <div className="lg:col-span-2">
+                            <p className="font-semibold text-[#637c88] mb-1">자동 채집 방식</p>
+                            <p className="text-[#111518]">{item.method}</p>
+                          </div>
+                          <div className="md:col-span-2 lg:col-span-4">
+                            <p className="font-semibold text-[#637c88] mb-1">팁 & 장소 예시</p>
+                            <p className="text-[#111518]">{item.tip}</p>
+                          </div>
                         </div>
-                        <span>{item.item}</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="font-semibold text-gray-600 mb-1">채집 대상</p>
-                          <p className="text-gray-800">{item.target}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-600 mb-1">설정 수량</p>
-                          <p className="text-gray-800">{item.quantity}</p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <p className="font-semibold text-gray-600 mb-1">자동 채집 방식</p>
-                          <p className="text-gray-800">{item.method}</p>
-                        </div>
-                        <div className="md:col-span-2 lg:col-span-4">
-                          <p className="font-semibold text-gray-600 mb-1">팁 & 장소 예시</p>
-                          <p className="text-gray-800">{item.tip}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="jobs" className="space-y-6">
-          <Card className="office-card">
-            <CardHeader>
-              <CardTitle className="text-gray-900">직업 계열 및 스킬 특징</CardTitle>
-              <CardDescription className="text-gray-600">마비노기 모바일의 다양한 직업과 그 특징</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {filteredJobData.map((series, index) => (
-                  <div key={index}>
-                    <h3 className="text-xl font-bold text-blue-700 mb-4">{series.series}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {series.jobs.map((job, jobIndex) => (
-                        <Card key={jobIndex} className="office-card">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-gray-900 text-lg">{job.name}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              <div>
-                                <p className="text-gray-600 text-sm mb-2">주요 스킬 태그</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {job.tags.map((tag, tagIndex) => (
-                                    <Badge
-                                      key={tagIndex}
-                                      variant="secondary"
-                                      className="text-xs bg-blue-100 text-blue-700 border-blue-200"
-                                    >
-                                      {tag}
-                                    </Badge>
-                                  ))}
+          <TabsContent value="jobs" className="space-y-6">
+            <Card className="shadow-sm border border-[#dce2e5]">
+              <CardHeader>
+                <CardTitle className="text-[#111518]">직업 계열 및 스킬 특징</CardTitle>
+                <CardDescription className="text-[#637c88]">마비노기 모바일의 다양한 직업과 그 특징</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {filteredJobData.map((series, index) => (
+                    <div key={index}>
+                      <h3 className="text-xl font-bold text-[#19a1e5] mb-4">{series.series}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {series.jobs.map((job, jobIndex) => (
+                          <Card key={jobIndex} className="shadow-sm border border-[#dce2e5]">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-[#111518] text-lg">{job.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="text-[#637c88] text-sm mb-2">주요 스킬 태그</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {job.tags.map((tag, tagIndex) => (
+                                      <Badge
+                                        key={tagIndex}
+                                        variant="secondary"
+                                        className="text-xs bg-[#e0f2fe] text-[#19a1e5] border-[#bfdbfe]"
+                                      >
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-[#637c88] text-sm mb-1">특징</p>
+                                  <p className="text-[#111518] text-sm">{job.feature}</p>
                                 </div>
                               </div>
-                              <div>
-                                <p className="text-gray-600 text-sm mb-1">특징</p>
-                                <p className="text-gray-800 text-sm">{job.feature}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="runes" className="space-y-6">
-          <Card className="office-card">
-            <CardHeader>
-              <CardTitle className="text-gray-900">엠블럼 룬 티어 가이드</CardTitle>
-              <CardDescription className="text-gray-600">
-                직업과 상황에 맞는 최적의 엠블럼 룬을 선택하여 전투력을 극대화하세요
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="office-table">
-                  <thead>
-                    <tr>
-                      <th>티어</th>
-                      <th>룬 이름</th>
-                      <th>주요 효과 요약</th>
-                      <th>비고/추천 직업군</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRuneData.map((rune, index) => (
-                      <tr key={index}>
-                        <td>
-                          <Badge
-                            className={
-                              rune.tier === "1티어"
-                                ? "bg-red-100 text-red-700 border-red-200"
-                                : rune.tier === "2티어"
-                                  ? "bg-blue-100 text-blue-700 border-blue-200"
-                                  : "bg-green-100 text-green-700 border-green-200"
-                            }
-                          >
-                            {rune.tier}
-                          </Badge>
-                        </td>
-                        <td className="font-medium">{rune.name}</td>
-                        <td>{rune.effect}</td>
-                        <td className="text-sm">{rune.note}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="combat" className="space-y-6">
-          <Card className="office-card">
-            <CardHeader>
-              <CardTitle className="text-gray-900">전투력 상승 가이드</CardTitle>
-              <CardDescription className="text-gray-600">효율적으로 전투력을 높이는 핵심 전략들</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {filteredCombatTips.map((section, index) => (
-                  <Card key={index} className="office-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-gray-900 flex items-center space-x-2">
-                        {section.category === "장비 강화" && <Shield className="w-5 h-5 text-blue-600" />}
-                        {section.category === "룬 및 보석" && <Zap className="w-5 h-5 text-purple-600" />}
-                        {section.category === "효율적 성장" && <Target className="w-5 h-5 text-green-600" />}
-                        <span>{section.category}</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {section.tips.map((tip, tipIndex) => (
-                          <li key={tipIndex} className="text-sm text-gray-700 flex items-start space-x-2">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span>{tip}</span>
-                          </li>
+                            </CardContent>
+                          </Card>
                         ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="runes" className="space-y-6">
+            <Card className="shadow-sm border border-[#dce2e5]">
+              <CardHeader>
+                <CardTitle className="text-[#111518]">엠블럼 룬 티어 가이드</CardTitle>
+                <CardDescription className="text-[#637c88]">
+                  직업과 상황에 맞는 최적의 엠블럼 룬을 선택하여 전투력을 극대화하세요
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left text-gray-500">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3">티어</th>
+                        <th scope="col" className="px-6 py-3">룬 이름</th>
+                        <th scope="col" className="px-6 py-3">주요 효과 요약</th>
+                        <th scope="col" className="px-6 py-3">비고/추천 직업군</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRuneData.map((rune, index) => (
+                        <tr key={index} className="bg-white border-b">
+                          <td className="px-6 py-4">
+                            <Badge
+                              className={
+                                rune.tier === "1티어"
+                                  ? "bg-[#fee2e2] text-[#ef4444] border-[#fecaca]"
+                                  : rune.tier === "2티어"
+                                    ? "bg-[#e0f2fe] text-[#19a1e5] border-[#bfdbfe]"
+                                    : "bg-[#dcfce7] text-[#22c55e] border-[#bbf7d0]"
+                              }
+                            >
+                              {rune.tier}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{rune.name}</td>
+                          <td className="px-6 py-4">{rune.effect}</td>
+                          <td className="px-6 py-4 text-sm">{rune.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="combat" className="space-y-6">
+            <Card className="shadow-sm border border-[#dce2e5]">
+              <CardHeader>
+                <CardTitle className="text-[#111518]">전투력 상승 가이드</CardTitle>
+                <CardDescription className="text-[#637c88]">효율적으로 전투력을 높이는 핵심 전략들</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {filteredCombatTips.map((section, index) => (
+                    <Card key={index} className="shadow-sm border border-[#dce2e5]">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg text-[#111518] flex items-center space-x-2">
+                          {section.category === "장비 강화" && <Shield className="w-5 h-5 text-[#19a1e5]" />}
+                          {section.category === "룬 및 보석" && <Zap className="w-5 h-5 text-[#a855f7]" />}
+                          {section.category === "효율적 성장" && <Target className="w-5 h-5 text-[#22c55e]" />}
+                          <span>{section.category}</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2">
+                          {section.tips.map((tip, tipIndex) => (
+                            <li key={tipIndex} className="text-sm text-[#111518] flex items-start space-x-2">
+                              <div className="w-1.5 h-1.5 bg-[#19a1e5] rounded-full mt-2 flex-shrink-0"></div>
+                              <span>{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </UnifiedLayout>
+  );
 }

@@ -10,6 +10,7 @@ import { FavoriteToggle } from "@/components/favorite-toggle"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { logger } from "@/lib/logger"
+import UnifiedLayout from "@/components/unified-layout";
 
 interface LifeSkill {
   id: number
@@ -127,133 +128,139 @@ export default function SkillsPage() {
   if (loading) {
     logger.debug("로딩 상태 렌더링");
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen bg-gray-50">
-        <Skeleton className="w-[300px] h-[100px] rounded-md" />
-      </div>
+      <UnifiedLayout>
+        <div className="p-6 flex items-center justify-center min-h-screen bg-gray-50">
+          <Skeleton className="w-[300px] h-[100px] rounded-md" />
+        </div>
+      </UnifiedLayout>
     );
   }
 
   if (error) {
     logger.debug("오류 상태 렌더링", { error });
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen bg-gray-50 text-red-500">
-        <p>{error}</p>
-      </div>
+      <UnifiedLayout>
+        <div className="p-6 flex items-center justify-center min-h-screen bg-gray-50 text-red-500">
+          <p>{error}</p>
+        </div>
+      </UnifiedLayout>
     );
   }
 
   logger.debug("일반 페이지 내용 렌더링");
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Enhanced Header - Dashboard style */}
-      <div className="modern-card fade-in mb-6">
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
-                <Sparkles className="w-8 h-8 text-purple-600" />
+    <UnifiedLayout>
+      <div className="p-6 space-y-6 bg-white min-h-screen" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
+        {/* Enhanced Header - Dashboard style */}
+        <div className="modern-card fade-in mb-6">
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-4 bg-purple-100 rounded-2xl flex-shrink-0">
+                  <Sparkles className="w-8 h-8 text-purple-600" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-4xl font-bold text-gray-900">생활 스킬</h1>
+                  <p className="text-lg text-gray-600 mt-1">생활 스킬 레벨 관리 및 효율적인 육성</p>
+                  <p className="text-sm text-gray-500 mt-1">다양한 생활 스킬의 레벨을 관리하고 필요한 정보를 확인하세요.</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-4xl font-bold text-gray-900">생활 스킬</h1>
-                <p className="text-lg text-gray-600 mt-1">생활 스킬 레벨 관리 및 효율적인 육성</p>
-                <p className="text-sm text-gray-500 mt-1">다양한 생활 스킬의 레벨을 관리하고 필요한 정보를 확인하세요.</p>
+              <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-6 h-6 text-purple-600" />
+                  <span className="text-gray-900 font-medium">
+                    총 {totalSkillLevels} 레벨
+                  </span>
+                </div>
+                <Input
+                  type="text"
+                  placeholder="검색..."
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  className="max-w-sm"
+                />
               </div>
-            </div>
-            <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-6 h-6 text-purple-600" />
-                <span className="text-gray-900 font-medium">
-                  총 {totalSkillLevels} 레벨
-                </span>
-              </div>
-              <Input
-                type="text"
-                placeholder="검색..."
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedCategory(category)}
-            className={
-              selectedCategory === category
-                ? "bg-purple-600 hover:bg-purple-700"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
-            }
-          >
-            {category}
-            {category !== "전체" && (
-              <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-700">
-                {skillsWithLevels.filter((s: LifeSkill & { level: number }) => s.category === category).length}
-              </Badge>
-            )}
-          </Button>
-        ))}
-      </div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category)}
+              className={
+                selectedCategory === category
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+              }
+            >
+              {category}
+              {category !== "전체" && (
+                <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-700">
+                  {skillsWithLevels.filter((s: LifeSkill & { level: number }) => s.category === category).length}
+                </Badge>
+              )}
+            </Button>
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredSkills.length > 0 ? (
-          filteredSkills.map((skill: LifeSkill & { level: number }) => (
-            <Card key={skill.id} className="bg-white border-gray-200 shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="text-3xl">{getSkillIcon(skill.name)}</div>
-                  <div className="flex-1">
-                    <CardTitle className="text-gray-900 text-sm">{skill.name}</CardTitle>
-                    <Badge variant="outline" className={`text-xs ${categoryColors[skill.category as keyof typeof categoryColors]}`}>
-                      {skill.category}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        logger.debug(`스킬 레벨 감소 버튼 클릭됨: ${skill.name} (ID: ${skill.id})`);
-                        updateSkillLevel(skill.id, -1);
-                      }}
-                      className="h-8 w-8 p-0 border-gray-300"
-                      disabled={skill.level <= 1}
-                    >
-                      <Minus className="w-3 h-3" />
-                    </Button>
-                    <div className="w-16 text-center">
-                      <span className="text-gray-900 font-medium text-sm">Lv. {skill.level}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredSkills.length > 0 ? (
+            filteredSkills.map((skill: LifeSkill & { level: number }) => (
+              <Card key={skill.id} className="document-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-3xl">{getSkillIcon(skill.name)}</div>
+                    <div className="flex-1">
+                      <CardTitle className="text-gray-900 text-sm">{skill.name}</CardTitle>
+                      <Badge variant="outline" className={`text-xs ${categoryColors[skill.category as keyof typeof categoryColors]}`}>
+                        {skill.category}
+                      </Badge>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        logger.debug(`스킬 레벨 증가 버튼 클릭됨: ${skill.name} (ID: ${skill.id})`);
-                        updateSkillLevel(skill.id, 1);
-                      }}
-                      className="h-8 w-8 p-0 border-gray-300"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p className="col-span-full text-center text-gray-500">일치하는 스킬이 없습니다.</p>
-        )}
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          logger.debug(`스킬 레벨 감소 버튼 클릭됨: ${skill.name} (ID: ${skill.id})`);
+                          updateSkillLevel(skill.id, -1);
+                        }}
+                        className="h-8 w-8 p-0 border-gray-300"
+                        disabled={skill.level <= 1}
+                      >
+                        <Minus className="w-3 h-3" />
+                      </Button>
+                      <div className="w-16 text-center">
+                        <span className="text-gray-900 font-medium text-sm">Lv. {skill.level}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          logger.debug(`스킬 레벨 증가 버튼 클릭됨: ${skill.name} (ID: ${skill.id})`);
+                          updateSkillLevel(skill.id, 1);
+                        }}
+                        className="h-8 w-8 p-0 border-gray-300"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="col-span-full text-center text-gray-500">일치하는 스킬이 없습니다.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </UnifiedLayout>
   )
 }

@@ -5,100 +5,30 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useCharacter } from "@/contexts/character-context"
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from '@/lib/supabase';
+import { useNotification } from "@/contexts/notification-context";
 import {
   Home,
   Package,
-  Sword,
-  CheckSquare,
   Users,
+  ScrollText,
+  LogIn,
+  LogOut,
+  UserCircle,
+  Gem,
   Hammer,
+  Swords,
+  Calendar,
   Sparkles,
-  Brain,
-  Map,
-  Save,
-  FileText,
-  Settings,
-  Download,
-  Upload,
-  RefreshCw,
   Clock,
-  Star,
+  MessageSquare,
+  Brain,
+  Trophy,
+  Shirt,
 } from "lucide-react"
-
-const ribbonTabs = [
-  {
-    id: "home",
-    label: "홈",
-    groups: [
-      {
-        title: "탐색",
-        items: [
-          { icon: Home, label: "대시보드", href: "/", size: "large" },
-        ],
-      },
-      {
-        title: "관리",
-        items: [
-          { icon: Package, label: "아이템", href: "/inventory", size: "large" },
-          { icon: Users, label: "캐릭터", href: "/characters", size: "large" },
-          { icon: CheckSquare, label: "숙제", href: "/quests", size: "large" },
-        ],
-      },
-      {
-        title: "장비 & 제작",
-        items: [
-          { icon: Sword, label: "장비", href: "/equipment", size: "large" },
-          { icon: Hammer, label: "제작", href: "/crafting", size: "large" },
-          { icon: Sparkles, label: "스킬", href: "/skills", size: "large" },
-        ],
-      },
-      {
-        title: "도구",
-        items: [
-          { icon: Clock, label: "타이머", href: "/timers", size: "small" },
-          { icon: Brain, label: "AI 도움", href: "/assistant", size: "small" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "data",
-    label: "데이터",
-    groups: [
-      {
-        title: "파일",
-        items: [
-          { icon: Save, label: "저장", action: "save", size: "large" },
-          { icon: Download, label: "내보내기", action: "export", size: "small" },
-          { icon: Upload, label: "가져오기", action: "import", size: "small" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "help",
-    label: "도움말",
-    groups: [
-      {
-        title: "가이드",
-        items: [
-          { icon: Map, label: "가이드", href: "/guides", size: "large" },
-          { icon: FileText, label: "문서", href: "/docs", size: "small" },
-        ],
-      },
-      {
-        title: "즐겨찾기",
-        items: [
-          { icon: Star, label: "즐겨찾기", href: "/favorites", size: "large" },
-          { icon: Settings, label: "설정", href: "/settings", size: "small" },
-        ],
-      },
-    ],
-  },
-]
 
 interface SidebarProps {
   isOpen: boolean
@@ -106,139 +36,104 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState("home")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const pathname = usePathname()
   const { activeCharacter } = useCharacter()
+  const { user, loading } = useAuth();
+  const { notifications, unreadCount, markAsRead } = useNotification();
 
-  const handleAction = useCallback((action: string) => {
-    switch (action) {
-      case "refresh":
-        window.location.reload()
-        break
-      case "save":
-        console.log("Saving data...")
-        break
-      case "export":
-        console.log("Exporting data...")
-        break
-      case "import":
-        console.log("Importing data...")
-        break
+  const handleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error during sign-in:", error);
     }
-  }, [])
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error during sign-out:", error);
+    }
+  };
+
+  const navItems = [
+    { href: "/", icon: Home, label: "홈" },
+    { href: "/characters", icon: Users, label: "캐릭터 관리" },
+    { href: "/inventory", icon: Package, label: "인벤토리" },
+    { href: "/equipment", icon: Shirt, label: "장비" },
+    { href: "/gems", icon: Gem, label: "젬" },
+    { href: "/crafting", icon: Hammer, label: "제작" },
+    { href: "/quests", icon: ScrollText, label: "퀘스트" },
+    { href: "/raid-board", icon: Swords, label: "레이드 매칭" },
+    { href: "/schedule", icon: Calendar, label: "스케줄" },
+    { href: "/skills", icon: Sparkles, label: "생활 스킬" },
+    { href: "/timers", icon: Clock, label: "타이머" },
+    { href: "/qa-board", icon: MessageSquare, label: "Q&A 게시판" },
+    { href: "/assistant", icon: Brain, label: "AI 어시스턴트" },
+    { href: "/leaderboard", icon: Trophy, label: "리더보드" },
+  ];
 
   return (
     <>
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full transform transition-all duration-300 ease-in-out bg-white border-r border-gray-200 shadow-lg",
+          "fixed left-0 top-0 z-40 h-full transform transition-all duration-300 ease-in-out bg-white border-r border-r-gray-200 shadow-md",
           isOpen ? "translate-x-0 w-64" : "-translate-x-full w-0 overflow-hidden",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200 bg-white">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  마비노기
-                  {activeCharacter && <span className="ml-2">- {activeCharacter.name}</span>}
-                </h2>
-                {!activeCharacter && <p className="text-xs text-gray-500">통합 관리 시스템</p>}
-              </div>
-            </div>
+          <div className="p-4 border-b border-b-gray-200 bg-white">
+            <h1 className="text-gray-900 text-base font-medium leading-normal">Mabinogi Mobile</h1>
           </div>
 
-          {/* Favorites Toggle */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="sidebar-favorites"
-                className="text-sm font-medium text-gray-700 flex items-center space-x-2"
-              >
-                <Star className="w-4 h-4" />
-                <span>즐겨찾기만 표시</span>
-              </Label>
-              <Switch id="sidebar-favorites" checked={showFavoritesOnly} onCheckedChange={setShowFavoritesOnly} />
-            </div>
-          </div>
-
-          {/* Tab Headers */}
-          <div className="flex flex-col p-4 border-b border-gray-200 bg-white">
-            {ribbonTabs.map((tab) => (
-              <Button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                variant="ghost"
+          <div className="flex flex-col gap-1 py-2 flex-grow">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  "justify-start mb-1 h-9 px-3 font-medium transition-all duration-200",
-                  activeTab === tab.id
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                  "flex items-center gap-3 px-4 py-2 rounded-lg mx-2 transition-colors duration-200",
+                  pathname === item.href
+                    ? "bg-violet-600 text-white font-semibold shadow-sm"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 )}
+                onClick={() => setIsOpen(false)} // Close sidebar on navigation
               >
-                {tab.label}
-              </Button>
+                <item.icon className="w-5 h-5" />
+                <p className="text-base leading-normal">{item.label}</p>
+              </Link>
             ))}
           </div>
-
-          {/* Navigation Content */}
-          <nav className="flex-1 p-4 space-y-4 bg-white overflow-y-auto">
-            {ribbonTabs.map((tab) => (
-              <div key={tab.id} className={cn("space-y-3", activeTab !== tab.id && "hidden")}>
-                {tab.groups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="space-y-2">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">{group.title}</h3>
-                    <div className="space-y-1">
-                      {group.items.map((item, itemIndex) => (
-                        <div key={itemIndex}>
-                          {item.href ? (
-                            <Link
-                              href={item.href}
-                              className={cn(
-                                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
-                                pathname === item.href
-                                  ? "bg-blue-600 text-white shadow-sm"
-                                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm border border-transparent hover:border-blue-200",
-                              )}
-                              onClick={() => setIsOpen(false)}
-                            >
-                              <item.icon className="w-5 h-5 flex-shrink-0" />
-                              <span className="truncate">{item.label}</span>
-                            </Link>
-                          ) : (
-                            <Button
-                              onClick={() => {
-                                item.action && handleAction(item.action)
-                                setIsOpen(false)
-                              }}
-                              variant="ghost"
-                              className={cn(
-                                "flex items-center space-x-3 w-full justify-start px-3 py-2 h-auto rounded-lg font-medium transition-all duration-200",
-                                "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm border border-transparent hover:border-blue-200",
-                              )}
-                            >
-                              <item.icon className="w-5 h-5 flex-shrink-0" />
-                              <span className="truncate">{item.label}</span>
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-xs text-gray-500 text-center font-medium">v2.0.0 - Clean Edition</p>
+          <div className="p-4 border-t border-t-gray-200 bg-gray-50 mt-auto">
+            {loading ? (
+              <div className="text-center text-sm text-gray-500">로딩중...</div>
+            ) : user ? (
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Link href={`/profile/${user.id}`} className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+                    <UserCircle className="w-5 h-5 text-gray-600" />
+                    <span className="text-sm font-medium truncate hover:underline">{user.user_metadata?.user_name || user.email}</span>
+                  </Link>
+                </div>
+                <Button onClick={handleLogout} variant="ghost" className="w-full justify-center text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                  <LogOut className="w-4 h-4 mr-2" /> 로그아웃
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleLogin} className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-md">
+                <LogIn className="w-4 h-4 mr-2" /> Google로 로그인
+              </Button>
+            )}
           </div>
         </div>
       </div>

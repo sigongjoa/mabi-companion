@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마비노기 모바일 유저 니즈 분석 대시보드</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter (Tailwind default often resembles this) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Custom font-family for Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8 text-gray-800">
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center text-gray-900 mb-8 sm:mb-10 lg:mb-12 rounded-xl p-4 bg-white shadow-xl border-b-4 border-indigo-600">
+        마비노기 모바일 유저 니즈 분석 보고서 대시보드
+    </h1>
+
+    <!-- Overview Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-indigo-400">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-4 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-indigo-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9.293 12.95a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L10 10.586 8.707 9.293a1 1 0 00-1.414 1.414l2 2z" clip-rule="evenodd"></path>
+            </svg>
+            개요
+        </h2>
+        <p class="text-gray-700 leading-relaxed">
+            마비노기 모바일 출시 100일 이후 유저들의 다양한 정보 니즈를 분석한 보고서입니다.
+            다섯 가지 페르소나별로 필요한 정보, 기능, 서비스 니즈를 조사하고, 기존 RAG (Retrieval Augmented Generation) 시스템의 부족한 점을 도출하여
+            유저 경험 향상을 위한 정보 및 기능 개선 방안을 제안합니다.
+        </p>
+    </div>
+
+    <!-- Persona Summary Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-blue-400">
+        <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+            </svg>
+            페르소나별 주요 니즈 요약
+        </h2>
+        <p class="text-gray-600 mb-4">각 페르소나가 요구하는 핵심 정보와 필요한 기능을 요약한 표입니다.</p>
+        <div class="overflow-x-auto rounded-lg border border-blue-200">
+            <table class="min-w-full divide-y divide-blue-200">
+                <thead class="bg-blue-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                            페르소나
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                            유저 니즈 (요구 정보 & 기능)
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                            주요 출처
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-blue-100">
+                    <!-- Data for personasSummary -->
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">전투력 중심</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">빠른 전투력 상승 노하우, 장비 강화 및 세팅 가이드, 전투력 정체 구간 돌파 방법, 효율적 성장 경로</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">gall.dcinside.com</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">수집/업적 매니아</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">숨겨진 퀘스트/업적 위치와 조건, 보상 정리, 칭호 획득법, 콜렉션 체크리스트 및 진행 현황 추적</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">mabinogimobile.nexon.com</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">아바타 수집가</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">아바타(코스튬) 획득처 및 세트효과 정보, 염색/코디 사례 공유, 패션 인벤토리 관리 (버그 개선)</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">gametrics.com, mabimo.inven.co.kr</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">스킬 최적화 유저</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">직업별 스킬 트리 및 딜 사이클, 스킬 강화 우선순위 가이드, 데미지 계산/공식 정보</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">m.inven.co.kr, nato-blog.tistory.com</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">효율 극대화</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">시간/자원 효율 높은 플레이 팁 (일일 루틴, 파밍 장소), 과금 효율 및 패키지 추천, 이벤트 자원 최적 활용</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">inven.co.kr, m.dcinside.com</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detailed Persona Analysis Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-purple-400">
+        <h2 class="text-2xl font-bold text-purple-700 mb-6 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-purple-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm3 5a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h.01a1 1 0 100-2H10zm3 0a1 1 0 100 2h.01a1 1 0 100-2H13zm2 8a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2zM2 16a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1v-4z"></path>
+            </svg>
+            페르소나별 상세 분석
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- Detailed Persona 1: 전투력 중심 플레이어 -->
+            <div class="bg-purple-50 rounded-lg p-5 shadow-md border border-purple-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">1. 전투력 중심 플레이어 📈</h3>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        필요 정보 및 니즈
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>장비 파밍 및 강화 경로: 고강화 구간 팁, 강화 재료 획득처 등 구체적 가이드.</li>
+                        <li>콘텐츠 공략 순서: 전투력 상승에 효율적인 콘텐츠 순서 (던전 vs 필드 사냥 vs 필드보스 등).</li>
+                        <li>전투력 대비 효율: 같은 투자 대비 전투력 상승량, 과금 효율표 등.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        공통 불편 사항
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>패션(아바타)과 전투력 연동으로 인한 과금 부담.</li>
+                        <li>전투력 요구치로 인한 던전/레이드 진입장벽 및 콘텐츠 소외.</li>
+                        <li>고레벨 구간 성장 가이드 부족으로 커뮤니티 의존.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 6.293A1 1 0 015.586 6H4zm4 9a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"></path></svg>
+                        원하는 서비스 형태
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>전투력 시뮬레이터/계산기: 현재 전투력 구성 입력 시 효율적인 강화 부위 추천.</li>
+                        <li>성장 루트 추천: 전투력 구간별 로드맵형 콘텐츠 (예: '이 시기에 할 일').</li>
+                        <li>즉문즉답 지식베이스: 전투력 정체 질문 시 즉각적인 답변 제공.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Persona 2: 수집/업적 매니아 -->
+            <div class="bg-purple-50 rounded-lg p-5 shadow-md border border-purple-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">2. 수집/업적 매니아 🏆</h3>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        필요 정보 및 니즈
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>히든 퀘스트/이스터에그 정보: 발견 위치, 트리거 조건, 유저 제작 지도/영상 의존 해소.</li>
+                        <li>업적 & 칭호 목록/보상: 한눈에 보는 업적/칭호 목록, 획득 조건, 보상 정보.</li>
+                        <li>도감/콜렉션 체크리스트: 몬스터, 아이템, 의상 컬렉션 진행 현황 추적 및 누락 부분 힌트.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        공통 불편 사항
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>정보 파편화: 히든 퀘스트/업적 정보가 여기저기 흩어져 검색의 어려움.</li>
+                        <li>진행 누락 걱정: 한 번 놓치면 못 얻는 업적/보상에 대한 불안감.</li>
+                        <li>칭호 효과 의문: 획득 칭호의 스탯 효과 불분명, 공식 자료 부족.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 6.293A1 1 0 015.586 6H4zm4 9a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"></path></svg>
+                        원하는 서비스 형태
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>통합 콜렉션 트래커: 히든 퀘스트, 업적, 도감 등을 한 화면에서 관리하는 체크리스트.</li>
+                        <li>업적/칭호 백과사전: 검색 가능한 DB를 통해 획득 조건/보상 제공.</li>
+                        <li>위치 기반 가이드: 히든 퀘스트/수집품 위치 지도 표시 또는 RAG 챗봇을 통한 위치 설명.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Persona 3: 아바타 수집가 -->
+            <div class="bg-purple-50 rounded-lg p-5 shadow-md border border-purple-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">3. 아바타 수집가 🎨</h3>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        필요 정보 및 니즈
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>코스튬 획득처 및 가격: 특정 의상/아바타 아이템의 획득 경로, 확률, 경매장 시세.</li>
+                        <li>패션 세트 효과: 여러 의상 세트 착용 시 전투력 기여도 정보.</li>
+                        <li>염색 및 코디 사례: 다른 유저들의 코디 사례, 염색 팁, 이미지 공유 갤러리.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        공통 불편 사항
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>확률형 의상 뽑기 피로감: 과금 부담 및 중복/등급 차별.</li>
+                        <li>의상-인벤토리 연동 미흡: 공간 부족, 정렬 문제, 패션 슬롯 버그.</li>
+                        <li>정보 산재: 신규 코스튬 정보 (이미지, 효과)를 한곳에서 보기 어려움.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 6.293A1 1 0 015.586 6H4zm4 9a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"></path></svg>
+                        원하는 서비스 형태
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>아바타 도감 & 시뮬레이터: 모든 코스튬 이미지, 획득 방법, 세트 효과 열람 및 코디 시뮬레이션.</li>
+                        <li>패션 알림/캘린더: 기간 한정 의상, 신규 아바타 출시 소식 알림.</li>
+                        <li>커뮤니티 연동 갤러리: 유저 코디 스크린샷 업로드 및 공유 공간.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Persona 4: 스킬 최적화 지향 유저 -->
+            <div class="bg-purple-50 rounded-lg p-5 shadow-md border border-purple-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">4. 스킬 최적화 지향 유저 🔧</h3>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        필요 정보 및 니즈
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>직업별 딜 사이클 가이드: 효율적인 스킬 연계 순서, 최대 DPS 공략.</li>
+                        <li>스킬 강화/개조 우선순위: 효율적인 스킬 레벨업 및 개조 투자 조언.</li>
+                        <li>데미지 계산식/스탯 효율: 게임 내 데미지 공식, 스탯 간 상관관계, DPS 기여도.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        공통 불편 사항
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>공식 매뉴얼의 한계: 스킬 툴팁만으로 효율 파악 어려움, 유저 직접 계산 필요.</li>
+                        <li>테스트 환경 미비: 스킬 DPS/콤보 테스트 모드 부재, 실전 시행착오.</li>
+                        <li>숨겨진 버그/오류: 스킬/룬 관련 숨겨진 버그 정보 부족.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 6.293A1 1 0 015.586 6H4zm4 9a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"></path></svg>
+                        원하는 서비스 형태
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>스킬 DPS 계산기 & 시뮬레이터: 스킬 레벨, 스펙 입력 시 예상 DPS 및 최적 딜사이클 시뮬레이션.</li>
+                        <li>전문화된 공략 모음: 직업별 최적화 공략, 상위권 유저 팁/노하우 큐레이션.</li>
+                        <li>데이터 라이브러리: 공식 스킬 계수, 공식 등 전문화된 지식 응답.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Persona 5: 효율 극대화 플레이어 -->
+            <div class="bg-purple-50 rounded-lg p-5 shadow-md border border-purple-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">5. 효율 극대화 플레이어 ⏱️💰</h3>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        필요 정보 및 니즈
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>시간 효율 (육성 루틴): 한정된 시간 내 이득이 큰 활동, 일일/주간 퀘스트 효율.</li>
+                        <li>자원 효율 (게임 재화): 골드, 스태미나, 재료 아이템 사용처 및 이득 계산.</li>
+                        <li>과금 효율 (현질 가치): 한정된 예산으로 효율 좋은 패키지 추천, 가성비 비교.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        공통 불편 사항
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>잘못된 투자에 대한 두려움: 효율 순위 정보 부재, 손해에 대한 불안감.</li>
+                        <li>불확실한 확률 요소: 뽑기/강화 확률 변수로 인한 결과 불확실성, 통계 자료 부족.</li>
+                        <li>정보 업데이트 지연: 패치로 인한 효율 정보 변화 시 공식 채널의 느린 대응.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 6.293A1 1 0 015.586 6H4zm4 9a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"></path></svg>
+                        원하는 서비스 형태
+                    </h4>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>일정 관리 및 알림: 일일/주간 할 일 리스트, 미완료 시 알림.</li>
+                        <li>효율 가이드 & 계산기: 모든 선택지의 효율 데이터, 투자치 입력 시 결과 계산.</li>
+                        <li>실시간 시세/거래 정보: 경매장 시세 변동, 최저가 알림, 서버 간 시세 비교.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing RAG Deficiencies Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-green-400">
+        <h2 class="text-2xl font-bold text-green-700 mb-6 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            기존 RAG 카테고리의 부족한 점 및 개선 필요성
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- RAG Deficiency 1: 직업별 특징/스킬 -->
+            <div class="bg-green-50 rounded-lg p-5 shadow-md border border-green-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-green-800 mb-2">직업별 특징/스킬</h3>
+                <div class="mb-3">
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        부족한 점
+                    </h4>
+                    <p class="text-sm text-gray-700">심화된 운용 팁이나 최신 공략 부족. 정량 정보만 제시하고 실전 팁 미흡.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        개선 방안
+                    </h4>
+                    <p class="text-sm text-gray-700">각 직업별 스킬 운용 FAQ, 추천 빌드/룬 세팅 섹션 추가, 패치 시 변경점 반영.</p>
+                </div>
+            </div>
+
+            <!-- RAG Deficiency 2: 딜 구조 -->
+            <div class="bg-green-50 rounded-lg p-5 shadow-md border border-green-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-green-800 mb-2">딜 구조</h3>
+                <div class="mb-3">
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        부족한 점
+                    </h4>
+                    <p class="text-sm text-gray-700">데미지 공식, 딜 사이클 등 이론적인 부분의 상세 데이터 부족. 유저들이 직접 실험하여 핵심 정보 찾아냄.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        개선 방안
+                    </h4>
+                    <p class="text-sm text-gray-700">공식 수치와 테스트 검증 데이터 반영 (예: 크리티컬 데미지 공식, 상태이상 딜 기여도 등) 및 질의응답 활용.</p>
+                </div>
+            </div>
+
+            <!-- RAG Deficiency 3: 던전/사냥 -->
+            <div class="bg-green-50 rounded-lg p-5 shadow-md border border-green-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-green-800 mb-2">던전/사냥</h3>
+                <div class="mb-3">
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        부족한 점
+                    </h4>
+                    <p class="text-sm text-gray-700">레이드 보스 패턴, 역할 분담, 필드보스 리젠 시간/추천 인원 등 디테일한 팁 부족.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        개선 방안
+                    </h4>
+                    <p class="text-sm text-gray-700">RAG 답변에 보스별 공략 포인트, 권장 전투력, 파티 조합 보강, 자주 묻는 질문 설명 콘텐츠 확충.</p>
+                </div>
+            </div>
+
+            <!-- RAG Deficiency 4: 아이템 획득처 -->
+            <div class="bg-green-50 rounded-lg p-5 shadow-md border border-green-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-green-800 mb-2">아이템 획득처</h3>
+                <div class="mb-3">
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        부족한 점
+                    </h4>
+                    <p class="text-sm text-gray-700">특정 아이템 획득 방법 누락, 신규 아이템 업데이트 지연, 이벤트 아이템/고유 재료 획득법 누락.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        개선 방안
+                    </h4>
+                    <p class="text-sm text-gray-700">모든 아이템에 대한 최신 획득처 DB 구축, 유사명칭/줄임말 검색 가능, 드랍 확률/주간 제한 정보 포함.</p>
+                </div>
+            </div>
+
+            <!-- RAG Deficiency 5: 경매장 -->
+            <div class="bg-green-50 rounded-lg p-5 shadow-md border border-green-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-green-800 mb-2">경매장</h3>
+                <div class="mb-3">
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        부족한 점
+                    </h4>
+                    <p class="text-sm text-gray-700">실시간성 및 편의성 부족. 상세 필터링, 가격 추이 그래프 등 부재.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-green-700 mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        개선 방안
+                    </h4>
+                    <p class="text-sm text-gray-700">최근 거래 기록 및 시세 변동 시각화, 조건부 검색 가능, 경매 알리미 기능 연동.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposed RAG Improvements Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-yellow-400">
+        <h2 class="text-2xl font-bold text-yellow-700 mb-6 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 012 14v3a1 1 0 001 1h14a1 1 0 001-1v-3a1 1 0 01-.293-.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" clip-rule="evenodd"></path>
+            </svg>
+            RAG 시스템에 추가/보완해야 할 정보 및 기능 제안
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Proposed Improvement 1 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">1) 신규 카테고리: 업적/칭호 & 히든 요소</h3>
+                <p class="text-sm text-gray-700">업적/칭호 달성법, 히든 퀘스트/이스터에그 전용 카테고리 신설. 지도 이미지나 NPC 좌표 스크린샷 제공.</p>
+            </div>
+            <!-- Proposed Improvement 2 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">2) 신규 카테고리: 아바타/패션</h3>
+                <p class="text-sm text-gray-700">의상, 염색, 아바타 수집 정보 총망라. 의상 갤러리, 획득 방법, 세트 효과 포함. 커뮤니티 패션 게시물 연계.</p>
+            </div>
+            <!-- Proposed Improvement 3 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">3) 페르소나별 FAQ 모음</h3>
+                <p class="text-sm text-gray-700">전투력, 효율, 수집 등 상황별 자주 묻는 질문 정리 섹션. 유저 성향/상황에 맞는 큐레이션 정보 제공.</p>
+            </div>
+            <!-- Proposed Improvement 4 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">4) 인터랙티브 도구 통합</h3>
+                <p class="text-sm text-gray-700">계산기/시뮬레이터형 기능 도입: 전투력 계산기, 스킬 DPS 시뮬레이터, 과금 효율 계산기.</p>
+            </div>
+            <!-- Proposed Improvement 5 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">5) 실시간 데이터 연동</h3>
+                <p class="text-sm text-gray-700">경매장 시세, 필드보스 젠 시간, 이벤트 진행 상황 등 실시간 정보를 RAG가 파악하고 답변에 활용.</p>
+            </div>
+            <!-- Proposed Improvement 6 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">6) 사용자 참여 지식 공유</h3>
+                <p class="text-sm text-gray-700">우수 커뮤니티 공략 선별 등록, 유저 피드백/공략 제안 채널 마련.</p>
+            </div>
+            <!-- Proposed Improvement 7 -->
+            <div class="bg-yellow-50 rounded-lg p-5 shadow-md border border-yellow-200 hover:shadow-lg transition-shadow duration-300">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2">7) 편의성 개선</h3>
+                <p class="text-sm text-gray-700">검색어 추천, 자연어 질문 이해 향상, 멀티링크 카드 제공, 표/이미지 출력 등 UI/UX 개선.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusion and Insights Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-400">
+        <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center">
+            <svg class="w-7 h-7 mr-3 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M15.828 4.229a7.949 7.949 0 01-1.397 1.053l-1.155 1.155a1 1 0 01-1.414-1.414L13.017 3.815a7.949 7.949 0 011.053-1.397 1 1 0 011.414 1.414zM10 2a8 8 0 100 16 8 8 0 000-16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            결론 및 인사이트
+        </h2>
+        <ul class="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
+            <li>
+                <span class="font-bold text-red-600">게임 내 정보 부족으로 인한 불편:</span> 유저들은 공식 매뉴얼이나 UI만으로는 갈증을 해소하지 못하고 커뮤니티에 의존. RAG 시스템 개입 여지가 크며, 정확하고 풍부한 정보를 한 곳에서 얻길 원하는 니즈 강함.
+            </li>
+            <li>
+                <span class="font-bold text-red-600">높아진 눈높이 – “더 편리하게, 더 정확하게”:</span> 유저들은 이미 다양한 외부 자료를 접하고 있어, RAG가 그 이상의 편의성과 신뢰성을 보여주지 못하면 외면당할 수 있음. 업데이트 속도와 정보 품질에서 커뮤니티를 뛰어넘어야 함.
+            </li>
+            <li>
+                <span class="font-bold text-red-600">페르소나 간 니즈 교차:</span> 페르소나의 니즈는 구분되면서도 연결되어 있어, 한 페르소나의 니즈 충족이 다른 페르소나 만족으로 이어지는 공통 영역에 주목해야 함 (예: 성장 가이드, 일일 체크리스트).
+            </li>
+            <li>
+                궁극적으로 RAG 시스템은 단순한 데이터베이스를 넘어 유저들의 게임 플레이 코치 역할을 할 잠재력이 있음.
+            </li>
+            <li>
+                유저 피드백을 지속 모니터링하며 RAG를 발전시키는 것이 중요하며, 게임 업데이트와 메타 변화에 선제적으로 대응해야 함.
+            </li>
+            <li>
+                <span class="font-bold text-red-600">핵심 인사이트:</span> "유저가 필요로 하는 답은 이미 유저 속에 있다." 커뮤니티의 집단지성과 생생한 요구를 RAG 시스템에 담아낸다면, 마비노기 모바일 RAG는 단순 FAQ를 넘어 게임 경험의 한 축으로 자리매김할 것임.
+            </li>
+        </ul>
+        <p class="text-gray-500 text-sm mt-4">
+            주요 출처: 공식 인벤 게시판 유저 의견, 디시인사이드 갤러리 토론, 티스토리 블로그 공략, 게임트릭스/뉴스 자료 등 다양한 커뮤니티 피드백을 종합했습니다.
+        </p>
+    </div>
+</body>
+</html>

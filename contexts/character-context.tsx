@@ -1,7 +1,11 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { supabase } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 import { logger } from "@/lib/logger"
+import { CharacterGemInstance, GemData } from "@/types/gem"
+import { CharacterStarSeal, StarSealData } from "@/types/starSeal"
 
 interface ProcessingQueue {
   id: number
@@ -45,6 +49,8 @@ export interface Character {
   favoriteCraftingFacilities: Record<string, boolean>
   favoriteItems: Record<string, boolean>
   currencyTimers: Record<string, CurrencyTimerState>
+  gems: CharacterGemInstance[]; // Add gems property
+  starSeals: CharacterStarSeal[]; // Add starSeals property
   guildName?: string
   guildRank?: string
   createdAt: string
@@ -68,6 +74,8 @@ interface CharacterContextType {
       | "skills"
       | "craftingQueues"
       | "favoriteCraftingFacilities"
+      | "gems"
+      | "starSeals"
     >,
   ) => void
   deleteCharacter: (id: string) => void
@@ -81,7 +89,8 @@ interface CharacterContextType {
   allSkillsData: any[];
   allCraftingFacilitiesData: any[];
   recipes: Recipe[];
-  allGems: any[];
+  allGems: GemData | null; // Change to GemData type
+  allStarSeals: StarSealData | null; // Add allStarSeals
   allAvatarSets: any;
 }
 
@@ -293,6 +302,20 @@ const createInitialCurrencyTimers = (initialTimers: Record<string, CurrencyTimer
   return currencyTimers;
 };
 
+const createInitialGems = (initialGems: CharacterGemInstance[] = []): CharacterGemInstance[] => {
+  logger.debug("Entering createInitialGems with initialGems:", initialGems);
+  // Here you might want to initialize with default gem instances if any,
+  // or simply return the provided initialGems if they are meant to be the source of truth.
+  // For now, we'll just return the initialGems as is, assuming they are loaded from storage.
+  return initialGems;
+};
+
+const createInitialStarSeals = (initialStarSeals: CharacterStarSeal[] = []): CharacterStarSeal[] => {
+  logger.debug("Entering createInitialStarSeals with initialStarSeals:", initialStarSeals);
+  // Similar to gems, return initialStarSeals as is.
+  return initialStarSeals;
+};
+
 // const defaultCharacters: Character[] = [
 //   {
 //     id: "1",
@@ -449,130 +472,91 @@ const createInitialCurrencyTimers = (initialTimers: Record<string, CurrencyTimer
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   logger.debug("CharacterProvider 렌더링 시작")
+  const { user, loading: authLoading } = useAuth();
   const [characters, setCharacters] = useState<Character[]>([])
   const [activeCharacter, setActiveCharacterState] = useState<Character | null>(null)
   const [viewMode, setViewMode] = useState<"single" | "all">("all")
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    logger.debug("CharacterProvider: 컴포넌트 마운트됨");
-    return () => {
-      logger.debug("CharacterProvider: 컴포넌트 언마운트됨");
-    };
-  }, []);
-
-  // JSON 데이터들을 위한 상태
-  const [allItems, setAllItems] = useState<Record<string, any>>({})
-  const [allQuests, setAllQuests] = useState<any>({})
-  const [allEquipment, setAllEquipment] = useState<any[]>([])
-  const [allSkillsData, setAllSkillsData] = useState<any[]>([])
-  const [allCraftingFacilitiesData, setAllCraftingFacilitiesData] = useState<any[]>([])
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [allGems, setAllGems] = useState<any[]>([])
-  const [allAvatarSets, setAllAvatarSets] = useState<any>({})
-
-  // 다른 탭에서 localStorage 변경 시 동기화
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "characters" && event.newValue) {
-        logger.debug("CharacterProvider: storage 이벤트 감지 - 캐릭터 데이터 업데이트");
-        try {
-          const parsedCharacters: Character[] = JSON.parse(event.newValue);
-          setCharacters(parsedCharacters.map(char => {
-            // JSON 데이터가 로드된 후에만 초기화 함수 사용
-            if (Object.keys(allItems).length > 0 && Object.keys(allQuests).length > 0 && allSkillsData.length > 0 && allCraftingFacilitiesData.length > 0) {
-              return {
-                ...char,
-                inventory: createInitialInventory(allItems, char.inventory),
-                ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks),
-                equippedItems: createInitialEquipment(char.equippedItems),
-                skills: createInitialSkills(allSkillsData, char.skills),
-                craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
-                favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
-                favoriteItems: char.favoriteItems,
-                currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
-                combatPower: char.combatPower || 0,
-              };
-            } else {
-              // JSON 데이터가 아직 로드되지 않았다면, 파싱된 데이터만 사용
-              return char;
-            }
-          }));
-          logger.debug("CharacterProvider: storage 이벤트로 캐릭터 상태 업데이트 성공");
-        } catch (e) {
-          logger.error("CharacterProvider: storage 이벤트 데이터 파싱 실패", { error: e });
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    logger.debug("CharacterProvider: storage 이벤트 리스너 등록됨");
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      logger.debug("CharacterProvider: storage 이벤트 리스너 해제됨");
-    };
-  }, [allItems, allQuests, allSkillsData, allCraftingFacilitiesData]);
+  
 
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [dataLoadError, setDataLoadError] = useState<string | null>(null)
 
-  // 모든 JSON 데이터 로드 함수
-  const loadJsonData = useCallback(async () => {
-    logger.debug("JSON 데이터 로드 시작")
-    setIsLoadingData(true)
-    setDataLoadError(null)
+  const [allItems, setAllItems] = useState<Record<string, any>>({});
+  const [allQuests, setAllQuests] = useState<any>(null);
+  const [allEquipment, setAllEquipment] = useState<any[]>([]);
+  const [allSkillsData, setAllSkillsData] = useState<any[]>([]);
+  const [allCraftingFacilitiesData, setAllCraftingFacilitiesData] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [allGems, setAllGems] = useState<GemData | null>(null);
+  const [allAvatarSets, setAllAvatarSets] = useState<any>(null);
+  const [allStarSeals, setAllStarSeals] = useState<StarSealData | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false); // Add isInitialized state
+
+  // 모든 데이터 로드 함수 (Supabase)
+  const loadSupabaseData = useCallback(async () => {
+    logger.debug("Supabase 데이터 로드 시작");
+    setIsLoadingData(true);
+    setDataLoadError(null);
     try {
-      const [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes, gemsRes, avatarSetsRes] = await Promise.all([
-        fetch("/data/items.json"),
-        fetch("/data/quests.json"),
-        fetch("/data/equipment.json"),
-        fetch("/data/skills.json"),
-        fetch("/data/craftingFacilities.json"),
-        fetch("/data/recipes.json"),
-        fetch("/data/gems.json"),
-        fetch("/data/avatarSets.json"),
-      ])
+      const { data: items, error: itemsError } = await supabase.from('items').select('*');
+      const { data: quests, error: questsError } = await supabase.from('quests').select('*');
+      const { data: equipment, error: equipmentError } = await supabase.from('equipment').select('*');
+      const { data: skills, error: skillsError } = await supabase.from('skills').select('*');
+      const { data: facilities, error: facilitiesError } = await supabase.from('craftingFacilities').select('*');
+      const { data: recipes, error: recipesError } = await supabase.from('recipes').select('*');
+      const { data: gems, error: gemsError } = await supabase.from('gems').select('*');
+      const { data: avatarSets, error: avatarSetsError } = await supabase.from('avatarSets').select('*');
+      const { data: starSeals, error: starSealsError } = await supabase.from('starSeals').select('*');
 
-      // 모든 응답이 OK인지 확인
-      for (const res of [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes, gemsRes, avatarSetsRes]) {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status} for ${res.url}`);
-        }
-      }
+      if (itemsError) throw itemsError;
+      if (questsError) throw questsError;
+      if (equipmentError) throw equipmentError;
+      if (skillsError) throw skillsError;
+      if (facilitiesError) throw facilitiesError;
+      if (recipesError) throw recipesError;
+      if (gemsError) throw gemsError;
+      if (avatarSetsError) throw avatarSetsError;
+      if (starSealsError) throw starSealsError;
 
-      const [items, quests, equipment, skills, facilities, recipes] = await Promise.all(
-        [itemsRes, questsRes, equipmentRes, skillsRes, facilitiesRes, recipesRes].map(res => res.json())
-      );
-      
-      logger.debug("JSON 데이터 로드 성공", { items, quests, equipment, skills, facilities, recipes })
+      // Transform items array to object for createInitialInventory
+      const itemsObject = items.reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
 
-      setAllItems(items)
-      setAllQuests(quests)
-      setAllEquipment(equipment)
-      setAllSkillsData(skills)
-      setAllCraftingFacilitiesData(facilities)
-      setRecipes(recipes)
+      setAllItems(itemsObject);
+      setAllQuests(quests[0]); // Assuming quests is a single object in an array
+      setAllEquipment(equipment);
+      setAllSkillsData(skills);
+      setAllCraftingFacilitiesData(facilities);
+      setRecipes(recipes);
+      setAllGems(gems[0]); // Assuming gems is a single object in an array
+      setAllAvatarSets(avatarSets);
+      setAllStarSeals(starSeals[0]); // Assuming starSeals is a single object in an array
+
+      logger.debug("Supabase 데이터 로드 성공", { items, quests, equipment, skills, facilities, recipes, gems, avatarSets, starSeals });
     } catch (error) {
-      logger.error("JSON 데이터 로드 실패", { error })
+      logger.error("Supabase 데이터 로드 실패", { error });
       setDataLoadError(`데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-      setIsLoadingData(false)
-      logger.debug("JSON 데이터 로드 완료")
+      setIsLoadingData(false);
+      logger.debug("Supabase 데이터 로드 완료");
     }
-  }, [])
+  }, []);
 
-  // 컴포넌트 마운트 시 JSON 데이터 로드
+  // 컴포넌트 마운트 시 Supabase 데이터 로드
   useEffect(() => {
-    logger.debug("useEffect: loadJsonData 호출")
-    loadJsonData()
-  }, [loadJsonData])
+    logger.debug("useEffect: loadSupabaseData 호출");
+    loadSupabaseData();
+  }, [loadSupabaseData]);
+
+  
 
   useEffect(() => {
-    logger.debug("useEffect: 캐릭터 데이터 로드 및 초기화 시작", { isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData })
+    logger.debug("useEffect: 캐릭터 데이터 로드 및 초기화 시작", { isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems, allStarSeals })
 
-    if (!isLoadingData && !dataLoadError && Object.keys(allItems).length > 0) {
-      logger.debug("JSON 데이터 로드 완료, localStorage에서 캐릭터 로드 시도")
+    if (!isLoadingData && !dataLoadError && Object.keys(allItems).length > 0 && allGems && allStarSeals) {
+      logger.debug("Supabase 데이터 로드 완료, localStorage에서 캐릭터 로드 시도")
       const storedCharacters = localStorage.getItem("characters")
       let initialCharacters: Character[];
 
@@ -593,6 +577,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
               favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
               favoriteItems: char.favoriteItems,
               currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
+              gems: createInitialGems(char.gems),
+              starSeals: createInitialStarSeals(char.starSeals), // Initialize starSeals
               combatPower: char.combatPower || 0,
             }
           })
@@ -642,7 +628,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     } else {
       logger.debug("JSON 데이터 로딩 중이거나 아직 로드되지 않아 캐릭터 초기화 대기")
     }
-  }, [isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData]);
+  }, [isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems]);
 
   // 캐릭터 변경 시 localStorage에 저장
   useEffect(() => {
@@ -710,6 +696,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       const initialCraftingQueues = createInitialCraftingQueues(allCraftingFacilitiesData);
       const initialFavoriteCraftingFacilities = createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData);
       const initialCurrencyTimers = createInitialCurrencyTimers();
+      const initialGems = createInitialGems();
+      const initialStarSeals = createInitialStarSeals(); // Initialize starSeals
 
       const newCharacter: Character = {
         id: Date.now().toString(),
@@ -729,6 +717,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         craftingQueues: initialCraftingQueues,
         favoriteCraftingFacilities: initialFavoriteCraftingFacilities,
         currencyTimers: initialCurrencyTimers,
+        gems: initialGems,
+        starSeals: initialStarSeals, // Initialize starSeals for new character
       };
       logger.debug("addCharacter: 생성된 새 캐릭터 객체 (initialQuestProgress 병합 후)", newCharacter);
 
@@ -738,7 +728,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         return updatedCharacters;
       });
     },
-    [allItems, allQuests, allSkillsData, allCraftingFacilitiesData, isLoadingData, dataLoadError],
+    [allItems, allQuests, allSkillsData, allCraftingFacilitiesData, allGems, allStarSeals, isLoadingData, dataLoadError],
   )
 
   const deleteCharacter = useCallback((id: string) => {
@@ -792,6 +782,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       allSkillsData,
       allCraftingFacilitiesData,
       recipes,
+      allGems,
+      allStarSeals, // Add allStarSeals to context value
     }),
     [
       characters,
@@ -812,6 +804,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       allSkillsData,
       allCraftingFacilitiesData,
       recipes,
+      allGems,
+      allStarSeals, // Add allStarSeals to dependency array
     ],
   )
 

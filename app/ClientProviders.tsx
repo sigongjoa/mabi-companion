@@ -10,6 +10,7 @@ import { X, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { logger } from "@/lib/logger"
 import { NotificationProvider } from "@/contexts/notification-context"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const inter = Inter({ subsets: ["latin"], display: "swap", preload: true })
 
@@ -55,35 +56,37 @@ export default function ClientProviders({
   );
 
   return (
-    <CharacterProvider>
-      <FavoritesProvider>
-        <NotificationProvider>
-          <div className={cn("min-h-screen bg-gray-50 flex", "force-no-padding")}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "fixed !top-0 z-50 hidden md:flex bg-white text-gray-900 hover:bg-gray-100 border border-gray-200 shadow-sm transition-all duration-300 ease-in-out",
-                isSidebarOpen ? "left-64 ml-4" : "left-4"
-              )}
-              onClick={toggleSidebar}
-            >
-              {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
+    <AuthProvider>
+      <CharacterProvider>
+        <FavoritesProvider>
+          <NotificationProvider>
+            <div className={cn("min-h-screen bg-gray-50 flex", "force-no-padding")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "fixed !top-0 z-50 hidden md:flex bg-white text-gray-900 hover:bg-gray-100 border border-gray-200 shadow-sm transition-all duration-300 ease-in-out",
+                  isSidebarOpen ? "left-64 ml-4" : "left-4"
+                )}
+                onClick={toggleSidebar}
+              >
+                {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
 
-            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+              <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
-            <main
-              className={cn(
-                "flex-1 overflow-auto p-6 transition-all duration-300 ease-in-out",
-                isSidebarOpen ? "md:ml-64" : "md:ml-0"
-              )}
-            >
-              {children}
-            </main>
-          </div>
-        </NotificationProvider>
-      </FavoritesProvider>
-    </CharacterProvider>
+              <main
+                className={cn(
+                  "flex-1 overflow-auto p-6 transition-all duration-300 ease-in-out",
+                  isSidebarOpen ? "md:ml-64" : "md:ml-0"
+                )}
+              >
+                {children}
+              </main>
+            </div>
+          </NotificationProvider>
+        </FavoritesProvider>
+      </CharacterProvider>
+    </AuthProvider>
   )
 }

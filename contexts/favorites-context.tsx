@@ -1,101 +1,93 @@
+
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react"
+import { logger } from "@/lib/logger"
 
-interface FavoriteComponent {
+interface Favorite {
   id: string
   name: string
   type: string
-  page: string
-  addedAt: Date
+  page?: string // Optional page field
 }
 
 interface FavoritesContextType {
-  favorites: FavoriteComponent[]
-  isFavorite: (id: string) => boolean
-  toggleFavorite: (component: Omit<FavoriteComponent, "addedAt">) => void
+  favorites: Favorite[]
+  addFavorite: (favorite: Favorite) => void
   removeFavorite: (id: string) => void
-  getFavoritesByPage: (page: string) => FavoriteComponent[]
-  getFavoritesByType: (type: string) => FavoriteComponent[]
+  getFavoritesByType: (type: string) => Favorite[]
 }
 
-const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined)
+const FavoritesContext = createContext<FavoritesContextType | undefined>(
+  undefined,
+)
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<FavoriteComponent[]>([])
+  const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Load from localStorage on mount
+  // Load favorites from localStorage on initial mount
   useEffect(() => {
-    try {
-      const savedFavorites = localStorage.getItem("mabinogi-favorites")
-      if (savedFavorites) {
-        const parsed = JSON.parse(savedFavorites).map((f: any) => ({
-          ...f,
-          addedAt: new Date(f.addedAt),
-        }))
-        setFavorites(parsed)
+    if (typeof window !== "undefined") {
+      try {
+        const storedFavorites = localStorage.getItem("mabi-favorites")
+        if (storedFavorites) {
+          setFavorites(JSON.parse(storedFavorites))
+          logger.debug("Favorites loaded from localStorage", JSON.parse(storedFavorites))
+        }
+      } catch (error) {
+        logger.error("Failed to load favorites from localStorage", error)
+      } finally {
+        setIsLoaded(true)
       }
-    } catch (error) {
-      console.warn("Failed to load favorites:", error)
     }
   }, [])
 
-  // Save to localStorage when favorites change
+  // Save favorites to localStorage whenever they change
   useEffect(() => {
-    try {
-      localStorage.setItem("mabinogi-favorites", JSON.stringify(favorites))
-    } catch (error) {
-      console.warn("Failed to save favorites:", error)
-    }
-  }, [favorites])
-
-  const isFavorite = useCallback(
-    (id: string) => {
-      return favorites.some((f) => f.id === id)
-    },
-    [favorites],
-  )
-
-  const toggleFavorite = useCallback((component: Omit<FavoriteComponent, "addedAt">) => {
-    setFavorites((prev) => {
-      const exists = prev.find((f) => f.id === component.id)
-      if (exists) {
-        return prev.filter((f) => f.id !== component.id)
-      } else {
-        return [...prev, { ...component, addedAt: new Date() }]
+    if (isLoaded && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("mabi-favorites", JSON.stringify(favorites))
+        logger.debug("Favorites saved to localStorage", favorites)
+      } catch (error) {
+        logger.error("Failed to save favorites to localStorage", error)
       }
+    }
+  }, [favorites, isLoaded])
+
+  const addFavorite = useCallback((favorite: Favorite) => {
+    setFavorites((prevFavorites) => {
+      if (!prevFavorites.some((fav) => fav.id === favorite.id)) {
+        logger.debug("Adding favorite", favorite)
+        return [...prevFavorites, favorite]
+      }
+      return prevFavorites
     })
   }, [])
 
   const removeFavorite = useCallback((id: string) => {
-    setFavorites((prev) => prev.filter((f) => f.id !== id))
+    setFavorites((prevFavorites) => {
+      logger.debug("Removing favorite with ID", id)
+      return prevFavorites.filter((favorite) => favorite.id !== id)
+    })
   }, [])
-
-  const getFavoritesByPage = useCallback(
-    (page: string) => {
-      return favorites.filter((f) => f.page === page)
-    },
-    [favorites],
-  )
 
   const getFavoritesByType = useCallback(
     (type: string) => {
-      return favorites.filter((f) => f.type === type)
+      return favorites.filter((favorite) => favorite.type === type)
     },
     [favorites],
   )
 
   return (
     <FavoritesContext.Provider
-      value={{
-        favorites,
-        isFavorite,
-        toggleFavorite,
-        removeFavorite,
-        getFavoritesByPage,
-        getFavoritesByType,
-      }}
+      value={{ favorites, addFavorite, removeFavorite, getFavoritesByType }}
     >
       {children}
     </FavoritesContext.Provider>

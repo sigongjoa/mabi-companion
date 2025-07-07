@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Noto_Sans, Plus_Jakarta_Sans, Spline_Sans } from "next/font/google"
 import "./globals.css"
 // import dynamic from "next/dynamic";
 import { headers } from "next/headers";
@@ -9,19 +9,25 @@ import { headers } from "next/headers";
 // });
 import ClientProviders from "./ClientProviders"
 
-const inter = Inter({
+const notoSans = Noto_Sans({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
-})
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-noto-sans",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-plus-jakarta-sans",
+});
 
 export const metadata: Metadata = {
   title: "마비노기 모바일 - 통합 관리 시스템",
   description: "캐릭터별 관리와 즐겨찾기 기능이 있는 마비노기 모바일 게임 관리 도구",
   keywords: "마비노기, 모바일, 게임관리, 캐릭터관리, 아이템관리",
   authors: [{ name: "Mabinogi Management System" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  themeColor: "#3b82f6",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -34,6 +40,13 @@ export const metadata: Metadata = {
     locale: "ko_KR",
   },
     generator: 'v0.dev'
+}
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#3b82f6",
 }
 
 export default async function RootLayout({
@@ -52,7 +65,7 @@ export default async function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <meta httpEquiv="Content-Security-Policy" content={csp} />
       </head>
-      <body className={inter.className}>
+      <body className={`${plusJakartaSans.variable} ${notoSans.variable}`}>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
