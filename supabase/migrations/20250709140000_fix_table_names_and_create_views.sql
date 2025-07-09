@@ -1,5 +1,3 @@
--- Rename tables to match the case used in the application code
-ALTER TABLE public.craftingfacilities RENAME TO "craftingFacilities";
 ALTER TABLE public.avatar_sets RENAME TO "avatarSets";
 
 -- Create a unified view for all gem types
