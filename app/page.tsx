@@ -10,10 +10,11 @@ interface Character {
   name: string;
   image_url: string;
   level: number;
-  class: string;
+  job: string;
   combat_power: number;
-  defense: number;
-  magic_defense: number;
+  silverCoins: number;
+  demonTribute: number;
+  server: string;
 }
 
 interface CraftingTimer {
@@ -106,10 +107,11 @@ export default function HomePage() {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-md">이름</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이미지</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">레벨</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">클래스</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">직업</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">전투력</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">방어</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-md">마법 방어</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">서버</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">은동전</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-md">마족공물</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -125,10 +127,11 @@ export default function HomePage() {
                                                 <img src={char.image_url || "https://placehold.co/40x40/E0E0E0/808080?text=IMG"} alt="Character Image" className="w-10 h-10 rounded-full" />
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.level}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.class}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.job}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.combat_power.toLocaleString()}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.defense}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.magic_defense}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.server}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.silverCoins}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.demonTribute}</td>
                                         </tr>
                                     ))
                                 )}
