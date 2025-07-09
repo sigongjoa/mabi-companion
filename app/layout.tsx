@@ -1,13 +1,8 @@
 import type { Metadata } from "next"
 import { Noto_Sans, Plus_Jakarta_Sans, Spline_Sans } from "next/font/google"
 import "./globals.css"
-// import dynamic from "next/dynamic";
 import { headers } from "next/headers";
-
-// const ClientProviders = dynamic(() => import("./ClientProviders"), {
-//   ssr: false, // 클라이언트 전용으로 완전히 분리
-// });
-import ClientProviders from "./ClientProviders"
+import DynamicProvider from "./DynamicProvider";
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -66,7 +61,7 @@ export default async function RootLayout({
         <meta httpEquiv="Content-Security-Policy" content={csp} />
       </head>
       <body className={`${plusJakartaSans.variable} ${notoSans.variable}`}>
-        <ClientProviders>{children}</ClientProviders>
+        <DynamicProvider>{children}</DynamicProvider>
       </body>
     </html>
   )

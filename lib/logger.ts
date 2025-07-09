@@ -11,6 +11,11 @@ export const logger = {
     console.warn(...args);
   },
   error: (...args: any[]) => {
-    console.error(...args);
+    const [message, errorObj, ...rest] = args;
+    if (errorObj && typeof errorObj === 'object' && errorObj !== null) {
+      console.error(message, errorObj.message || '', errorObj.details || '', errorObj.hint || '', errorObj, ...rest);
+    } else {
+      console.error(...args);
+    }
   },
 }; 

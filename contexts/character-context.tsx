@@ -1,11 +1,12 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 import { logger } from "@/lib/logger"
 import { CharacterGemInstance, GemData } from "@/types/gem"
 import { CharacterStarSeal, StarSealData } from "@/types/starSeal"
+import { UserItem } from "@/types/page-context"
 
 interface ProcessingQueue {
   id: number
@@ -39,7 +40,7 @@ export interface Character {
     daily: { completed: number; total: number }
     weekly: { completed: number; total: number }
   }
-  inventory: Record<number, number>
+  userItems: UserItem[]; // Changed from inventory: Record<number, number>
   equipment: Record<string, any>
   skills: Record<number, number>
   completedDailyTasks: Record<string, boolean>
@@ -96,27 +97,6 @@ interface CharacterContextType {
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined)
 
-const createInitialInventory = (
-  allItems: Record<string, any>,
-  initialQuantities: Record<number, number> = {},
-): Record<number, number> => {
-  logger.debug("Entering createInitialInventory with initialQuantities:", initialQuantities)
-  const inventory: Record<number, number> = {}
-  Object.values(allItems).forEach((item: any) => {
-    if (item && item.id !== undefined) {
-      inventory[item.id] = 0
-    }
-  })
-  logger.debug("Initial inventory with all items set to 0:", inventory)
-
-  for (const itemId in initialQuantities) {
-    if (Object.prototype.hasOwnProperty.call(initialQuantities, itemId)) {
-      inventory[Number(itemId)] = initialQuantities[itemId]
-    }
-  }
-  logger.debug("Exiting createInitialInventory, merged inventory:", inventory)
-  return inventory
-}
 
 const createInitialQuestProgress = (
   allQuests: any,
@@ -128,7 +108,7 @@ const createInitialQuestProgress = (
   const weeklyTasks: Record<string, boolean> = {};
 
   // Get a set of all valid current daily task IDs for quick lookup
-  const currentDailyTaskIds = new Set(Object.values(allQuests.daily || {}).flat().map((task: any) => task.id));
+  const currentDailyTaskIds = new Set(Object.values(allQuests.daily || []).flat().map((task: any) => task.id));
 
   // Initialize dailyTasks with all current daily tasks set to false
   if (allQuests?.daily) {
@@ -478,7 +458,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [viewMode, setViewMode] = useState<"single" | "all">("all")
   
 
-  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [isLoadingData, setIsLoadingData] = useState(false)
   const [dataLoadError, setDataLoadError] = useState<string | null>(null)
 
   const [allItems, setAllItems] = useState<Record<string, any>>({});
@@ -493,8 +473,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false); // Add isInitialized state
 
   // 모든 데이터 로드 함수 (Supabase)
-  const loadSupabaseData = useCallback(async () => {
-    logger.debug("Supabase 데이터 로드 시작");
+  const loadGlobalData = useCallback(async () => {
+    logger.debug("Supabase 전역 데이터 로드 시작");
     setIsLoadingData(true);
     setDataLoadError(null);
     try {
@@ -518,7 +498,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       if (avatarSetsError) throw avatarSetsError;
       if (starSealsError) throw starSealsError;
 
-      // Transform items array to object for createInitialInventory
+      // Transform items array to object for easy lookup
       const itemsObject = items.reduce((acc, item) => {
         acc[item.id] = item;
         return acc;
@@ -534,101 +514,107 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setAllAvatarSets(avatarSets);
       setAllStarSeals(starSeals[0]); // Assuming starSeals is a single object in an array
 
-      logger.debug("Supabase 데이터 로드 성공", { items, quests, equipment, skills, facilities, recipes, gems, avatarSets, starSeals });
+      logger.debug("Supabase 전역 데이터 로드 성공", { items, quests, equipment, skills, facilities, recipes, gems, avatarSets, starSeals });
     } catch (error) {
-      logger.error("Supabase 데이터 로드 실패", { error });
-      setDataLoadError(`데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error("Supabase 전역 데이터 로드 실패", { error });
+      setDataLoadError(`전역 데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoadingData(false);
-      logger.debug("Supabase 데이터 로드 완료");
+      logger.debug("Supabase 전역 데이터 로드 완료");
     }
   }, []);
 
-  // 컴포넌트 마운트 시 Supabase 데이터 로드
+  const loadUserData = useCallback(async (userId: string) => {
+    logger.debug("Supabase 사용자 데이터 로드 시작", { userId });
+    setIsLoadingData(true);
+    setDataLoadError(null);
+    try {
+      const { data: fetchedCharacters, error: charactersError } = await supabase
+        .from('characters')
+        .select(`
+          *,
+          user_items (
+            id,
+            item_id,
+            quantity,
+            acquired_at,
+            durability,
+            custom_props,
+            items (
+              name,
+              category,
+              icon,
+              description,
+              weight,
+              price,
+              tradeable,
+              sellable,
+              isFavorite
+            )
+          )
+        `)
+        .eq('user_id', userId); // Fetch only characters belonging to the current user
+
+      if (charactersError) throw charactersError;
+
+      const charactersWithUserItems = fetchedCharacters.map((char: any) => ({
+        ...char,
+        userItems: char.user_items.map((userItem: any) => ({
+          id: userItem.id,
+          item_id: userItem.item_id,
+          quantity: userItem.quantity,
+          acquired_at: userItem.acquired_at,
+          durability: userItem.durability,
+          custom_props: userItem.custom_props,
+          name: userItem.items.name,
+          category: userItem.items.category,
+          icon: userItem.items.icon,
+          description: userItem.items.description,
+          weight: userItem.items.weight,
+          price: userItem.items.price,
+          tradeable: userItem.items.tradeable,
+          sellable: userItem.items.sellable,
+          isFavorite: userItem.items.isFavorite,
+        })),
+      }));
+
+      setCharacters(charactersWithUserItems);
+      logger.debug("Supabase 사용자 데이터 로드 성공", { characters: charactersWithUserItems });
+    } catch (error) {
+      logger.error("Supabase 사용자 데이터 로드 실패", { error });
+      setDataLoadError(`사용자 데이터를 불러오는 데 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoadingData(false);
+      logger.debug("Supabase 사용자 데이터 로드 완료");
+    }
+  }, []);
+
+  // 컴포넌트 마운트 시 전역 데이터 로드
   useEffect(() => {
-    logger.debug("useEffect: loadSupabaseData 호출");
-    loadSupabaseData();
-  }, [loadSupabaseData]);
+    if (!authLoading) {
+      logger.debug("useEffect: loadGlobalData 호출");
+      loadGlobalData();
+    }
+  }, [authLoading, loadGlobalData]);
 
-  
-
+  // 사용자 변경 시 사용자 데이터 로드
   useEffect(() => {
-    logger.debug("useEffect: 캐릭터 데이터 로드 및 초기화 시작", { isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems, allStarSeals })
+    logger.debug("useEffect: 사용자 데이터 로드 및 초기화 시작", { user, isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems, allStarSeals })
 
-    if (!isLoadingData && !dataLoadError && Object.keys(allItems).length > 0 && allGems && allStarSeals) {
-      logger.debug("Supabase 데이터 로드 완료, localStorage에서 캐릭터 로드 시도")
-      const storedCharacters = localStorage.getItem("characters")
-      let initialCharacters: Character[];
-
-      if (storedCharacters) {
-        logger.debug("localStorage에서 storedCharacters 발견", { storedCharactersLength: storedCharacters.length });
-        try {
-          const parsedCharacters: Character[] = JSON.parse(storedCharacters)
-          logger.debug("localStorage 캐릭터 데이터 파싱 성공", { parsedCharactersLength: parsedCharacters.length });
-          initialCharacters = parsedCharacters.map(char => {
-            // 모든 초기화 함수에 로드된 JSON 데이터 전달
-            return {
-              ...char,
-              inventory: createInitialInventory(allItems, char.inventory),
-              ...createInitialQuestProgress(allQuests, char.completedDailyTasks, char.completedWeeklyTasks),
-              equippedItems: createInitialEquipment(char.equippedItems),
-              skills: createInitialSkills(allSkillsData, char.skills),
-              craftingQueues: createInitialCraftingQueues(allCraftingFacilitiesData, char.craftingQueues),
-              favoriteCraftingFacilities: createInitialFavoriteCraftingFacilities(allCraftingFacilitiesData, char.favoriteCraftingFacilities),
-              favoriteItems: char.favoriteItems,
-              currencyTimers: createInitialCurrencyTimers(char.currencyTimers),
-              gems: createInitialGems(char.gems),
-              starSeals: createInitialStarSeals(char.starSeals), // Initialize starSeals
-              combatPower: char.combatPower || 0,
-            }
-          })
-          logger.debug("localStorage에서 캐릭터 로드 및 초기화 성공", { initialCharactersLength: initialCharacters.length });
-        } catch (e) {
-          logger.error("localStorage 캐릭터 데이터 파싱 실패. 빈 배열로 대체합니다.", { error: e })
-          initialCharacters = []; // Fallback to empty if parsing fails
-        }
-      } else {
-        logger.debug("localStorage에 저장된 캐릭터 없음. 빈 배열로 초기화.");
-        initialCharacters = [];
-      }
-
-      setCharacters(initialCharacters);
-      logger.debug("CharacterProvider: characters 상태 업데이트 완료", { finalCharactersLength: initialCharacters.length });
-
-      // If no active character is set, set the first character from the loaded list
-      // This is important for the initial load if localStorage was empty or had no active character
-      if (initialCharacters.length > 0) {
-        const storedActiveCharacterId = localStorage.getItem("activeCharacterId");
-        let foundActiveCharacter: Character | null = null;
-
-        if (storedActiveCharacterId) {
-          foundActiveCharacter = initialCharacters.find(char => char.id === storedActiveCharacterId) || null;
-          if (foundActiveCharacter) {
-            logger.debug(`localStorage에서 활성 캐릭터 ID 발견 및 설정: ${foundActiveCharacter.name}`);
-          } else {
-            logger.warn(`localStorage에 있는 활성 캐릭터 ID (${storedActiveCharacterId})와 일치하는 캐릭터를 찾을 수 없습니다. 첫 번째 캐릭터로 설정합니다.`);
-            foundActiveCharacter = initialCharacters[0];
-          }
-        } else {
-          logger.debug("localStorage에 활성 캐릭터 ID 없음. 첫 번째 캐릭터로 설정합니다.");
-          foundActiveCharacter = initialCharacters[0];
-        }
-
-        if (foundActiveCharacter) {
-          setActiveCharacterState(foundActiveCharacter);
-          logger.debug("활성 캐릭터 설정 완료", { characterName: foundActiveCharacter.name });
-        }
-      } else {
-        setActiveCharacterState(null);
-        logger.debug("로드된 캐릭터가 없으므로 활성 캐릭터를 null로 설정합니다.");
-      }
-      setIsInitialized(true); // Data has been loaded and characters set, mark as initialized
+    if (user && !isLoadingData && !dataLoadError && Object.keys(allItems).length > 0 && allGems && allStarSeals) {
+      logger.debug("Supabase 전역 데이터 로드 완료 및 사용자 로그인 상태, 사용자 데이터 로드 시도");
+      loadUserData(user.id);
+    } else if (!user) {
+      logger.debug("사용자 로그아웃 상태, 캐릭터 데이터 초기화");
+      setCharacters([]);
+      setActiveCharacterState(null);
+      setIsInitialized(true); // Mark as initialized even if no user data
     } else if (dataLoadError) {
       logger.error("데이터 로드 오류로 인해 캐릭터 초기화 건너뜜", { dataLoadError })
     } else {
-      logger.debug("JSON 데이터 로딩 중이거나 아직 로드되지 않아 캐릭터 초기화 대기")
+      logger.debug("전역 데이터 로딩 중이거나 아직 로드되지 않아 사용자 데이터 초기화 대기")
     }
-  }, [isLoadingData, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems]);
+  }, [user, dataLoadError, allItems, allQuests, allEquipment, allSkillsData, allCraftingFacilitiesData, allGems, allStarSeals, loadUserData]);
 
   // 캐릭터 변경 시 localStorage에 저장
   useEffect(() => {
@@ -653,20 +639,72 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateCharacter = useCallback(
-    (id: string, updates: Partial<Character>) => {
+    async (id: string, updates: Partial<Character>) => {
       logger.debug(`updateCharacter 호출됨: ${id}`, { updates });
-      setCharacters(prev =>
-        prev.map(char =>
-          char.id === id
-            ? { ...char, ...updates }
-            : char
-        )
-      );
-      setActiveCharacterState(prev =>
-        prev?.id === id
-          ? { ...prev, ...updates }
-          : prev
-      );
+
+      // If userItems are being updated, handle them separately
+      if (updates.userItems !== undefined) {
+        const { userItems, ...restUpdates } = updates;
+
+        // Update userItems in Supabase
+        // This assumes userItems are managed directly in the database
+        // For simplicity, we'll replace all userItems for the character
+        // In a real application, you might want to do more granular updates (insert, update, delete)
+        const { error: deleteError } = await supabase
+          .from('user_items')
+          .delete()
+          .eq('user_id', id);
+
+        if (deleteError) {
+          logger.error("Error deleting old user items:", deleteError);
+          return;
+        }
+
+        const itemsToInsert = userItems.map(item => ({
+          user_id: id,
+          item_id: item.item_id,
+          quantity: item.quantity,
+          durability: item.durability,
+          custom_props: item.custom_props,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('user_items')
+          .insert(itemsToInsert);
+
+        if (insertError) {
+          logger.error("Error inserting new user items:", insertError);
+          return;
+        }
+
+        // Update local state with the new userItems
+        setCharacters(prev =>
+          prev.map(char =>
+            char.id === id
+              ? { ...char, userItems, ...restUpdates }
+              : char
+          )
+        );
+        setActiveCharacterState(prev =>
+          prev?.id === id
+            ? { ...prev, userItems, ...restUpdates }
+            : prev
+        );
+      } else {
+        // Handle other character updates (non-userItems)
+        setCharacters(prev =>
+          prev.map(char =>
+            char.id === id
+              ? { ...char, ...updates }
+              : char
+          )
+        );
+        setActiveCharacterState(prev =>
+          prev?.id === id
+            ? { ...prev, ...updates }
+            : prev
+        );
+      }
     },
     []
   );
@@ -690,7 +728,6 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         logger.warn("JSON 데이터 로드 중이거나 오류 발생으로 인해 캐릭터 추가 불가")
         return;
       }
-      const initialInventory = createInitialInventory(allItems);
       const initialEquipment = createInitialEquipment();
       const initialSkills = createInitialSkills(allSkillsData);
       const initialCraftingQueues = createInitialCraftingQueues(allCraftingFacilitiesData);
@@ -711,7 +748,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
         ...character,
         ...createInitialQuestProgress(allQuests),
-        inventory: initialInventory,
+        userItems: [], // Initialize userItems as an empty array
         equippedItems: initialEquipment,
         skills: initialSkills,
         craftingQueues: initialCraftingQueues,

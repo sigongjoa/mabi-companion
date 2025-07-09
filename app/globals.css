@@ -368,3 +368,206 @@
   color: inherit !important;
   border-color: transparent !important;
 }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F8F9FA; /* Light Gray Background */
+}
+.header {
+    background-color: #FFFFFF; /* White Header */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 1rem; /* p-4 */
+    display: flex; /* flex */
+    align-items: center; /* items-center */
+    justify-content: space-between; /* justify-between */
+}
+.card {
+    background-color: #FFFFFF; /* White Card */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.main-card-padding {
+    padding: 1.5rem; /* p-6 */
+}
+.character-card-layout {
+    padding: 1rem; /* p-4 */
+    display: flex; /* flex */
+    align-items: center; /* items-center */
+    gap: 1rem; /* space-x-4 */
+}
+.card-header-bg {
+    background-color: #6A6AFF; /* Soft Purple for card header */
+    color: #FFFFFF;
+}
+.btn-primary {
+    background-color: #2A68FF; /* Primary blue for buttons */
+    color: #FFFFFF;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    display: flex; /* flex */
+    align-items: center; /* items-center */
+}
+.btn-primary:hover {
+    background-color: #1E56D9; /* Darker blue on hover */
+}
+.btn-secondary {
+    background-color: #E6F0FF; /* Light blue for secondary buttons */
+    color: #2A68FF;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+.btn-secondary:hover {
+    background-color: #D0E0FF; /* Lighter blue on hover */
+}
+.text-primary {
+    color: #2A68FF; /* Primary blue for main text */
+}
+.text-secondary {
+    color: #6C757D; /* Secondary gray for less prominent text */
+    margin-left: 1rem; /* ml-4 */
+    font-size: 0.875rem; /* text-sm */
+}
+.input-field {
+    border: 1px solid #CED4DA; /* Light gray border for inputs */
+    border-radius: 8px;
+    padding: 10px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    width: 16rem; /* w-64 */
+    margin-right: 1rem; /* mr-4 */
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 256px;
+    width: calc(100% - 256px);
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 700px;
+    padding: 0; /* Remove padding here, add to inner divs */
+    overflow: hidden; /* Ensure rounded corners apply to children */
+}
+.modal-header {
+    background-color: #6A6AFF; /* Soft Purple for modal header */
+    color: #FFFFFF;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+.modal-body {
+    padding: 24px;
+    display: grid; /* grid */
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); /* grid-cols-1 md:grid-cols-2 */
+    gap: 1rem; /* gap-4 */
+}
+.modal-footer {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid #F0F4F8; /* Light gray border */
+}
+.tab-button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #6C757D;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tab-button.active {
+    background-color: #2A68FF; /* Active tab background */
+    color: #FFFFFF; /* Active tab text */
+}
+.tab-button:not(.active):hover {
+    background-color: #E6F0FF; /* Hover for inactive tabs */
+    color: #2A68FF;
+}
+.category-button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500;
+    color: #6C757D;
+    background-color: #F0F4F8; /* Light gray blue for category buttons */
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.category-button.active {
+    background-color: #2A68FF; /* Active category background */
+    color: #FFFFFF; /* Active category text */
+}
+.category-button:not(.active):hover {
+    background-color: #D0E0FF; /* Hover for inactive categories */
+    color: #2A68FF;
+}
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #CED4DA; /* Off state color */
+    transition: .4s;
+    border-radius: 24px;
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .toggle-slider {
+    background-color: #2A68FF; /* On state color */
+}
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+.sidebar {
+    background-color: #FFFFFF; /* White Sidebar */
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+.sidebar-item.active {
+    background-color: #E6F0FF; /* Light Blue for active item */
+    color: #2A68FF; /* Darker Blue for active text */
+    border-left: 4px solid #2A68FF; /* Blue border for active item */
+}
+.timer-card {
+    background-color: #F0F4F8; /* Light Gray Blue for timer cards */
+    border-radius: 8px;
+}
+.timer-icon {
+    color: #2A68FF; /* Blue for timer icon */
+}

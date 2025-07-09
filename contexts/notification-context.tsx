@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 import { AppNotification } from '@/types/notification';
 
@@ -27,8 +27,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('userId', user.id)
-        .order('createdAt', { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -47,7 +47,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .channel('notifications_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications', filter: `userId=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         (payload) => {
           fetchNotifications();
         }

@@ -41,6 +41,26 @@ export interface Material {
   quantity: number;
 }
 
+export interface UserItem {
+  id: string; // user_items 테이블의 id (UUID)
+  user_id: string;
+  item_id: number; // items 테이블의 id
+  quantity: number;
+  acquired_at: string; // ISO string
+  durability?: number;
+  custom_props?: Record<string, any>;
+  // items 테이블에서 조인된 정보 (예: name, category, icon 등)
+  name?: string;
+  category?: string;
+  icon?: string;
+  description?: string;
+  weight?: number;
+  price?: number;
+  tradeable?: boolean;
+  sellable?: boolean;
+  isFavorite?: boolean;
+}
+
 export interface Item {
   id: number;
   name: string;
@@ -91,7 +111,7 @@ export interface Character {
     daily: { completed: number; total: number };
     weekly: { completed: number; total: number };
   };
-  inventory: Record<number, number>;
+  userItems: UserItem[]; // Changed from inventory: Record<number, number>
   equipment: Record<string, any>; // This is equippedItems in Character context
   skills: Record<number, number>;
   completedDailyTasks: Record<string, boolean>;

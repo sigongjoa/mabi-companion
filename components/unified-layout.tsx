@@ -29,6 +29,10 @@ export interface UnifiedLayoutProps {
 export function UnifiedLayout({ children, isOpen = true, setIsOpen }: UnifiedLayoutProps) {
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-gray-200">
+        <Sidebar />
+      </aside>
       <main className="flex-1 bg-gray-50 p-4 md:p-8">{children}</main>
     </div>
   )

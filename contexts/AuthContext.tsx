@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -24,15 +24,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('users')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error && error.code === 'PGRST116') { // No rows found
           // Create new user profile
+          const username = session.user.user_metadata?.user_name || // GitHub
+                         session.user.user_metadata?.full_name ||  // Google
+                         session.user.user_metadata?.global_name || // Discord
+                         session.user.email; // Fallback
+
           const { error: insertError } = await supabase
             .from('users')
             .insert({
               id: session.user.id,
-              username: session.user.user_metadata?.user_name || session.user.email,
+              username: username,
               llmTokens: 0,
               rating: 0,
               feedbackCount: 0,

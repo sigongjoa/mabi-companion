@@ -1,776 +1,180 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useCharacter, type Character } from "@/contexts/character-context"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CharacterScopedHeader } from "@/components/character-scoped-header"
-import { FavoriteToggle } from "@/components/favorite-toggle"
-import { Plus, Minus, Package, Sparkles, LayoutGrid, Table2, Star, User } from "lucide-react"
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
-import { logger } from "@/lib/logger"
-import { type Item, type Recipe } from "@/types/page-context"
-import ImageInventoryParser from "@/components/image-inventory-parser"
-import UnifiedLayout from "@/components/unified-layout";
+import React, { useState } from 'react';
 
-// Update categories to include individual material categories
-const categories = [
-  "전체",
-  "소모품",
-  "음식",
-  "장비",
-  "기타",
-  "화폐",
-  "광물",
-  "목재",
-  "가죽",
-  "옷감",
-  "버섯",
-  "결정",
-  "마법",
-  "파편",
-  "꽃",
-  "요리재료",
-  "보석",
-]
+interface Item {
+  id: string;
+  icon: string; // Placeholder for icon path or component
+  name: string;
+  category: string;
+  quantity: number;
+  isFavorite: boolean;
+}
 
 export default function InventoryPage() {
-  logger.debug("InventoryPage 렌더링 시작");
-  const { activeCharacter, viewMode, characters, updateCharacter, allItems, recipes, allGems } = useCharacter()
-  const [selectedCategory, setSelectedCategory] = useState<string[]>(["전체"])
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  // Change state for main tabs
-  const [currentMainTab, setCurrentMainTab] = useState("inventory-table")
-  const [currentCraftingViewMode, setCurrentCraftingViewMode] = useState("card")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState('items'); // 'items', 'craftable', 'gems', 'image-parsing'
+  const [activeCategory, setActiveCategory] = useState('all'); // 'all', 'consumables', 'equipment', etc.
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Get inventory data based on view mode
-  const getInventoryData = () => {
-    logger.debug("getInventoryData 호출");
-    let currentInventoryMap = new Map<number, number>() // Initialize map
-    if (viewMode === "single" && activeCharacter) {
-      currentInventoryMap = new Map(
-        Object.entries(activeCharacter.inventory as Record<string, number>).map(([k, v]) => [Number(k), v]),
+  const [items, setItems] = useState<Item[]>([
+    // Dummy data
+    { id: '1', icon: '', name: '생명력 포션', category: '소모품', quantity: 10, isFavorite: false },
+    { id: '2', icon: '', name: '롱 소드', category: '장비', quantity: 1, isFavorite: true },
+    { id: '3', icon: '', name: '마나 허브', category: '기타', quantity: 50, isFavorite: false },
+    { id: '4', icon: '', name: '금화 주머니', category: '화폐', quantity: 1, isFavorite: false },
+  ]);
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+    const matchesFavorites = !showFavoritesOnly || item.isFavorite;
+    return matchesSearch && matchesCategory && matchesFavorites;
+  });
+
+  const handleFavoriteToggle = (id: string) => {
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
       )
-      logger.debug("getInventoryData - single character mode", { activeCharacterId: activeCharacter.id });
-    } else if (viewMode === "all" && characters.length > 0) {
-      // Aggregate all character inventories
-      const aggregated = new Map<number, number>()
-      characters.forEach((character: Character) => {
-        Object.entries(character.inventory as Record<string, number>).forEach(
-          ([itemId, quantity]: [string, number]) => {
-            const id = Number(itemId)
-            aggregated.set(id, (aggregated.get(id) || 0) + quantity)
-          },
-        )
-      })
-      currentInventoryMap = aggregated
-      logger.debug("getInventoryData - all characters mode", { characterCount: characters.length });
-    }
-    logger.debug("getInventoryData 결과", { inventorySize: currentInventoryMap.size });
-    return currentInventoryMap
-  }
-
-  const inventory = getInventoryData()
-  logger.debug("인벤토리 데이터 로드됨", { inventory });
-
-  const updateGemQuantity = (gemId: string, gemGrade: string, change: number, isDirectSet: boolean = false) => {
-    logger.debug("updateGemQuantity 호출", { gemId, gemGrade, change, isDirectSet, viewMode, activeCharacterId: activeCharacter?.id });
-    if (!activeCharacter || viewMode !== "single") {
-      logger.warn("updateGemQuantity: 활성 캐릭터가 없거나 단일 캐릭터 모드가 아님, 업데이트 건너뜀");
-      return;
-    }
-
-    const currentGems = activeCharacter.gems || [];
-    const existingGemIndex = currentGems.findIndex(g => g.id === gemId && g.grade === gemGrade);
-
-    let newGems = [...currentGems];
-
-    if (existingGemIndex !== -1) {
-      const currentQuantity = newGems[existingGemIndex].quantity;
-      const newQuantity = isDirectSet ? change : Math.max(0, currentQuantity + change);
-
-      if (newQuantity === 0) {
-        newGems.splice(existingGemIndex, 1);
-        logger.debug("updateGemQuantity: 보석 수량 0이 되어 인벤토리에서 삭제", { gemId, gemGrade });
-      } else {
-        newGems[existingGemIndex] = { ...newGems[existingGemIndex], quantity: newQuantity };
-        logger.debug("updateGemQuantity: 보석 수량 업데이트", { gemId, gemGrade, newQuantity });
-      }
-    } else if (change > 0 || isDirectSet && change > 0) {
-      // Add new gem if it doesn't exist and quantity is positive
-      const gemName = allGems?.basicGems.find(g => g.id === gemId)?.name ||
-                      allGems?.combinedGems.find(g => g.id === gemId)?.name ||
-                      allGems?.premiumGems.find(g => g.id === gemId)?.name ||
-                      gemId;
-      newGems.push({ id: gemId, name: gemName, grade: gemGrade, quantity: isDirectSet ? change : change });
-      logger.debug("updateGemQuantity: 새 보석 추가", { gemId, gemGrade, quantity: isDirectSet ? change : change });
-    }
-
-    updateCharacter(activeCharacter.id, { gems: newGems });
-    logger.debug("updateGemQuantity: 캐릭터 보석 업데이트 완료", { newGems });
+    );
   };
-
-  const updateQuantity = (itemId: number, change: number) => {
-    logger.debug("updateQuantity 호출", { itemId, change, viewMode, activeCharacterId: activeCharacter?.id });
-    let targetCharacter = null;
-    if (viewMode === "single" && activeCharacter) {
-      targetCharacter = activeCharacter;
-    } else if (viewMode === "all" && characters.length > 0) {
-      targetCharacter = characters[0];
-    }
-
-    if (targetCharacter) {
-      logger.debug("updateQuantity: 캐릭터 인벤토리 업데이트 진행", { itemId, change, targetCharacterId: targetCharacter.id });
-      const currentQuantity = targetCharacter.inventory[itemId] || 0;
-      const newQuantity = Math.max(0, currentQuantity + change);
-
-      const newInventory = { ...targetCharacter.inventory };
-      if (newQuantity === 0) {
-        delete newInventory[itemId];
-        logger.debug("updateQuantity: 아이템 수량 0이 되어 인벤토리에서 삭제", { itemId });
-      } else {
-        newInventory[itemId] = newQuantity;
-        logger.debug("updateQuantity: 아이템 수량 업데이트", { itemId, newQuantity });
-      }
-
-      updateCharacter(targetCharacter.id, { inventory: newInventory });
-      logger.debug("updateQuantity: 캐릭터 인벤토리 업데이트 완료", { targetCharacterId: targetCharacter.id, newInventory });
-    } else {
-      logger.debug("updateQuantity: 활성 캐릭터 또는 타겟 캐릭터 없음, 업데이트 건너뜀", { viewMode, activeCharacter: !!activeCharacter, charactersCount: characters.length });
-    }
-  };
-
-  const handleQuantityChange = (itemId: number, value: string) => {
-    logger.debug("handleQuantityChange 호출", { itemId, value, viewMode, activeCharacterId: activeCharacter?.id });
-    let targetCharacter = null;
-    if (viewMode === "single" && activeCharacter) {
-      targetCharacter = activeCharacter;
-    } else if (viewMode === "all" && characters.length > 0) {
-      targetCharacter = characters[0];
-    }
-
-    if (targetCharacter) {
-      logger.debug("handleQuantityChange: 캐릭터 인벤토리 업데이트 진행", { itemId, value, targetCharacterId: targetCharacter.id });
-      const newQuantity = Math.max(0, parseInt(value) || 0);
-      const newInventory = { ...targetCharacter.inventory };
-
-      if (newQuantity === 0) {
-        delete newInventory[itemId];
-        logger.debug("handleQuantityChange: 아이템 수량 0이 되어 인벤토리에서 삭제 (텍스트박스 입력)", { itemId });
-      } else {
-        newInventory[itemId] = newQuantity;
-        logger.debug("handleQuantityChange: 아이템 수량 업데이트 (텍스트박스 입력)", { itemId, newQuantity });
-      }
-
-      updateCharacter(targetCharacter.id, { inventory: newInventory });
-      logger.debug("handleQuantityChange: 캐릭터 인벤토리 업데이트 완료", { targetCharacterId: targetCharacter.id, newInventory });
-    } else {
-      logger.debug("handleQuantityChange: 활성 캐릭터 또는 타겟 캐릭터 없음, 업데이트 건너뜀", { viewMode, activeCharacter: !!activeCharacter, charactersCount: characters.length });
-    }
-  };
-
-  const handleCategoryToggle = (category: string) => {
-    logger.debug("handleCategoryToggle 호출", { category });
-    setSelectedCategory((prev) => {
-      if (category === "전체") {
-        logger.debug("카테고리 전체 선택");
-        return ["전체"];
-      } else {
-        let newCategories: string[];
-        if (prev.includes("전체")) {
-          // "전체"가 선택된 상태에서 다른 카테고리 선택 시 "전체" 제거
-          newCategories = [category];
-          logger.debug("'전체' 제거 후 카테고리 선택", { category });
-        } else if (prev.includes(category)) {
-          // 이미 선택된 카테고리 해제
-          newCategories = prev.filter((c) => c !== category);
-          logger.debug("카테고리 선택 해제", { category });
-        } else {
-          // 새로운 카테고리 선택
-          newCategories = [...prev, category];
-          logger.debug("새로운 카테고리 선택", { category });
-        }
-
-        // 모든 카테고리가 선택 해제되면 자동으로 "전체" 선택
-        if (newCategories.length === 0) {
-          logger.debug("모든 카테고리 해제, '전체' 자동 선택");
-          return ["전체"];
-        }
-
-        logger.debug("handleCategoryToggle 결과", { newCategories });
-        return newCategories;
-      }
-    });
-  };
-
-  const canCraft = (recipe: Recipe) => {
-    logger.debug("canCraft 호출", { recipeResultId: recipe.resultId });
-    const result = recipe.materials.every((material) => {
-      const materialItem = allItems[material.itemId.toString()];
-      if (!materialItem) {
-        logger.warn("재료 아이템을 allItems에서 찾을 수 없음", { itemId: material.itemId });
-        return false;
-      }
-      const currentInventory = inventory.get(materialItem.id) || 0;
-      const requiredQuantity = material.quantity;
-      logger.debug("재료 확인", { materialId: materialItem.id, currentInventory, requiredQuantity });
-      return currentInventory >= requiredQuantity;
-    });
-    logger.debug("canCraft 결과", { result });
-    return result;
-  };
-
-  const craftItem = (recipe: Recipe) => {
-    logger.debug("craftItem 호출", { recipeResultId: recipe.resultId });
-    if (!canCraft(recipe) || viewMode !== "single" || !activeCharacter) {
-      logger.warn("제작 불가 조건", { canCraft: canCraft(recipe), viewMode, activeCharacter: !!activeCharacter });
-      return;
-    }
-
-    const newInventory = { ...activeCharacter.inventory };
-    logger.debug("제작 전 인벤토리", { newInventory });
-
-    // 재료 소모
-    recipe.materials.forEach((material) => {
-      const materialItem = allItems[material.itemId.toString()];
-      if (!materialItem) {
-        logger.error("재료 아이템을 찾을 수 없음", { itemId: material.itemId });
-        return;
-      }
-      const current = newInventory[materialItem.id] || 0;
-      newInventory[materialItem.id] = current - material.quantity;
-      logger.debug("재료 소모됨", { materialId: materialItem.id, quantityUsed: material.quantity });
-    });
-
-    // 결과물 추가
-    const resultItem = allItems[recipe.resultId.toString()];
-    if (!resultItem) {
-      logger.error("결과 아이템을 찾을 수 없음", { resultId: recipe.resultId });
-      return;
-    }
-    const currentResult = newInventory[resultItem.id] || 0;
-    newInventory[resultItem.id] = currentResult + 1;
-    logger.debug("결과 아이템 추가됨", { resultItemId: resultItem.id, newQuantity: newInventory[resultItem.id] });
-
-    updateCharacter(activeCharacter.id, { inventory: newInventory });
-    logger.debug("아이템 제작 완료, 캐릭터 인벤토리 업데이트됨");
-  };
-
-  const filteredItems = Array.from(inventory.entries())
-    .map(([id, quantity]) => {
-      const item = allItems[id.toString()]
-      if (!item) {
-        logger.warn("인벤토리 아이템을 allItems에서 찾을 수 없음", { itemId: id });
-        return null // Item not found, skip this entry
-      }
-      const filteredItem = { ...item, quantity }
-      return filteredItem
-    })
-    .filter((item): item is Item & { quantity: number } => {
-      if (!item) return false
-
-      // Category filter
-      const categoryMatch = selectedCategory.includes("전체") || selectedCategory.includes(item.category);
-
-      // Favorites filter
-      const favoritesMatch = !showFavoritesOnly || (activeCharacter?.favoriteItems?.[item.id] === true);
-
-      // Search filter
-      const searchMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.category.toLowerCase().includes(searchQuery.toLowerCase());
-      logger.debug("아이템 필터링 중", { itemName: item.name, categoryMatch, favoritesMatch, searchMatch });
-
-      return categoryMatch && favoritesMatch && searchMatch
-    })
-    .sort((a, b) => a.name.localeCompare(b.name))
-  logger.debug("filteredItems 결과", { filteredItemsLength: filteredItems.length });
-
-  const craftableRecipes = recipes.filter(canCraft)
-  logger.debug("craftableRecipes 결과", { craftableRecipesLength: craftableRecipes.length });
-
-  const filteredRecipes = recipes.filter((recipe) => {
-    logger.debug("filteredRecipes 필터링 중", { recipeResultId: recipe.resultId });
-    const resultItem = allItems[recipe.resultId.toString()];
-    if (!resultItem) {
-      logger.warn("제작 결과 아이템을 allItems에서 찾을 수 없음", { resultId: recipe.resultId });
-      return false;
-    }
-
-    // Search query filter
-    const searchMatch = resultItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        recipe.materials.some(material => {
-                            const materialItem = allItems[material.itemId.toString()];
-                            return materialItem && materialItem.name.toLowerCase().includes(searchQuery.toLowerCase());
-                        });
-    logger.debug("레시피 검색 일치 여부", { recipeResultId: recipe.resultId, searchMatch });
-    return searchMatch;
-  })
-  logger.debug("filteredRecipes 결과", { filteredRecipesLength: filteredRecipes.length });
 
   return (
-    <UnifiedLayout>
-      <div className="p-6 space-y-6 bg-white min-h-screen" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
-        {/* Enhanced Header - Dashboard style */}
-        <div className="modern-card fade-in mb-6">
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-4 bg-yellow-100 rounded-2xl flex-shrink-0">
-                  <Package className="w-8 h-8 text-yellow-600" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-4xl font-bold text-gray-900">아이템 관리</h1>
-                  <p className="text-lg text-gray-600 mt-1">인벤토리 및 아이템 현황 관리</p>
-                  <p className="text-sm text-gray-500 mt-1">내 캐릭터의 아이템을 효율적으로 관리하고 생산에 활용하세요.</p>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-                <Input
-                  type="text"
-                  placeholder="검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-            </div>
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <header className="header">
+        <div className="flex items-center">
+          <svg className="w-8 h-8 text-gray-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM13 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2h-2zM13 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z" clipRule="evenodd"></path></svg>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-800">아이템 관리</h1>
+            <p className="text-sm text-secondary">인벤토리 및 아이템 현황 관리</p>
+            <p className="text-xs text-secondary">내 캐릭터의 아이템을 효율적으로 관리하고 생산에 활용하세요.</p>
           </div>
         </div>
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="검색..."
+            className="input-field"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </header>
 
-        <Tabs defaultValue={currentMainTab} onValueChange={setCurrentMainTab} className="space-y-6">
-          <div className="document-card p-4">
-            <Tabs
-              defaultValue="inventory-table"
-              value={currentMainTab}
-              onValueChange={setCurrentMainTab}
-              className="section-spacing"
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 overflow-y-auto">
+        <div className="card main-card-padding mb-6">
+          {/* Tabs */}
+          <div className="flex space-x-2 mb-4">
+            <button
+              className={`tab-button ${activeTab === 'items' ? 'active' : ''} flex items-center`}
+              onClick={() => setActiveTab('items')}
             >
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                <div className="p-4">
-                  <TabsList className="bg-gray-50 border border-gray-200">
-                    <TabsTrigger
-                      value="inventory-table"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      <Table2 className="w-4 h-4 mr-2" /> 아이템 (테이블)
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="craftable-items"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" /> 제작 가능 ({craftableRecipes.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="gems-table"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" /> 보석
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="image-parser"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" /> 이미지 파싱
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-              </div>
-
-              <TabsContent value="inventory-table" className="space-y-6">
-                <Card className="document-card">
-                  <CardHeader className="excel-header flex-row items-center justify-between">
-                    <CardTitle className="text-gray-900 flex items-center space-x-2">
-                      <Package className="w-5 h-5" />
-                      <span>통합 인벤토리</span>
-                      <Badge variant="secondary" className="ml-2 font-normal text-gray-500">
-                        총 {filteredItems.length}개 아이템 ({activeCharacter ? activeCharacter.name : '선택된 캐릭터 없음'})
-                      </Badge>
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="favorites-only"
-                        checked={showFavoritesOnly}
-                        onCheckedChange={setShowFavoritesOnly}
-                      />
-                      <Label htmlFor="favorites-only" className="text-sm text-muted-foreground">
-                        즐겨찾기만
-                      </Label>
-                      <FavoriteToggle
-                        itemId="inventory-header"
-                        itemType="header"
-                        size="sm"
-                        className="ml-2"
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="flex flex-wrap gap-2 mb-4 p-4">
-                      {categories.map((category) => (
-                        <Button
-                          key={category}
-                          variant={selectedCategory.includes(category) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleCategoryToggle(category)}
-                          className={cn(
-                            "transition-all duration-200",
-                            selectedCategory.includes(category)
-                              ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                              : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400",
-                          )}
-                        >
-                          {category}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="max-h-[600px] overflow-y-auto excel-scrollbar">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[70px] text-center">즐겨찾기</TableHead>
-                            <TableHead className="w-[80px] text-center">아이콘</TableHead>
-                            <TableHead>이름</TableHead>
-                            <TableHead>카테고리</TableHead>
-                            <TableHead className="text-right w-[180px]">수량</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredItems.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="text-center align-middle">
-                                <FavoriteToggle itemId={item.id.toString()} itemType="item" size="sm" />
-                              </TableCell>
-                              <TableCell className="text-2xl text-center">
-                                {/* 아이콘 이미지 경로 대신 이모지를 직접 렌더링합니다. */}
-                                {item.icon}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {item.name}
-                              </TableCell>
-                              <TableCell>{item.category}</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => updateQuantity(item.id, -1)}
-                                    disabled={item.quantity <= 0}
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <Input
-                                    type="number"
-                                    value={item.quantity}
-                                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                                    className="w-24 text-center inline-block mx-1"
-                                    min={0}
-                                  />
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => updateQuantity(item.id, 1)}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    {filteredItems.length === 0 && (
-                      <div className="p-6 text-center text-muted-foreground">
-                        표시할 아이템이 없습니다.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="craftable-items" className="space-y-6">
-                <Card className="document-card">
-                  <CardHeader className="excel-header flex-row items-center justify-between">
-                    <CardTitle className="text-gray-900 flex items-center space-x-2">
-                      <Sparkles className="w-5 h-5" />
-                      <span>제작 가능 아이템</span>
-                      <Badge variant="secondary" className="ml-2 font-normal text-gray-500">
-                        총 {craftableRecipes.length}개 레시피
-                      </Badge>
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Tabs value={currentCraftingViewMode} onValueChange={setCurrentCraftingViewMode}>
-                        <TabsList>
-                          <TabsTrigger value="card">
-                            <LayoutGrid className="w-4 h-4 mr-2" /> 카드
-                          </TabsTrigger>
-                          <TabsTrigger value="table">
-                            <Table2 className="w-4 h-4 mr-2" /> 테이블
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    {currentCraftingViewMode === "card" ? (
-                      <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3">
-                        {craftableRecipes.map((recipe) => {
-                          const resultItem = allItems[recipe.resultId.toString()];
-                          if (!resultItem) return null;
-                          return (
-                            <div key={recipe.id} className="flex flex-col gap-3 pb-3 border border-[#dce2e5] rounded-xl p-4">
-                              <div
-                                className="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl"
-                                style={{ backgroundImage: `url(${resultItem.icon || '/placeholder.svg'})` }}
-                              ></div>
-                              <div>
-                                <p className="text-[#111518] text-base font-medium leading-normal">{resultItem.name}</p>
-                                <p className="text-[#637c88] text-sm font-normal leading-normal">
-                                  재료: {recipe.materials.map(mat => `${allItems[mat.itemId]?.name || '알 수 없음'} x${mat.quantity}`).join(', ')}
-                                </p>
-                                <Button onClick={() => craftItem(recipe)} className="mt-2 w-full">
-                                  제작
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="max-h-[600px] overflow-y-auto excel-scrollbar">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>아이템</TableHead>
-                              <TableHead>재료</TableHead>
-                              <TableHead className="text-right">액션</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {craftableRecipes.map((recipe) => {
-                              const resultItem = allItems[recipe.resultId.toString()];
-                              if (!resultItem) return null;
-                              return (
-                                <TableRow key={recipe.id}>
-                                  <TableCell className="font-medium">{resultItem.name}</TableCell>
-                                  <TableCell>
-                                    {recipe.materials.map(material => {
-                                      const matItem = allItems[material.itemId.toString()];
-                                      return `${matItem?.name || '알 수 없음'} x${material.quantity}`;
-                                    }).join(", ")}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button onClick={() => craftItem(recipe)} size="sm">
-                                      제작
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                    {craftableRecipes.length === 0 && (
-                      <div className="p-6 text-center text-muted-foreground">
-                        제작 가능한 아이템이 없습니다.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="gems-table" className="space-y-6">
-                <Card className="document-card">
-                  <CardHeader className="excel-header flex-row items-center justify-between">
-                    <CardTitle className="text-gray-900 flex items-center space-x-2">
-                      <Sparkles className="w-5 h-5" />
-                      <span>보석 인벤토리</span>
-                      <Badge variant="secondary" className="ml-2 font-normal text-gray-500">
-                        총 {activeCharacter?.gems?.length || 0}개 보석 ({activeCharacter ? activeCharacter.name : '선택된 캐릭터 없음'})
-                      </Badge>
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="favorites-only-gems"
-                        checked={showFavoritesOnly}
-                        onCheckedChange={setShowFavoritesOnly}
-                      />
-                      <Label htmlFor="favorites-only-gems" className="text-sm text-muted-foreground">
-                        즐겨찾기만
-                      </Label>
-                      {/* Gem specific favorite toggle if needed */}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="max-h-[600px] overflow-y-auto excel-scrollbar">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[70px] text-center">즐겨찾기</TableHead>
-                            <TableHead>이름</TableHead>
-                            <TableHead>등급</TableHead>
-                            <TableHead>효과</TableHead>
-                            <TableHead className="text-right w-[180px]">수량</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {allGems && activeCharacter && (
-                            <>
-                              {/* Basic Gems */}
-                              {allGems.basicGems.map((gem) => {
-                                const characterGem = activeCharacter.gems.find(g => g.id === gem.id && g.grade === "기본");
-                                const quantity = characterGem ? characterGem.quantity : 0;
-                                return (
-                                  <TableRow key={gem.id + "-basic"}>
-                                    <TableCell className="text-center align-middle">
-                                      <FavoriteToggle itemId={gem.id} itemType="gem" size="sm" />
-                                    </TableCell>
-                                    <TableCell className="font-medium">{gem.name}</TableCell>
-                                    <TableCell>기본</TableCell>
-                                    <TableCell>{gem.effect}</TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex items-center justify-end space-x-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "기본", -1)}
-                                          disabled={quantity <= 0}
-                                        >
-                                          <Minus className="h-4 w-4" />
-                                        </Button>
-                                        <Input
-                                          type="number"
-                                          value={quantity}
-                                          onChange={(e) => updateGemQuantity(gem.id, "기본", parseInt(e.target.value) || 0, true)}
-                                          className="w-24 text-center inline-block mx-1"
-                                          min={0}
-                                        />
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "기본", 1)}
-                                        >
-                                          <Plus className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-
-                              {/* Combined Gems (simplified for now, assuming only one grade for display) */}
-                              {allGems.combinedGems.map((gem) => {
-                                const characterGem = activeCharacter.gems.find(g => g.id === gem.id && g.grade === "복합");
-                                const quantity = characterGem ? characterGem.quantity : 0;
-                                return (
-                                  <TableRow key={gem.id + "-combined"}>
-                                    <TableCell className="text-center align-middle">
-                                      <FavoriteToggle itemId={gem.id} itemType="gem" size="sm" />
-                                    </TableCell>
-                                    <TableCell className="font-medium">{gem.name}</TableCell>
-                                    <TableCell>복합</TableCell>
-                                    <TableCell>{gem.effect}</TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex items-center justify-end space-x-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "복합", -1)}
-                                          disabled={quantity <= 0}
-                                        >
-                                          <Minus className="h-4 w-4" />
-                                        </Button>
-                                        <Input
-                                          type="number"
-                                          value={quantity}
-                                          onChange={(e) => updateGemQuantity(gem.id, "복합", parseInt(e.target.value) || 0, true)}
-                                          className="w-24 text-center inline-block mx-1"
-                                          min={0}
-                                        />
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "복합", 1)}
-                                        >
-                                          <Plus className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-
-                              {/* Premium Gems */}
-                              {allGems.premiumGems.map((gem) => {
-                                const characterGem = activeCharacter.gems.find(g => g.id === gem.id && g.grade === "프리미엄");
-                                const quantity = characterGem ? characterGem.quantity : 0;
-                                return (
-                                  <TableRow key={gem.id + "-premium"}>
-                                    <TableCell className="text-center align-middle">
-                                      <FavoriteToggle itemId={gem.id} itemType="gem" size="sm" />
-                                    </TableCell>
-                                    <TableCell className="font-medium">{gem.name}</TableCell>
-                                    <TableCell>프리미엄</TableCell>
-                                    <TableCell>{gem.effect}</TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex items-center justify-end space-x-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "프리미엄", -1)}
-                                          disabled={quantity <= 0}
-                                        >
-                                          <Minus className="h-4 w-4" />
-                                        </Button>
-                                        <Input
-                                          type="number"
-                                          value={quantity}
-                                          onChange={(e) => updateGemQuantity(gem.id, "프리미엄", parseInt(e.target.value) || 0, true)}
-                                          className="w-24 text-center inline-block mx-1"
-                                          min={0}
-                                        />
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => updateGemQuantity(gem.id, "프리미엄", 1)}
-                                        >
-                                          <Plus className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </>
-                          )}
-                          {(!allGems || !activeCharacter || activeCharacter.gems.length === 0) && (
-                            <TableRow>
-                              <TableCell colSpan={5} className="text-center text-muted-foreground p-6">
-                                보유한 보석이 없습니다.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="image-parser" className="space-y-6">
-                <ImageInventoryParser />
-              </TabsContent>
-            </Tabs>
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1zM10 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1zM13 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1z"></path><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-5-8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd"></path></svg>
+              아이템 (테이블)
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'craftable' ? 'active' : ''} flex items-center`}
+              onClick={() => setActiveTab('craftable')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414L7 9.586V7a1 1 0 10-2 0v3a1 1 0 001 1h3a1 1 0 100-2H7.414l1.293-1.293z" clipRule="evenodd"></path></svg>
+              제작 가능 (0)
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'gems' ? 'active' : ''} flex items-center`}
+              onClick={() => setActiveTab('gems')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586V7a1 1 0 10-2 0v3.586L5.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 000-1.414z" clipRule="evenodd"></path></svg>
+              보석
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'image-parsing' ? 'active' : ''} flex items-center`}
+              onClick={() => setActiveTab('image-parsing')}
+            >
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd"></path></svg>
+              이미지 파싱
+            </button>
           </div>
-        </Tabs>
-      </div>
-    </UnifiedLayout>
-  )
+
+          {/* Integrated Inventory Section */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <h3 className="text-lg font-semibold text-gray-800 mr-2">통합 인벤토리</h3>
+              <span className="text-sm text-secondary">총 {filteredItems.length}개 아이템 (선택된 캐릭터 없음)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm text-gray-700 mr-2">즐겨찾기만</span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={showFavoritesOnly}
+                  onChange={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+              <button className="ml-4 text-gray-500 hover:text-red-500">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {['전체', '소모품', '장비', '기타', '화폐', '광물', '가죽', '옷감', '버섯', '결정', '마법', '파편', '꽃', '요리재료', '보석'].map(category => (
+              <button
+                key={category}
+                className={`category-button ${activeCategory === category.toLowerCase() ? 'active' : ''}`}
+                onClick={() => setActiveCategory(category.toLowerCase())}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Item List Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-md">즐겨찾기</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">아이콘</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">카테고리</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-md">수량</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary">표시할 아이템이 없습니다.</td>
+                  </tr>
+                ) : (
+                  filteredItems.map(item => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button onClick={() => handleFavoriteToggle(item.id)}>
+                          <svg className={`w-5 h-5 ${item.isFavorite ? 'text-red-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"></path></svg>
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {/* Placeholder for item icon */}
+                        <div className="w-8 h-8 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+                          {item.name.charAt(0)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </body>
+  );
 }

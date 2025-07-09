@@ -45,13 +45,22 @@ const config: Config = {
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
   			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
-  		},
+				'1': 'hsl(var(--chart-1))',
+				'2': 'hsl(var(--chart-2))',
+				'3': 'hsl(var(--chart-3))',
+				'4': 'hsl(var(--chart-4))',
+				'5': 'hsl(var(--chart-5))'
+			},
+        'light-gray-background': '#F8F9FA',
+        'light-blue-active': '#E6F0FF',
+        'dark-blue-primary': '#2A68FF',
+        'soft-purple-card-header': '#6A6AFF',
+        'light-gray-blue-timer': '#F0F4F8',
+        'secondary-gray': '#6C757D',
+        'dark-blue-primary-hover': '#1E56D9',
+        'light-blue-active-hover': '#D0E0FF',
+        'input-border-light': '#CED4DA'
+		},
       fontFamily: {
         sans: ['var(--font-plus-jakarta-sans)', 'var(--font-noto-sans)'],
       },

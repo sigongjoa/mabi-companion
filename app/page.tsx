@@ -1,138 +1,166 @@
 "use client";
 
-import { useCharacter } from "@/contexts/character-context";
-import { useRouter } from 'next/navigation';
-import { logger } from "@/lib/logger";
+import React, { useState, useEffect } from 'react';
+import Sidebar from '@/components/sidebar'; // Import the new Sidebar component
+import supabase from '@/lib/supabase'; // Import Supabase client
+import { useAuth } from '@/contexts/AuthContext';
+
+interface Character {
+  id: string;
+  name: string;
+  image_url: string;
+  level: number;
+  class: string;
+  combat_power: number;
+  defense: number;
+  magic_defense: number;
+}
+
+interface CraftingTimer {
+  id: string;
+  item_name: string;
+  time_remaining: string; // e.g., "2시간 30분"
+}
 
 export default function HomePage() {
-  logger.debug("HomePage 렌더링 시작");
-  const router = useRouter();
-  const { activeCharacter, characters, isLoadingData, dataLoadError } = useCharacter();
+  const { user, loading } = useAuth();
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [craftingTimers, setCraftingTimers] = useState<CraftingTimer[]>([]);
 
-  if (isLoadingData) {
-    return <div>로딩중...</div>;
-  }
+  useEffect(() => {
+    if (loading) return; // Wait for auth to load
+    if (!user) {
+      window.location.href = '/login'; // Redirect to login if no user
+      return;
+    }
 
-  if (dataLoadError) {
-    return <div>데이터를 불러오는데 실패했습니다.</div>;
-  }
+    const fetchCharacters = async () => {
+      const { data, error } = await supabase.from('characters').select('*');
+      if (data) {
+        setCharacters(data);
+      } else if (error) {
+        console.error('Error fetching characters:', error.message);
+      }
+    };
+
+    const fetchCraftingTimers = async () => {
+      // Assuming a 'crafting_timers' table in Supabase
+      const { data, error } = await supabase.from('crafting_timers').select('*');
+      if (data) {
+        setCraftingTimers(data);
+      } else if (error) {
+        console.error('Error fetching crafting timers:', error.message);
+      }
+    };
+
+    fetchCharacters();
+    fetchCraftingTimers();
+  }, [loading, user]);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error.message);
+    } else {
+      // Redirect to login page or update UI
+      window.location.href = '/login'; // Example redirect
+    }
+  };
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}>
-      <div className="layout-container flex h-full grow flex-col">
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f4f3f0] px-10 py-3">
-          <div className="flex items-center gap-4 text-[#171511]">
-            <div className="size-4">
-              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor"></path>
-              </svg>
-            </div>
-            <h2 className="text-[#171511] text-lg font-bold leading-tight tracking-[-0.015em]">마비노기 모바일</h2>
-          </div>
-          <div className="flex flex-1 justify-end gap-8">
-            <div className="flex items-center gap-9">
-              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">홈</a>
-              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">거래소</a>
-              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">커뮤니티</a>
-              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">가이드</a>
-              <a className="text-[#171511] text-sm font-medium leading-normal" href="#">고객지원</a>
-            </div>
-            <button
-              className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-[#f4f3f0] text-[#171511] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
-            >
-              <div className="text-[#171511]" data-icon="Bell" data-size="20px" data-weight="regular">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
-                  <path
-                    d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"
-                  ></path>
-                </svg>
-              </div>
-            </button>
-            <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-              style={{ backgroundImage: `url(${activeCharacter?.imageUrl || '/placeholder-user.jpg'})` }}
-            ></div>
-          </div>
-        </header>
-        <div className="px-40 flex flex-1 justify-center py-5">
-          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-            <section className="my-12 rounded-xl shadow-lg overflow-hidden">
-              <div className="h-1 bg-violet-500 rounded-t-xl"></div>
-              <div className="p-6 bg-gray-50">
-                <h2 className="text-violet-600 text-[32px] font-bold leading-tight tracking-[-0.015em] pb-3">
-                  캐릭터 정보
-                </h2>
-                <div className="px-4 py-3 @container">
-                  <div className="flex overflow-hidden rounded-xl border border-[#e5e2dc] bg-white">
-                    <table className="flex-1">
-                      <thead>
-                        <tr className="bg-white">
-                          <th className="px-4 py-3 text-left text-[#171511] w-[150px] text-sm font-medium leading-normal">이름</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-14 text-sm font-medium leading-normal">이미지</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-[80px] text-sm font-medium leading-normal">레벨</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-[120px] text-sm font-medium leading-normal">클래스</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-[120px] text-sm font-medium leading-normal">전투력</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-[100px] text-sm font-medium leading-normal">방어</th>
-                          <th className="px-4 py-3 text-left text-[#171511] w-[100px] text-sm font-medium leading-normal">마법방어</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {characters && characters.map((character) => (
-                          <tr className="border-t border-t-[#e5e2dc] bg-white transition-all duration-300 ease-in-out hover:shadow-md hover:-translate-y-0.5" key={character.id}>
-                            <td className="h-[72px] px-4 py-2 text-[#171511] text-sm font-normal leading-normal">{character.name}</td>
-                            <td className="h-[72px] px-4 py-2 w-14 text-sm font-normal leading-normal">
-                              <div
-                                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10"
-                                style={{ backgroundImage: `url(${character.imageUrl || '/placeholder-user.jpg'})` }}
-                              ></div>
-                            </td>
-                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.level}</td>
-                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.profession}</td>
-                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.combatPower?.toLocaleString() || 'N/A'}</td>
-                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.defense || 'N/A'}</td>
-                            <td className="h-[72px] px-4 py-2 text-[#877b64] text-sm font-normal leading-normal">{character.magicDefense || 'N/A'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </section>
+    <div className="flex h-screen">
+      <Sidebar userEmail={user?.email || 'Guest'} onLogout={handleLogout} />
 
-            <section className="my-12 rounded-xl shadow-lg overflow-hidden">
-              <div className="h-1 bg-violet-500 rounded-t-xl"></div>
-              <div className="p-6 bg-gray-50">
-                <h2 className="text-violet-600 text-[22px] font-bold leading-tight tracking-[-0.015em] pb-3">
-                  제작 타이머
-                </h2>
-                <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 rounded-lg shadow-sm mb-3 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
-                  <div className="text-violet-500 flex items-center justify-center rounded-lg bg-[#f4f3f0] shrink-0 size-12" data-icon="Clock" data-size="24px" data-weight="regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
-                      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path>
-                    </svg>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <p className="text-[#171511] text-base font-medium leading-normal line-clamp-1">아이템 이름</p>
-                    <p className="text-violet-700 text-sm font-normal leading-normal line-clamp-2">남은 시간: 2시간 30분</p>
-                  </div>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col bg-gray-100">
+        {/* Header */}
+        <header className="header rounded-bl-lg">
+            <div className="flex items-center">
+                <h1 className="text-xl font-semibold text-gray-800">마비노기 모바일</h1>
+                <nav className="ml-8 text-gray-600">
+                    <a href="#" className="mr-4 hover:text-blue-600">홈</a>
+                    <a href="#" className="mr-4 hover:text-blue-600">거래소</a>
+                    <a href="#" className="mr-4 hover:text-blue-600">커뮤니티</a>
+                    <a href="#" className="mr-4 hover:text-blue-600">가이드</a>
+                    <a href="#" className="hover:text-blue-600">고객지원</a>
+                </nav>
+            </div>
+            <div className="flex items-center">
+                <svg className="w-6 h-6 text-gray-600 mr-4" fill="currentColor" viewBox="0 0 20 20"><path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm4 0h2v2h-2V8z"></path></svg>
+                <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
+            </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 p-6 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Character Info Card */}
+                <div className="card">
+                    <div className="card-header-bg py-3 px-4 -mx-6 -mt-6 mb-6 rounded-t-lg">
+                        <h2 className="text-lg font-semibold">캐릭터 정보</h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-md">이름</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이미지</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">레벨</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">클래스</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">전투력</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">방어</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-md">마법 방어</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {characters.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary">캐릭터 정보가 없습니다.</td>
+                                    </tr>
+                                ) : (
+                                    characters.map(char => (
+                                        <tr key={char.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{char.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <img src={char.image_url || "https://placehold.co/40x40/E0E0E0/808080?text=IMG"} alt="Character Image" className="w-10 h-10 rounded-full" />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.level}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.class}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.combat_power.toLocaleString()}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.defense}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{char.magic_defense}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div className="flex items-center gap-4 bg-white px-4 min-h-[72px] py-2 rounded-lg shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
-                  <div className="text-violet-500 flex items-center justify-center rounded-lg bg-[#f4f3f0] shrink-0 size-12" data-icon="Clock" data-size="24px" data-weight="regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
-                      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path>
-                    </svg>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <p className="text-[#171511] text-base font-medium leading-normal line-clamp-1">다른 아이템 이름</p>
-                    <p className="text-violet-700 text-sm font-normal leading-normal line-clamp-2">남은 시간: 1시간 15분</p>
-                  </div>
+
+                {/* Crafting Timer Card */}
+                <div className="card">
+                    <div className="card-header-bg py-3 px-4 -mx-6 -mt-6 mb-6 rounded-t-lg">
+                        <h2 className="text-lg font-semibold">제작 타이머</h2>
+                    </div>
+                    <div className="space-y-4">
+                        {craftingTimers.length === 0 ? (
+                            <p className="text-sm text-secondary text-center">진행 중인 제작 타이머가 없습니다.</p>
+                        ) : (
+                            craftingTimers.map(timer => (
+                                <div key={timer.id} className="timer-card p-4 flex items-center">
+                                    <svg className="timer-icon w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clipRule="evenodd"></path></svg>
+                                    <div>
+                                        <p className="font-medium text-gray-800">{timer.item_name}</p>
+                                        <p className="text-sm text-secondary">남은 시간: {timer.time_remaining}</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
-              </div>
-            </section>
-          </div>
+            </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import { RaidPost, RaidMatch } from '@/types/raid';
 import { UserProfile } from '@/types/qa';
 import { AppNotification } from '@/types/notification';

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Users, Plus, Trash2, Star, Edit } from "lucide-react"
 import { useCharacter } from "@/contexts/character-context";
@@ -31,12 +31,30 @@ interface Character {
 
 const servers = ["데이안", "아이라", "던컨", "알리사", "메이븐", "라사", "칼릭스"];
 const professions = [
-  "전사", "대검전사", "검술사",
-  "궁수", "석궁사수", "장궁병",
-  "마법사", "화염술사", "빙결술사", "전격술사",
-  "힐러", "사제", "수도사",
-  "음유시인", "댄서", "악사",
-  "도적", "격투가", "듀얼블레이드"
+  {
+    category: "전사 계열",
+    professions: ["전사", "대검전사", "검술사"]
+  },
+  {
+    category: "궁수 계열",
+    professions: ["궁수", "석궁사수", "장궁병"]
+  },
+  {
+    category: "마법사 계열",
+    professions: ["마법사", "화염술사", "빙결술사", "전격술사"]
+  },
+  {
+    category: "힐러 계열",
+    professions: ["힐러", "사제", "수도사"]
+  },
+  {
+    category: "음유시인 계열",
+    professions: ["음유시인", "댄서", "악사"]
+  },
+  {
+    category: "도적 계열",
+    professions: ["도적", "격투가", "듀얼블레이드"]
+  }
 ];
 
 export default function CharactersPage() {
@@ -189,16 +207,16 @@ export default function CharactersPage() {
 
         {/* 새 캐릭터 추가/수정 모달 */}
         <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingCharacter ? "캐릭터 수정" : "새 캐릭터 추가"}</DialogTitle>
               <DialogDescription>
                 {editingCharacter ? "캐릭터 정보를 수정합니다." : "새로운 캐릭터를 추가합니다."}
               </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-1 gap-4 py-4">
               <div>
-                <Label htmlFor="name" className="text-gray-700">
+                <Label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   캐릭터 이름
                 </Label>
                 <Input
@@ -206,18 +224,18 @@ export default function CharactersPage() {
                   value={newCharacter.name}
                   onChange={(e) => setNewCharacter((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="캐릭터 이름 입력"
-                  className="form-input"
+                  className="form-input w-full"
                 />
               </div>
               <div>
-                <Label htmlFor="server" className="text-gray-700">
+                <Label htmlFor="server" className="block text-sm font-medium text-gray-700 mb-1">
                   서버
                 </Label>
                 <Select
                   value={newCharacter.server}
                   onValueChange={(value) => setNewCharacter((prev) => ({ ...prev, server: value }))}
                 >
-                  <SelectTrigger className="form-input">
+                  <SelectTrigger className="form-input w-full">
                     <SelectValue placeholder="서버 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -230,7 +248,7 @@ export default function CharactersPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="level" className="text-gray-700">
+                <Label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">
                   레벨
                 </Label>
                 <Input
@@ -242,11 +260,11 @@ export default function CharactersPage() {
                     setNewCharacter((prev) => ({ ...prev, level: e.target.value }));
                   }}
                   placeholder="65"
-                  className="form-input"
+                  className="form-input w-full"
                 />
               </div>
               <div>
-                <Label htmlFor="profession" className="text-gray-700">
+                <Label htmlFor="profession" className="block text-sm font-medium text-gray-700 mb-1">
                   직업
                 </Label>
                 <Select
@@ -256,20 +274,25 @@ export default function CharactersPage() {
                     setNewCharacter((prev) => ({ ...prev, profession: value }));
                   }}
                 >
-                  <SelectTrigger className="form-input">
+                  <SelectTrigger className="form-input w-full">
                     <SelectValue placeholder="직업 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    {professions.map((profession) => (
-                      <SelectItem key={profession} value={profession}>
-                        {profession}
-                      </SelectItem>
+                    {professions.map((group) => (
+                      <SelectGroup key={group.category}>
+                        <SelectLabel>{group.category}</SelectLabel>
+                        {group.professions.map((profession) => (
+                          <SelectItem key={profession} value={profession}>
+                            {profession}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="combatPower" className="text-gray-700">
+                <Label htmlFor="combatPower" className="block text-sm font-medium text-gray-700 mb-1">
                   전투력
                 </Label>
                 <Input
@@ -281,7 +304,7 @@ export default function CharactersPage() {
                     setNewCharacter((prev) => ({ ...prev, combatPower: e.target.value }));
                   }}
                   placeholder="전투력 입력 (예: 12345)"
-                  className="form-input"
+                  className="form-input w-full"
                 />
               </div>
             </div>
