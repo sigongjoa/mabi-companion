@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/sidebar'; // Import the new Sidebar component
 import supabase from '@/lib/supabase'; // Import Supabase client
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from "@/lib/logger";
 
 interface Character {
   id: string;
@@ -24,31 +25,41 @@ interface CraftingTimer {
 }
 
 export default function HomePage() {
+  logger.debug("HomePage 렌더링 시작");
   const { user, loading } = useAuth();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [craftingTimers, setCraftingTimers] = useState<CraftingTimer[]>([]);
 
   useEffect(() => {
-    if (loading) return; // Wait for auth to load
+    logger.debug("HomePage useEffect 실행");
+    if (loading) {
+      logger.debug("HomePage useEffect: 인증 로딩 중");
+      return; // Wait for auth to load
+    }
+    logger.debug("HomePage useEffect: 인증 로딩 완료");
     if (!user) {
+      logger.debug("HomePage useEffect: 사용자 로그인 안됨, 로그인 페이지로 리디렉션");
       window.location.href = '/login'; // Redirect to login if no user
       return;
     }
+    logger.debug("HomePage useEffect: 사용자 로그인됨");
 
     const fetchCharacters = async () => {
+      logger.debug("fetchCharacters 호출");
       const { data, error } = await supabase.from('characters').select('*');
       if (data) {
-        setCharacters(data);
+        logger.debug("fetchCharacters 성공", { data });
       } else if (error) {
         console.error('Error fetching characters:', error.message);
       }
     };
 
     const fetchCraftingTimers = async () => {
+      logger.debug("fetchCraftingTimers 호출");
       // Assuming a 'crafting_timers' table in Supabase
       const { data, error } = await supabase.from('crafting_timers').select('*');
       if (data) {
-        setCraftingTimers(data);
+        logger.debug("fetchCraftingTimers 성공", { data });
       } else if (error) {
         console.error('Error fetching crafting timers:', error.message);
       }
