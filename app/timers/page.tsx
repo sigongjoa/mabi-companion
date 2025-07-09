@@ -1,5 +1,7 @@
 "use client"
 
+console.log("[Timers Page] 렌더 시작");
+
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CurrencyTimer } from "@/components/currency-timer"
