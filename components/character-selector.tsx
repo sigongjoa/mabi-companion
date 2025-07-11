@@ -9,11 +9,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Users, User, Star, Clock } from "lucide-react"
+import { useNotification } from "@/contexts/notification-context"
 
 export function CharacterSelector() {
   console.debug("CharacterSelector rendered.");
   const { characters, activeCharacter, viewMode, setActiveCharacter, setViewMode, toggleCharacterFavorite } =
     useCharacter()
+  const { addNotification } = useNotification()
 
   const [isExpanded, setIsExpanded] = useState(false)
   console.debug("CharacterSelector - Current viewMode:", viewMode);
@@ -80,6 +82,9 @@ export function CharacterSelector() {
                 const character = characters.find((c) => c.id === value);
                 console.debug("Select - 찾은 캐릭터:", character);
                 setActiveCharacter(character || null);
+                if (character) {
+                  addNotification({ id: Date.now(), message: `${character.name}(으)로 캐릭터가 선택되었습니다.`, type: 'success' });
+                }
               }}
             >
               <SelectTrigger className="form-input">
@@ -142,6 +147,7 @@ export function CharacterSelector() {
                     console.debug(`Expanded list click - character: ${character.name}, viewMode: ${viewMode}`);
                     if (viewMode === "single") {
                       setActiveCharacter(character);
+                      addNotification({ id: Date.now(), message: `${character.name}(으)로 캐릭터가 선택되었습니다.`, type: 'success' });
                     }
                   }}
                 >

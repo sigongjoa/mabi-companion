@@ -3,6 +3,7 @@ import { Noto_Sans, Plus_Jakarta_Sans, Spline_Sans } from "next/font/google"
 import "./globals.css"
 import { headers } from "next/headers";
 import DynamicProvider from "./DynamicProvider";
+import { GlobalDataProvider } from "@/contexts/GlobalDataContext"; // Added import
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -61,7 +62,9 @@ export default async function RootLayout({
         <meta httpEquiv="Content-Security-Policy" content={csp} />
       </head>
       <body className={`${plusJakartaSans.variable} ${notoSans.variable}`}>
-        <DynamicProvider>{children}</DynamicProvider>
+        <GlobalDataProvider> {/* Added GlobalDataProvider */}
+          <DynamicProvider>{children}</DynamicProvider>
+        </GlobalDataProvider>
       </body>
     </html>
   )

@@ -1,47 +1,144 @@
 "use client";
 
-import React, { useState } from 'react';
-
-interface Item {
-  id: string;
-  icon: string; // Placeholder for icon path or component
-  name: string;
-  category: string;
-  quantity: number;
-  isFavorite: boolean;
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLayout from '@/components/unified-layout';
+import { useCharacter } from '@/contexts/character-context';
+import { useGlobalData, GameItem } from '@/contexts/GlobalDataContext'; // Import useGlobalData and GameItem
+import { UserItem } from '@/types/page-context';
+import debounce from 'lodash.debounce';
 
 export default function InventoryPage() {
+  const { activeCharacter, updateCharacter } = useCharacter();
+  const { allItems } = useGlobalData(); // Get allItems from GlobalDataContext
   const [activeTab, setActiveTab] = useState('items'); // 'items', 'craftable', 'gems', 'image-parsing'
   const [activeCategory, setActiveCategory] = useState('all'); // 'all', 'consumables', 'equipment', etc.
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [items, setItems] = useState<UserItem[]>([]);
 
-  const [items, setItems] = useState<Item[]>([
-    // Dummy data
-    { id: '1', icon: '', name: '생명력 포션', category: '소모품', quantity: 10, isFavorite: false },
-    { id: '2', icon: '', name: '롱 소드', category: '장비', quantity: 1, isFavorite: true },
-    { id: '3', icon: '', name: '마나 허브', category: '기타', quantity: 50, isFavorite: false },
-    { id: '4', icon: '', name: '금화 주머니', category: '화폐', quantity: 1, isFavorite: false },
-  ]);
+  useEffect(() => {
+    if (activeCharacter && allItems) {
+      const mergedItems: UserItem[] = [];
+      const userItemMap = new Map<string, UserItem>();
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
-    const matchesFavorites = !showFavoritesOnly || item.isFavorite;
-    return matchesSearch && matchesCategory && matchesFavorites;
-  });
+      // Populate map with user's actual items
+      (activeCharacter.userItems || []).forEach(item => {
+        userItemMap.set(item.item_id, item);
+      });
 
-  const handleFavoriteToggle = (id: string) => {
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
-      )
+      // Iterate through all game items and merge with user's items
+      Object.values(allItems).forEach(gameItem => {
+        const userItem = userItemMap.get(gameItem.id.toString());
+        if (userItem) {
+          mergedItems.push({
+            ...userItem,
+            item_name: gameItem.name, // Ensure item_name is from gameItem
+            category: gameItem.category, // Ensure category is from gameItem
+            isFavorite: activeCharacter.favoriteItems?.[gameItem.id.toString()] || false, // Get favorite status
+          });
+        } else {
+          // Item not owned by character, add with quantity 0
+          mergedItems.push({
+            item_id: gameItem.id.toString(),
+            item_name: gameItem.name,
+            category: gameItem.category,
+            quantity: 0,
+            durability: null, // Default for unowned
+            custom_props: {}, // Default for unowned
+            isFavorite: activeCharacter.favoriteItems?.[gameItem.id.toString()] || false, // Get favorite status
+          });
+        }
+      });
+      console.log('useEffect: mergedItems before setItems', mergedItems); // Debug log
+      setItems(mergedItems);
+    }
+  }, [activeCharacter, allItems]);
+
+  const filteredItems = React.useMemo(() => {
+    console.log('filteredItems calculation: items', items, 'activeCategory', activeCategory, 'showFavoritesOnly', showFavoritesOnly, 'searchTerm', searchTerm); // Debug log
+    return items.filter(item => {
+      const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = activeCategory === 'all' || item.category.toLowerCase() === activeCategory; // category를 소문자로 변환하여 비교
+      const matchesFavorites = !showFavoritesOnly || item.isFavorite;
+      return matchesSearch && matchesCategory && matchesFavorites;
+    });
+  }, [items, activeCategory, showFavoritesOnly, searchTerm]);
+  console.log('filteredItems calculation: result', filteredItems); // Debug log
+
+  // Debounced function for updating character items in the database
+  const debouncedUpdateCharacterItems = useCallback(
+    debounce((charId: string, updatedItems: UserItem[]) => {
+      updateCharacter(charId, { userItems: updatedItems });
+    }, 500), // Adjust debounce time as needed (e.g., 500ms)
+    [updateCharacter]
+  );
+
+  const handleFavoriteToggle = (itemId: string) => {
+    if (activeCharacter && updateCharacter) {
+      const newFavoriteItems = { ...activeCharacter.favoriteItems };
+      newFavoriteItems[itemId] = !newFavoriteItems[itemId];
+
+      // If the item is not in userItems, add it with quantity 0 when favorited
+      const existingUserItem = activeCharacter.userItems.find(ui => ui.item_id === itemId);
+      if (!existingUserItem && newFavoriteItems[itemId]) {
+        const gameItem = allItems[itemId];
+        if (gameItem) {
+          const newUserItems = [...activeCharacter.userItems, {
+            item_id: gameItem.id.toString(),
+            item_name: gameItem.name,
+            category: gameItem.category,
+            quantity: 0,
+            durability: null,
+            custom_props: {},
+            isFavorite: true,
+          }];
+          updateCharacter(activeCharacter.id, { favoriteItems: newFavoriteItems, userItems: newUserItems });
+        } else {
+          updateCharacter(activeCharacter.id, { favoriteItems: newFavoriteItems });
+        }
+      } else {
+        updateCharacter(activeCharacter.id, { favoriteItems: newFavoriteItems });
+      }
+    }
+  };
+
+  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    if (!activeCharacter || !updateCharacter) return;
+
+    const updatedUserItems = (activeCharacter.userItems || []).map(item =>
+      item.item_id === itemId ? { ...item, quantity: newQuantity } : item
     );
+
+    // If the item doesn't exist in userItems and newQuantity > 0, add it
+    const existingItem = updatedUserItems.find(item => item.item_id === itemId);
+    if (!existingItem && newQuantity > 0) {
+      const gameItem = allItems[itemId];
+      if (gameItem) {
+        updatedUserItems.push({
+          item_id: gameItem.id.toString(),
+          item_name: gameItem.name,
+          category: gameItem.category,
+          quantity: newQuantity,
+          durability: null,
+          custom_props: {},
+          isFavorite: activeCharacter.favoriteItems?.[gameItem.id.toString()] || false,
+        });
+      }
+    }
+
+    setItems(prev =>
+      prev.map(item =>
+        item.item_id === itemId ? { ...item, quantity: newQuantity } : item
+      )
+    ); // Update local state immediately for smooth UI
+
+    // Call the debounced function to update the database
+    debouncedUpdateCharacterItems(activeCharacter.id, updatedUserItems);
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <UnifiedLayout>
+      <div className="h-screen flex flex-col">
       {/* Header */}
       <header className="header">
         <div className="flex items-center">
@@ -102,7 +199,7 @@ export default function InventoryPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <h3 className="text-lg font-semibold text-gray-800 mr-2">통합 인벤토리</h3>
-              <span className="text-sm text-secondary">총 {filteredItems.length}개 아이템 (선택된 캐릭터 없음)</span>
+              <span className="text-sm text-secondary">총 {filteredItems.length}개 아이템 ({activeCharacter ? activeCharacter.name : '선택된 캐릭터 없음'})</span>
             </div>
             <div className="flex items-center">
               <span className="text-sm text-gray-700 mr-2">즐겨찾기만</span>
@@ -126,7 +223,10 @@ export default function InventoryPage() {
               <button
                 key={category}
                 className={`category-button ${activeCategory === category.toLowerCase() ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category.toLowerCase())}
+                onClick={() => {
+                  console.log('Category button clicked:', category.toLowerCase()); // Debug log
+                  setActiveCategory(category.toLowerCase());
+                }}
               >
                 {category}
               </button>
@@ -152,21 +252,43 @@ export default function InventoryPage() {
                   </tr>
                 ) : (
                   filteredItems.map(item => (
-                    <tr key={item.id}>
+                    <tr key={item.item_id}>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button onClick={() => handleFavoriteToggle(item.id)}>
+                        <button onClick={() => handleFavoriteToggle(item.item_id)}>
                           <svg className={`w-5 h-5 ${item.isFavorite ? 'text-red-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"></path></svg>
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {/* Placeholder for item icon */}
                         <div className="w-8 h-8 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
-                          {item.name.charAt(0)}
+                          {item.item_name.charAt(0)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.item_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            className="px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleQuantityChange(item.item_id, Math.max(0, item.quantity - 1))}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleQuantityChange(item.item_id, Number(e.target.value))}
+                            className="w-16 text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                          />
+                          <button
+                            className="px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleQuantityChange(item.item_id, item.quantity + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -175,6 +297,7 @@ export default function InventoryPage() {
           </div>
         </div>
       </main>
-    </body>
+    </div>
+    </UnifiedLayout>
   );
 }

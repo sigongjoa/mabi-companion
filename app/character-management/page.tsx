@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import supabase from '@/lib/supabase'; // Import Supabase client
 import { useNotification } from '@/contexts/notification-context';
+import { useCharacter } from '@/contexts/character-context'; // Import useCharacter
 
 import UnifiedLayout from "@/components/unified-layout";
 
@@ -24,6 +25,7 @@ export default function CharacterManagementPage() {
   const [job, setJob] = useState('');
   const [combatPower, setCombatPower] = useState('');
   const { notify } = useNotification();
+  const { setActiveCharacter, activeCharacter } = useCharacter(); // Get setActiveCharacter and activeCharacter from context
 
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -76,6 +78,11 @@ export default function CharacterManagementPage() {
     }
   };
 
+  const handleSelectCharacter = (character: Character) => {
+    setActiveCharacter(character);
+    notify(`${character.name}(으)로 캐릭터가 선택되었습니다.`);
+  };
+
   return (
     <UnifiedLayout>
       <div className="h-screen flex flex-col">
@@ -107,7 +114,7 @@ export default function CharacterManagementPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {characters.map((char) => (
-                  <div key={char.id} className="card character-card-layout">
+                  <div key={char.id} className={`card character-card-layout ${activeCharacter?.id === char.id ? 'border-blue-500' : ''}`}>
                     <div className="flex-shrink-0">
                       {/* Placeholder for character image */}
                       <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xl font-bold">
@@ -120,6 +127,9 @@ export default function CharacterManagementPage() {
                       <p className="text-sm text-secondary">레벨: {char.level}</p>
                       <p className="text-sm text-secondary">직업: {char.job}</p>
                       <p className="text-sm text-secondary">전투력: {char.combat_power}</p>
+                      <button className="btn-primary mt-2" onClick={() => handleSelectCharacter(char)}>
+                        선택
+                      </button>
                     </div>
                   </div>
                 ))}
